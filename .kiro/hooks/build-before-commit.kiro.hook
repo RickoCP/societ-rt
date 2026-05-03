@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Build & Commit Lint Before Commit",
+  "description": "Menjalankan npm run build dan memvalidasi format Conventional Commits sebelum git commit. Jika build gagal atau format commit message salah, commit tidak boleh dilanjutkan.",
+  "version": "1",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": [
+      ".*git commit.*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A git commit is about to be executed. Before proceeding, do THREE steps:\n\n0. STAGE ALL FILES: Run 'git add .' first to stage all changes.\n\n1. COMMIT MESSAGE FORMAT: Verify the commit message follows Conventional Commits format. It MUST match one of these prefixes: feat:, fix:, refactor:, docs:, test:, chore:, style:, perf:, ci:, build:, revert:. The prefix MUST be lowercase, followed by a colon and space, then a description. Optional scope in parentheses is allowed (e.g. 'feat(auth): add login'). If the message does NOT match this format, do NOT proceed with the commit. Inform the user and suggest a corrected message.\n\n2. BUILD CHECK: Run 'npm run build'. If the build fails, do NOT proceed with the commit and inform the user about the build error.\n\nOnly proceed with the commit if steps 1 and 2 both pass."
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "DI Registration Reminder",
+  "description": "Saat file baru dibuat di core atau infrastructure, ingatkan untuk mendaftarkan dependency baru ke DI container (Awilix).",
+  "version": "1.0.0",
+  "when": {
+    "type": "fileCreated",
+    "patterns": [
+      "src/core/**/*.ts",
+      "src/infrastructure/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "File baru dibuat di core atau infrastructure. Periksa apakah file ini memerlukan registrasi DI: (1) Jika file adalah repository implementation baru → HARUS didaftarkan di src/infrastructure/di/registry/repositoryContainer.ts. (2) Jika file adalah use case baru → HARUS didaftarkan di src/infrastructure/di/registry/useCasesContainer.ts. (3) Jika file adalah adapter/module baru → HARUS didaftarkan di src/infrastructure/di/registry/moduleContainer.ts. (4) Jika file adalah test, mapper, DTO, entity, atau interface → TIDAK perlu registrasi DI. Jika registrasi diperlukan, ingatkan developer untuk menambahkannya."
+  }
+}

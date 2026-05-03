@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "name": "Post Task Test",
+  "description": "Menjalankan npm test setelah task Kiro spec selesai untuk memverifikasi tidak ada regresi yang diperkenalkan.",
+  "version": "1",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm test -- --passWithNoTests"
+  }
+}

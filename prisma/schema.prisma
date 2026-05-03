@@ -1,0 +1,735 @@
+// =============================================================================
+// SocieT-RT Prisma Schema
+// Multi-tenant SaaS platform for RT/RW community management
+// =============================================================================
+// Conventions:
+// - All TypeScript field names use camelCase
+// - All database columns use snake_case via @map directives
+// - All table names use snake_case plural via @@map directives
+// - All IDs are UUIDs with @default(uuid())
+// - All models have created_at, updated_at timestamps
+// - Models supporting soft delete have deleted_at nullable timestamp
+// =============================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum TenantStatus {
+  active
+  suspended
+}
+
+enum UserRole {
+  Super_Admin
+  Ketua_RT
+  Pengurus
+  Warga
+  Security_Guard
+}
+
+enum UserStatus {
+  active
+  locked
+  inactive
+}
+
+enum ResidencyStatus {
+  tetap
+  kontrak
+  kos
+  pindah
+}
+
+enum Gender {
+  male
+  female
+}
+
+enum TransactionType {
+  income
+  expense
+}
+
+enum IuranPaymentStatus {
+  paid
+  unpaid
+}
+
+enum VoteMode {
+  anonymous
+  verified
+}
+
+enum AnnouncementCategory {
+  umum
+  keamanan
+  keuangan
+  kegiatan
+  darurat
+}
+
+// =============================================================================
+// Models
+// =============================================================================
+
+/// Subscription plan that determines feature limits and user count limits per tenant.
+model SubscriptionPlan {
+  id        String   @id @default(uuid()) @map("id")
+  name      String   @map("name") // Free, Pro, Enterprise
+  maxUsers  Int?     @map("max_users") // null = unlimited
+  features  String[] @map("features")
+  price     Decimal  @map("price") @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenants Tenant[]
+
+  @@map("subscription_plans")
+}
+
+/// Tenant represents a single RT/RW/cluster/community organization.
+/// All tenant-scoped data references this model via tenant_id.
+model Tenant {
+  id                 String       @id @default(uuid()) @map("id")
+  name               String       @map("name")
+  subdomain          String       @unique @map("subdomain")
+  rtRwNumber         String       @map("rt_rw_number")
+  region             String       @map("region")
+  address            String       @map("address")
+  contactPerson      String       @map("contact_person")
+  logoUrl            String?      @map("logo_url")
+  primaryColor       String?      @map("primary_color")
+  secondaryColor     String?      @map("secondary_color")
+  status             TenantStatus @default(active) @map("status")
+  subscriptionPlanId String       @map("subscription_plan_id")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  subscriptionPlan      SubscriptionPlan       @relation(fields: [subscriptionPlanId], references: [id])
+  users                 User[]
+  invitationTokens      InvitationToken[]
+  households            Household[]
+  residents             Resident[]
+  financialTransactions FinancialTransaction[]
+  iuranStatuses         IuranStatus[]
+  votes                 Vote[]
+  announcements         Announcement[]
+  emergencyAlerts       EmergencyAlert[]
+  patrolSchedules       PatrolSchedule[]
+  incidentReports       IncidentReport[]
+  letterRequests        LetterRequest[]
+  communityEvents       CommunityEvent[]
+  visitorLogs           VisitorLog[]
+  packageLogs           PackageLog[]
+  invoices              Invoice[]
+  featureFlagOverrides  FeatureFlagOverride[]
+  notifications         Notification[]
+  auditLogs             AuditLog[]
+  pushSubscriptions     PushSubscription[]
+
+  @@unique([rtRwNumber, region], map: "tenants_rt_rw_number_region_unique")
+  @@map("tenants")
+}
+
+/// User represents an authenticated user within a tenant.
+/// Supports soft delete via deleted_at timestamp.
+model User {
+  id                  String     @id @default(uuid()) @map("id")
+  tenantId            String     @map("tenant_id")
+  name                String     @map("name")
+  email               String     @map("email")
+  passwordHash        String     @map("password_hash")
+  role                UserRole   @default(Warga) @map("role")
+  status              UserStatus @default(active) @map("status")
+  failedLoginAttempts Int        @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime?  @map("locked_until")
+  consentTimestamp    DateTime?  @map("consent_timestamp")
+  consentVersion      String?    @map("consent_version")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+  deletedAt           DateTime?  @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, email], map: "users_tenant_id_email_unique")
+  @@index([tenantId, id], map: "users_tenant_id_id_idx")
+  @@index([tenantId, createdAt], map: "users_tenant_id_created_at_idx")
+  @@index([tenantId, status], map: "users_tenant_id_status_idx")
+  @@map("users")
+}
+
+/// Invitation token for user registration. Created by Ketua_RT or Pengurus.
+model InvitationToken {
+  id        String    @id @default(uuid()) @map("id")
+  tenantId  String    @map("tenant_id")
+  email     String    @map("email")
+  role      UserRole  @map("role")
+  token     String    @unique @map("token")
+  expiresAt DateTime  @map("expires_at")
+  createdBy String    @map("created_by")
+  createdAt DateTime  @default(now()) @map("created_at")
+  usedAt    DateTime? @map("used_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id], map: "invitation_tokens_tenant_id_id_idx")
+  @@index([tenantId, createdAt], map: "invitation_tokens_tenant_id_created_at_idx")
+  @@map("invitation_tokens")
+}
+
+/// Household represents a family unit (Kartu Keluarga) within a tenant's community.
+model Household {
+  id              String   @id @default(uuid()) @map("id")
+  tenantId        String   @map("tenant_id")
+  householdNumber String   @map("household_number")
+  address         String   @map("address")
+  block           String?  @map("block")
+  latitude        Float?   @map("latitude")
+  longitude       Float?   @map("longitude")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  residents     Resident[]
+  iuranStatuses IuranStatus[]
+
+  @@unique([tenantId, householdNumber], map: "households_tenant_id_household_number_unique")
+  @@index([tenantId, id], map: "households_tenant_id_id_idx")
+  @@map("households")
+}
+
+/// Resident represents an individual person within a household.
+/// Supports soft delete via deleted_at timestamp.
+model Resident {
+  id                          String          @id @default(uuid()) @map("id")
+  tenantId                    String          @map("tenant_id")
+  householdId                 String          @map("household_id")
+  name                        String          @map("name")
+  nik                         String          @map("nik")
+  dateOfBirth                 DateTime        @map("date_of_birth")
+  gender                      Gender          @map("gender")
+  phone                       String?         @map("phone")
+  status                      ResidencyStatus @default(tetap) @map("status")
+  categories                  String[]        @map("categories")
+  emergencyContactName        String?         @map("emergency_contact_name")
+  emergencyContactPhone       String?         @map("emergency_contact_phone")
+  emergencyContactRelationship String?        @map("emergency_contact_relationship")
+  createdAt                   DateTime        @default(now()) @map("created_at")
+  updatedAt                   DateTime        @updatedAt @map("updated_at")
+  deletedAt                   DateTime?       @map("deleted_at")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  household Household @relation(fields: [householdId], references: [id])
+
+  @@unique([tenantId, nik], map: "residents_tenant_id_nik_unique")
+  @@index([tenantId, id], map: "residents_tenant_id_id_idx")
+  @@index([tenantId, createdAt], map: "residents_tenant_id_created_at_idx")
+  @@index([tenantId, status], map: "residents_tenant_id_status_idx")
+  @@map("residents")
+}
+
+/// FinancialTransaction represents an income or expense entry in the tenant's
+/// community treasury (uang kas). Supports soft delete via deleted_at.
+model FinancialTransaction {
+  id          String          @id @default(uuid()) @map("id")
+  tenantId    String          @map("tenant_id")
+  type        TransactionType @map("type")
+  amount      Decimal         @map("amount") @db.Decimal(12, 2)
+  description String          @map("description")
+  category    String          @map("category")
+  date        DateTime        @map("date")
+  createdBy   String          @map("created_by")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  deletedAt   DateTime?       @map("deleted_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id], map: "financial_transactions_tenant_id_id_idx")
+  @@index([tenantId, createdAt], map: "financial_transactions_tenant_id_created_at_idx")
+  @@index([tenantId, date], map: "financial_transactions_tenant_id_date_idx")
+  @@map("financial_transactions")
+}
+
+/// IuranStatus tracks the monthly dues (iuran) payment status for each
+/// household within a tenant. One record per household per month.
+model IuranStatus {
+  id            String             @id @default(uuid()) @map("id")
+  tenantId      String             @map("tenant_id")
+  householdId   String             @map("household_id")
+  month         String             @map("month") // YYYY-MM format
+  status        IuranPaymentStatus @default(unpaid) @map("status")
+  paidAt        DateTime?          @map("paid_at")
+  transactionId String?            @map("transaction_id")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  household Household @relation(fields: [householdId], references: [id])
+
+  @@unique([tenantId, householdId, month], map: "iuran_statuses_tenant_id_household_id_month_unique")
+  @@index([tenantId, id], map: "iuran_statuses_tenant_id_id_idx")
+  @@map("iuran_statuses")
+}
+
+/// Vote represents a community poll/vote created within a tenant.
+/// Supports anonymous and verified voting modes.
+model Vote {
+  id          String   @id @default(uuid()) @map("id")
+  tenantId    String   @map("tenant_id")
+  title       String   @map("title")
+  description String   @map("description")
+  mode        VoteMode @map("mode")
+  deadline    DateTime @map("deadline")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [id])
+  options VoteOption[]
+  ballots Ballot[]
+
+  @@index([tenantId, id], map: "votes_tenant_id_id_idx")
+  @@index([tenantId, createdAt], map: "votes_tenant_id_created_at_idx")
+  @@map("votes")
+}
+
+/// VoteOption represents a selectable option belonging to a vote.
+model VoteOption {
+  id        String @id @default(uuid()) @map("id")
+  voteId    String @map("vote_id")
+  label     String @map("label")
+  voteCount Int    @default(0) @map("vote_count")
+
+  vote Vote @relation(fields: [voteId], references: [id])
+
+  @@index([voteId], map: "vote_options_vote_id_idx")
+  @@map("vote_options")
+}
+
+/// Ballot represents a vote cast by a user for a specific option.
+/// The unique constraint on (voteId, userId) prevents duplicate voting.
+model Ballot {
+  id        String   @id @default(uuid()) @map("id")
+  voteId    String   @map("vote_id")
+  userId    String   @map("user_id")
+  optionId  String   @map("option_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  vote Vote @relation(fields: [voteId], references: [id])
+
+  @@unique([voteId, userId], map: "ballots_vote_id_user_id_unique")
+  @@map("ballots")
+}
+
+/// Announcement represents a community announcement within a tenant.
+/// Supports categories: umum, keamanan, keuangan, kegiatan, darurat.
+model Announcement {
+  id          String               @id @default(uuid()) @map("id")
+  tenantId    String               @map("tenant_id")
+  title       String               @map("title")
+  content     String               @map("content")
+  category    AnnouncementCategory @map("category")
+  createdBy   String               @map("created_by")
+  publishedAt DateTime?            @map("published_at")
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+
+  tenant      Tenant                     @relation(fields: [tenantId], references: [id])
+  attachments AnnouncementAttachment[]
+
+  @@index([tenantId, id], map: "announcements_tenant_id_id_idx")
+  @@index([tenantId, createdAt], map: "announcements_tenant_id_created_at_idx")
+  @@map("announcements")
+}
+
+enum EmergencyAlertStatus {
+  active
+  responding
+  resolved
+}
+
+/// AnnouncementAttachment represents a file attached to an announcement.
+/// Each announcement can have up to 5 attachments (enforced at application level).
+model AnnouncementAttachment {
+  id             String   @id @default(uuid()) @map("id")
+  announcementId String   @map("announcement_id")
+  fileUrl        String   @map("file_url")
+  fileName       String   @map("file_name")
+  fileSize       Int      @map("file_size")
+  mimeType       String   @map("mime_type")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  announcement Announcement @relation(fields: [announcementId], references: [id])
+
+  @@index([announcementId], map: "announcement_attachments_announcement_id_idx")
+  @@map("announcement_attachments")
+}
+
+/// EmergencyAlert represents an emergency alert triggered by a Warga.
+/// Tracks GPS coordinates (if available) and alert status lifecycle.
+model EmergencyAlert {
+  id                   String               @id @default(uuid()) @map("id")
+  tenantId             String               @map("tenant_id")
+  userId               String               @map("user_id")
+  latitude             Float?               @map("latitude")
+  longitude            Float?               @map("longitude")
+  locationUnavailable  Boolean              @default(false) @map("location_unavailable")
+  status               EmergencyAlertStatus @default(active) @map("status")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id], map: "emergency_alerts_tenant_id_id_idx")
+  @@index([tenantId, status], map: "emergency_alerts_tenant_id_status_idx")
+  @@map("emergency_alerts")
+}
+
+// =============================================================================
+// Security Patrol Enums & Models
+// =============================================================================
+
+enum SeverityLevel {
+  low
+  medium
+  high
+  critical
+}
+
+/// PatrolSchedule represents a security patrol schedule within a tenant.
+model PatrolSchedule {
+  id              String   @id @default(uuid()) @map("id")
+  tenantId        String   @map("tenant_id")
+  date            DateTime @map("date")
+  timeSlot        String   @map("time_slot")
+  assignedUserIds String[] @map("assigned_user_ids")
+  createdBy       String   @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  tenant      Tenant             @relation(fields: [tenantId], references: [id])
+  attendances PatrolAttendance[]
+
+  @@index([tenantId, id], map: "patrol_schedules_tenant_id_id_idx")
+  @@index([tenantId, date], map: "patrol_schedules_tenant_id_date_idx")
+  @@map("patrol_schedules")
+}
+
+/// PatrolAttendance represents a security guard's check-in for a patrol schedule.
+model PatrolAttendance {
+  id               String   @id @default(uuid()) @map("id")
+  scheduleId       String   @map("schedule_id")
+  userId           String   @map("user_id")
+  checkInTimestamp DateTime @map("check_in_timestamp")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  schedule PatrolSchedule @relation(fields: [scheduleId], references: [id])
+
+  @@index([scheduleId], map: "patrol_attendances_schedule_id_idx")
+  @@map("patrol_attendances")
+}
+
+/// IncidentReport represents a security incident report within a tenant.
+model IncidentReport {
+  id            String        @id @default(uuid()) @map("id")
+  tenantId      String        @map("tenant_id")
+  date          DateTime      @map("date")
+  time          String        @map("time")
+  description   String        @map("description")
+  location      String        @map("location")
+  severityLevel SeverityLevel @map("severity_level")
+  reportedBy    String        @map("reported_by")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id], map: "incident_reports_tenant_id_id_idx")
+  @@index([tenantId, createdAt], map: "incident_reports_tenant_id_created_at_idx")
+  @@map("incident_reports")
+}
+
+// =============================================================================
+// Administration Enums & Models
+// =============================================================================
+
+enum LetterType {
+  surat_pengantar
+  domisili
+  SKTM
+}
+
+enum LetterRequestStatus {
+  pending
+  approved
+  rejected
+}
+
+/// LetterRequest represents an administrative letter request within a tenant.
+model LetterRequest {
+  id              String              @id @default(uuid()) @map("id")
+  tenantId        String              @map("tenant_id")
+  userId          String              @map("user_id")
+  letterType      LetterType          @map("letter_type")
+  purpose         String              @map("purpose")
+  status          LetterRequestStatus @default(pending) @map("status")
+  rejectionReason String?             @map("rejection_reason")
+  documentUrl     String?             @map("document_url")
+  decidedBy       String?             @map("decided_by")
+  decidedAt       DateTime?           @map("decided_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id], map: "letter_requests_tenant_id_id_idx")
+  @@index([tenantId, createdAt], map: "letter_requests_tenant_id_created_at_idx")
+  @@index([tenantId, userId], map: "letter_requests_tenant_id_user_id_idx")
+  @@map("letter_requests")
+}
+
+
+// =============================================================================
+// Event Enums & Models
+// =============================================================================
+
+enum RsvpResponse {
+  attending
+  not_attending
+}
+
+/// CommunityEvent represents a community event within a tenant.
+model CommunityEvent {
+  id          String   @id @default(uuid()) @map("id")
+  tenantId    String   @map("tenant_id")
+  title       String   @map("title")
+  description String   @map("description")
+  date        DateTime @map("date")
+  time        String   @map("time")
+  location    String   @map("location")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant      @relation(fields: [tenantId], references: [id])
+  rsvps  EventRsvp[]
+
+  @@index([tenantId, id], map: "community_events_tenant_id_id_idx")
+  @@index([tenantId, date], map: "community_events_tenant_id_date_idx")
+  @@map("community_events")
+}
+
+/// EventRsvp represents an RSVP response to a community event.
+/// The unique constraint on (eventId, userId) prevents duplicate RSVPs.
+model EventRsvp {
+  id        String       @id @default(uuid()) @map("id")
+  eventId   String       @map("event_id")
+  userId    String       @map("user_id")
+  response  RsvpResponse @map("response")
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  event CommunityEvent @relation(fields: [eventId], references: [id])
+
+  @@unique([eventId, userId], map: "event_rsvps_event_id_user_id_unique")
+  @@map("event_rsvps")
+}
+
+// =============================================================================
+// Visitor & Package Log Models
+// =============================================================================
+
+/// VisitorLog represents a visitor entry log within a tenant.
+model VisitorLog {
+  id                     String    @id @default(uuid()) @map("id")
+  tenantId               String    @map("tenant_id")
+  visitorName            String    @map("visitor_name")
+  purpose                String    @map("purpose")
+  destinationHouseholdId String    @map("destination_household_id")
+  entryTimestamp         DateTime  @default(now()) @map("entry_timestamp")
+  exitTimestamp          DateTime? @map("exit_timestamp")
+  loggedBy               String    @map("logged_by")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id], map: "visitor_logs_tenant_id_id_idx")
+  @@index([tenantId, createdAt], map: "visitor_logs_tenant_id_created_at_idx")
+  @@map("visitor_logs")
+}
+
+/// PackageLog represents a package delivery log within a tenant.
+model PackageLog {
+  id                   String   @id @default(uuid()) @map("id")
+  tenantId             String   @map("tenant_id")
+  recipientHouseholdId String   @map("recipient_household_id")
+  courierName          String   @map("courier_name")
+  description          String   @map("description")
+  arrivalTimestamp     DateTime @default(now()) @map("arrival_timestamp")
+  loggedBy             String   @map("logged_by")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, id], map: "package_logs_tenant_id_id_idx")
+  @@index([tenantId, createdAt], map: "package_logs_tenant_id_created_at_idx")
+  @@map("package_logs")
+}
+
+
+// =============================================================================
+// Billing Enums & Models
+// =============================================================================
+
+enum InvoiceStatus {
+  pending
+  paid
+  failed
+}
+
+/// Invoice represents a billing invoice for a tenant's subscription.
+/// Tracks billing period, payment status, and gateway transaction references.
+model Invoice {
+  id                   String        @id @default(uuid()) @map("id")
+  tenantId             String        @map("tenant_id")
+  planName             String        @map("plan_name")
+  amount               Decimal       @map("amount") @db.Decimal(12, 2)
+  billingPeriodStart   DateTime      @map("billing_period_start")
+  billingPeriodEnd     DateTime      @map("billing_period_end")
+  dueDate              DateTime      @map("due_date")
+  status               InvoiceStatus @default(pending) @map("status")
+  gatewayTransactionId String?       @map("gateway_transaction_id")
+  paidAt               DateTime?     @map("paid_at")
+  retryCount           Int           @default(0) @map("retry_count")
+  idempotencyKey       String        @unique @map("idempotency_key")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, status, dueDate], map: "invoices_tenant_id_status_due_date_idx")
+  @@map("invoices")
+}
+
+/// PaymentReconciliation records the reconciliation between a payment gateway
+/// transaction and an internal invoice for auditing purposes.
+model PaymentReconciliation {
+  id                   String    @id @default(uuid()) @map("id")
+  gatewayTransactionId String    @map("gateway_transaction_id")
+  internalInvoiceId    String    @map("internal_invoice_id")
+  amount               Decimal   @map("amount") @db.Decimal(12, 2)
+  status               String    @map("status")
+  gatewayResponse      Json      @map("gateway_response")
+  reconciledAt         DateTime? @map("reconciled_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  @@map("payment_reconciliations")
+}
+
+// =============================================================================
+// Feature Flag Models
+// =============================================================================
+
+/// FeatureFlag maps a feature to a subscription plan with an enabled/disabled state.
+model FeatureFlag {
+  id          String  @id @default(uuid()) @map("id")
+  featureName String  @map("feature_name")
+  planId      String  @map("plan_id")
+  enabled     Boolean @default(true) @map("enabled")
+
+  @@map("feature_flags")
+}
+
+/// FeatureFlagOverride allows per-tenant overrides of feature flags.
+model FeatureFlagOverride {
+  id           String   @id @default(uuid()) @map("id")
+  tenantId     String   @map("tenant_id")
+  featureName  String   @map("feature_name")
+  enabled      Boolean  @map("enabled")
+  overriddenBy String   @map("overridden_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, featureName], map: "feature_flag_overrides_tenant_id_feature_name_unique")
+  @@map("feature_flag_overrides")
+}
+
+// =============================================================================
+// Notification Models
+// =============================================================================
+
+/// Notification represents a notification sent to a user within a tenant.
+/// Supports push, email, and inbox channels.
+model Notification {
+  id        String   @id @default(uuid()) @map("id")
+  tenantId  String   @map("tenant_id")
+  userId    String   @map("user_id")
+  type      String   @map("type")
+  title     String   @map("title")
+  body      String   @map("body")
+  channel   String   @map("channel") // push | email | inbox
+  status    String   @default("unread") @map("status") // unread | read
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, userId, status, createdAt], map: "notifications_tenant_id_user_id_status_created_at_idx")
+  @@map("notifications")
+}
+
+// =============================================================================
+// Audit Log Models
+// =============================================================================
+
+/// AuditLog represents an append-only audit trail entry within a tenant.
+/// Sensitive data (passwords, tokens, OTP) is excluded from details at write time.
+model AuditLog {
+  id              String   @id @default(uuid()) @map("id")
+  tenantId        String   @map("tenant_id")
+  actorUserId     String   @map("actor_user_id")
+  actionType      String   @map("action_type")
+  resourceType    String   @map("resource_type")
+  resourceId      String   @map("resource_id")
+  details         Json     @map("details")
+  ipAddress       String?  @map("ip_address")
+  impersonatorId  String?  @map("impersonator_id")
+  timestamp       DateTime @default(now()) @map("timestamp")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, timestamp], map: "audit_logs_tenant_id_timestamp_idx")
+  @@index([tenantId, actionType], map: "audit_logs_tenant_id_action_type_idx")
+  @@map("audit_logs")
+}
+
+// =============================================================================
+// Push Subscription Models
+// =============================================================================
+
+/// PushSubscription stores Web Push subscription data for push notifications.
+model PushSubscription {
+  id        String   @id @default(uuid()) @map("id")
+  userId    String   @map("user_id")
+  tenantId  String   @map("tenant_id")
+  endpoint  String   @map("endpoint")
+  p256dhKey String   @map("p256dh_key")
+  authKey   String   @map("auth_key")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, endpoint], map: "push_subscriptions_user_id_endpoint_unique")
+  @@index([tenantId, userId], map: "push_subscriptions_tenant_id_user_id_idx")
+  @@map("push_subscriptions")
+}

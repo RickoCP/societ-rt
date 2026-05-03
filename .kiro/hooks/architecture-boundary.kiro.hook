@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "Architecture Boundary Check",
+  "description": "Memvalidasi penempatan file baru berdasarkan konvensi penamaan: *.usecase.ts dan *.entity.ts harus di Core_Layer, *.view-model.ts dan *.screen.tsx harus di Presentation_Layer.",
+  "version": "1",
+  "when": {
+    "type": "fileCreated",
+    "patterns": [
+      "**/*.ts",
+      "**/*.tsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Periksa apakah file yang baru dibuat ditempatkan di direktori layer arsitektur yang benar berdasarkan konvensi penamaan: (1) File *.usecase.ts HARUS berada di src/core/domains/[domain]/usecases/. (2) File *.entity.ts HARUS berada di src/core/domains/[domain]/entities/. (3) File *.repository.ts (interface) HARUS berada di src/core/domains/[domain]/repositories/. (4) File *.view-model.ts HARUS berada di src/presentation/features/[feature]/viewModels/. (5) File *.screen.tsx HARUS berada di src/presentation/features/[feature]/screens/. Jika file salah tempat, sarankan lokasi yang benar."
+  }
+}

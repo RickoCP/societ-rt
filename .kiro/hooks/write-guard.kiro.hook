@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Write Operation Guard",
+  "description": "Gabungan validasi untuk setiap operasi write: dependency rule, security review untuk area sensitif, dan guard untuk file konfigurasi/secret.",
+  "version": "1.0.0",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": [
+      "write"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Periksa file yang akan ditulis terhadap Dependency Rule: (1) File di src/core/ TIDAK BOLEH mengimport dari src/infrastructure/, src/presentation/, src/app/, atau library framework (next, react, zustand, @tanstack/react-query). (2) File di src/presentation/ TIDAK BOLEH mengimport langsung dari src/infrastructure/ (harus melalui DI/Context). (3) File di src/app/ TIDAK BOLEH mengandung logika bisnis atau import domain model. Jika ada pelanggaran, tolak operasi dan jelaskan pelanggaran yang ditemukan.\n\nJika file yang akan ditulis berada di src/app/api/, src/infrastructure/, atau src/app/middleware.ts, periksa aspek security berikut: (1) Apakah ada secret/token/credential yang hardcoded? (2) Apakah input dari request body/query/params sudah divalidasi dengan schema? (3) Apakah error response tidak membocorkan detail internal? (4) Apakah endpoint yang seharusnya protected sudah ada auth check? (5) Apakah ada penggunaan dangerouslySetInnerHTML tanpa sanitization? Jika file BUKAN di area tersebut, lewati pemeriksaan ini dan lanjutkan operasi.\n\nJika file yang akan ditulis adalah .env, .env.local, .env.production, next.config.js, next.config.mjs, next.config.ts, atau file apapun yang mengandung secret/credential, periksa: (1) Apakah ada secret yang akan ditulis langsung ke file? (2) Apakah ada NEXT_PUBLIC_ prefix pada variable yang seharusnya server-only? (3) Apakah perubahan config bisa membuka attack surface baru (misalnya menambah domain di images, menambah header permisif)? Jika ada risiko, tolak operasi dan jelaskan. Jika file BUKAN file sensitif, lewati pemeriksaan ini dan lanjutkan."
+  }
+}

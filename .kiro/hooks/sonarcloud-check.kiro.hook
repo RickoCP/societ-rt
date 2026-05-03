@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "name": "SonarCloud Issue Check",
+  "description": "Hook manual untuk fetch dan review issues dari SonarCloud. Trigger via tombol di IDE untuk memeriksa code quality issues terbaru.",
+  "version": "1.0.0",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Fetch issues dari SonarCloud untuk project ricko.caesar.putra_my-digi. Gunakan MCP SonarQube tools untuk: (1) Cek quality gate status. (2) Ambil daftar issues yang OPEN dengan severity HIGH atau CRITICAL. (3) Untuk setiap issue yang ditemukan, tampilkan: file, line, rule, message, dan severity. (4) Jika ada issues yang bisa langsung diperbaiki di codebase ini, tawarkan untuk memperbaikinya. (5) Jika tidak ada issues, konfirmasi bahwa code quality baik."
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Test Reminder on Stop",
+  "description": "Saat agent selesai bekerja, ingatkan untuk mengevaluasi apakah test perlu ditambahkan atau diupdate berdasarkan perubahan yang dilakukan.",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Evaluasi perubahan yang baru saja dilakukan. Apakah ada file baru atau perubahan logic yang memerlukan: (1) Unit test baru? (2) Update test yang sudah ada? (3) Property test untuk value object/entity baru? (4) Component test untuk UI baru? Jika ya, sebutkan file test apa yang perlu dibuat/diupdate. Jika tidak ada perubahan yang memerlukan test, jelaskan alasannya secara singkat."
+  }
+}

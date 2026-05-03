@@ -1,0 +1,130 @@
+/**
+ * POST /api/tenants — Registers a new tenant (RT/RW community).
+ *
+ * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * This is a protected endpoint — requires Super_Admin role.
+ *
+ * @see Requirements 2.1, 2.2, 2.5
+ */
+
+import { NextResponse, type NextRequest } from 'next/server';
+import { z } from 'zod';
+import { UserRole } from '@core/protocols';
+import { container } from '@infrastructure/di/container';
+import { generateCorrelationId } from '@infrastructure/utils/correlationId';
+import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
+import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import type { RegisterTenantUseCase } from '@core/domains/tenant/usecases';
+
+// ---------------------------------------------------------------------------
+// Input schema
+// ---------------------------------------------------------------------------
+
+const createTenantSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  rtRwNumber: z.string().min(1, 'RT/RW number is required'),
+  region: z.string().min(1, 'Region is required'),
+  address: z.string().min(1, 'Address is required'),
+  contactPerson: z.string().min(1, 'Contact person is required'),
+});
+
+// ---------------------------------------------------------------------------
+// Route handler
+// ---------------------------------------------------------------------------
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const correlationId =
+    request.headers.get('x-correlation-id') ?? generateCorrelationId();
+
+  // 1. Resolve auth context from middleware-set headers
+  const authContext = resolveAuthContext(request);
+  if (!authContext) {
+    return NextResponse.json(
+      {
+        code: 'AUTH_TOKEN_INVALID',
+        message: 'Unauthorized',
+        correlationId,
+      },
+      { status: 401 },
+    );
+  }
+
+  // 2. Check Super_Admin role
+  if (authContext.role !== UserRole.Super_Admin) {
+    return NextResponse.json(
+      {
+        code: 'AUTH_INSUFFICIENT_ROLE',
+        message: 'You do not have permission to perform this action.',
+        correlationId,
+      },
+      { status: 403 },
+    );
+  }
+
+  // 3. Parse and validate input
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Invalid JSON body',
+        correlationId,
+      },
+      { status: 400 },
+    );
+  }
+
+  const validation = createTenantSchema.safeParse(body);
+  if (!validation.success) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        fields: formatZodErrors(validation.error),
+        correlationId,
+      },
+      { status: 400 },
+    );
+  }
+
+  // 4. Extract client IP for audit
+  const ipAddress =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    request.headers.get('x-real-ip') ??
+    undefined;
+
+  // 5. Execute use case via DI
+  const registerTenantUseCase =
+    container.resolve<RegisterTenantUseCase>('registerTenantUseCase');
+  const result = await registerTenantUseCase.execute({
+    data: validation.data,
+    actorUserId: authContext.userId,
+    ipAddress,
+  });
+
+  // 6. Map result to safe response
+  if (!result.success) {
+    return mapAppErrorToHttpResponse(result.error, correlationId);
+  }
+
+  const tenant = result.data;
+
+  return NextResponse.json(
+    {
+      data: {
+        id: tenant.id,
+        name: tenant.name,
+        subdomain: tenant.subdomain,
+        rtRwNumber: tenant.rtRwNumber,
+        region: tenant.region,
+        address: tenant.address,
+        contactPerson: tenant.contactPerson,
+        status: tenant.status,
+        createdAt: tenant.createdAt.toISOString(),
+      },
+    },
+    { status: 201 },
+  );
+}

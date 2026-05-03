@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "name": "Type Check on Prompt",
+  "description": "Menjalankan TypeScript compiler dalam mode --noEmit saat prompt dikirimkan agar agent memiliki konteks error tipe terkini sebelum mulai bekerja.",
+  "version": "1",
+  "when": {
+    "type": "promptSubmit"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npx tsc --noEmit --pretty"
+  }
+}

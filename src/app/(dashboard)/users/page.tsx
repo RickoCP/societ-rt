@@ -1,0 +1,5 @@
+import { UserManagementScreen } from '@features/users/screens/UserManagementScreen';
+
+export default function UsersPage() {
+  return <UserManagementScreen />;
+}

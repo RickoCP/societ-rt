@@ -1,0 +1,55 @@
+/**
+ * Repository Container — Registers repository implementations.
+ *
+ * Binds core repository interfaces to their infrastructure implementations.
+ * All repositories are registered as singletons (stateless).
+ */
+
+import { asFunction, type AwilixContainer } from 'awilix';
+import { AuthRepositoryImpl } from '@infrastructure/repositories/auth/AuthRepositoryImpl';
+import { RbacRepositoryImpl } from '@infrastructure/repositories/rbac/RbacRepositoryImpl';
+import { TenantRepositoryImpl } from '@infrastructure/repositories/tenant/TenantRepositoryImpl';
+import { ResidentRepositoryImpl } from '@infrastructure/repositories/resident/ResidentRepositoryImpl';
+import { FinanceRepositoryImpl } from '@infrastructure/repositories/finance/FinanceRepositoryImpl';
+import { VotingRepositoryImpl } from '@infrastructure/repositories/voting/VotingRepositoryImpl';
+import { AnnouncementRepositoryImpl } from '@infrastructure/repositories/announcement/AnnouncementRepositoryImpl';
+import { EmergencyRepositoryImpl } from '@infrastructure/repositories/emergency/EmergencyRepositoryImpl';
+import { MapRepositoryImpl } from '@infrastructure/repositories/map/MapRepositoryImpl';
+import { SecurityRepositoryImpl } from '@infrastructure/repositories/security/SecurityRepositoryImpl';
+import { AdministrationRepositoryImpl } from '@infrastructure/repositories/administration/AdministrationRepositoryImpl';
+import { EventRepositoryImpl } from '@infrastructure/repositories/event/EventRepositoryImpl';
+import { VisitorRepositoryImpl } from '@infrastructure/repositories/visitor/VisitorRepositoryImpl';
+import { BillingRepositoryImpl } from '@infrastructure/repositories/billing/BillingRepositoryImpl';
+import { FeatureFlagRepositoryImpl } from '@infrastructure/repositories/featureFlag/FeatureFlagRepositoryImpl';
+import { NotificationRepositoryImpl } from '@infrastructure/repositories/notification/NotificationRepositoryImpl';
+import { AuditRepositoryImpl } from '@infrastructure/repositories/audit/AuditRepositoryImpl';
+import { DashboardRepositoryImpl } from '@infrastructure/repositories/dashboard/DashboardRepositoryImpl';
+import { FileStorageRepositoryImpl } from '@infrastructure/repositories/fileStorage/FileStorageRepositoryImpl';
+import { PrivacyRepositoryImpl } from '@infrastructure/repositories/privacy/PrivacyRepositoryImpl';
+import { OperationalRepositoryImpl } from '@infrastructure/repositories/operational/OperationalRepositoryImpl';
+
+export function registerRepositories(container: AwilixContainer): void {
+  container.register({
+    authRepository: asFunction(AuthRepositoryImpl).singleton(),
+    rbacRepository: asFunction(RbacRepositoryImpl).singleton(),
+    tenantRepository: asFunction(TenantRepositoryImpl).singleton(),
+    residentRepository: asFunction(ResidentRepositoryImpl).singleton(),
+    financeRepository: asFunction(FinanceRepositoryImpl).singleton(),
+    votingRepository: asFunction(VotingRepositoryImpl).singleton(),
+    announcementRepository: asFunction(AnnouncementRepositoryImpl).singleton(),
+    emergencyRepository: asFunction(EmergencyRepositoryImpl).singleton(),
+    mapRepository: asFunction(MapRepositoryImpl).singleton(),
+    securityRepository: asFunction(SecurityRepositoryImpl).singleton(),
+    administrationRepository: asFunction(AdministrationRepositoryImpl).singleton(),
+    eventRepository: asFunction(EventRepositoryImpl).singleton(),
+    visitorRepository: asFunction(VisitorRepositoryImpl).singleton(),
+    billingRepository: asFunction(BillingRepositoryImpl).singleton(),
+    featureFlagRepository: asFunction(FeatureFlagRepositoryImpl).singleton(),
+    notificationRepository: asFunction(NotificationRepositoryImpl).singleton(),
+    auditRepository: asFunction(AuditRepositoryImpl).singleton(),
+    dashboardRepository: asFunction(DashboardRepositoryImpl).singleton(),
+    fileStorageRepository: asFunction(FileStorageRepositoryImpl).singleton(),
+    privacyRepository: asFunction(PrivacyRepositoryImpl).singleton(),
+    operationalRepository: asFunction(OperationalRepositoryImpl).singleton(),
+  });
+}

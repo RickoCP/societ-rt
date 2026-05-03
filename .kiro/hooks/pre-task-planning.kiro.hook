@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Pre-Task Planning",
+  "description": "Sebelum mulai mengerjakan task spec, ingatkan agent untuk mengidentifikasi risiko, dependensi, dan rencana implementasi.",
+  "version": "1",
+  "when": {
+    "type": "preTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Sebelum mulai mengerjakan task ini, lakukan perencanaan singkat: (1) Identifikasi file apa saja yang akan dibuat atau diubah. (2) Apakah task ini menyentuh area sensitif (auth, API, data sensitif, client/server boundary)? (3) Apakah ada dependency ke task lain yang harus selesai dulu? (4) Apakah ada risiko breaking change? (5) Test apa yang perlu ditambahkan setelah task selesai? Lanjutkan dengan implementasi setelah perencanaan."
+  }
+}

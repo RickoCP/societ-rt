@@ -1,0 +1,17 @@
+{
+  "enabled": false,
+  "name": "Auto Lint",
+  "description": "Menjalankan ESLint pada file TypeScript yang diedit untuk mendeteksi masalah lint secara real-time.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.ts",
+      "**/*.tsx"
+    ]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npx eslint --no-error-on-unmatched-pattern ${file}"
+  }
+}

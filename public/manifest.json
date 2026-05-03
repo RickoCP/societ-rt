@@ -1,0 +1,17 @@
+{
+  "name": "SocieT-RT — Community Management Platform",
+  "short_name": "SocieT-RT",
+  "description": "Multi-tenant SaaS platform for managing RT/RW communities",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
