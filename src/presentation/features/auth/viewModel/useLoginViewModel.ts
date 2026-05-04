@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import type { LoginFormData } from '../validation/loginSchema';
 
 interface LoginResponse {
@@ -11,7 +12,10 @@ async function loginRequest(data: LoginFormData): Promise<LoginResponse> {
   const res = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      ...data,
+      tenantId: '00000000-0000-0000-0000-000000000010',
+    }),
   });
 
   if (!res.ok) {
@@ -23,8 +27,13 @@ async function loginRequest(data: LoginFormData): Promise<LoginResponse> {
 }
 
 export function useLoginViewModel() {
+  const router = useRouter();
+
   const mutation = useMutation({
     mutationFn: loginRequest,
+    onSuccess: () => {
+      router.push('/');
+    },
   });
 
   return {
