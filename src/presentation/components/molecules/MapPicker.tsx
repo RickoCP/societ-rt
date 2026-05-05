@@ -18,6 +18,38 @@ export function MapPicker({ latitude, longitude, onLocationChange }: MapPickerPr
   const markerRef = useRef<unknown>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+
+  const handleUseGps = () => {
+    if (!navigator.geolocation) {
+      setGpsError('GPS tidak didukung di browser ini');
+      return;
+    }
+    setGpsLoading(true);
+    setGpsError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        onLocationChange(lat, lng);
+        if (markerRef.current) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (markerRef.current as any).setLatLng([lat, lng]);
+        }
+        if (mapInstanceRef.current) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (mapInstanceRef.current as any).setView([lat, lng], 17);
+        }
+        setGpsLoading(false);
+      },
+      (err) => {
+        setGpsError(err.message === 'User denied Geolocation' ? 'Akses lokasi ditolak' : 'Gagal mendapatkan lokasi GPS');
+        setGpsLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -120,7 +152,7 @@ export function MapPicker({ latitude, longitude, onLocationChange }: MapPickerPr
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Search bar */}
+      {/* Search bar + GPS button */}
       <div className="flex gap-2">
         <input
           type="text"
@@ -138,7 +170,17 @@ export function MapPicker({ latitude, longitude, onLocationChange }: MapPickerPr
         >
           {searching ? '...' : '🔍'}
         </button>
+        <button
+          type="button"
+          onClick={handleUseGps}
+          disabled={gpsLoading}
+          className="rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+          title="Gunakan lokasi GPS saat ini"
+        >
+          {gpsLoading ? '...' : '📡 GPS'}
+        </button>
       </div>
+      {gpsError && <p className="text-xs text-red-600">{gpsError}</p>}
       {/* Map container */}
       <div
         ref={mapRef}

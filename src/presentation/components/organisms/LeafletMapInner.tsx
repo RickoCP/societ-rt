@@ -35,11 +35,11 @@ export function LeafletMapInner({ center, zoom, markers }: LeafletMapInnerProps)
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {markers.map(marker => (
-        <Marker key={marker.id} position={[marker.lat, marker.lng]}>
+      {markers.filter(m => m.lat != null && m.lng != null && !isNaN(m.lat) && !isNaN(m.lng)).map((marker, index) => (
+        <Marker key={marker.id || `marker-${index}`} position={[marker.lat, marker.lng]}>
           {(marker.label ?? marker.popupContent) && (
             <Popup>
-              {marker.label && <strong>{marker.label}</strong>}
+              {/* {marker.label && <strong>{marker.label}</strong>} */}
               {marker.popupContent}
             </Popup>
           )}

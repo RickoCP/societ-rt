@@ -17,19 +17,27 @@ interface MapMarkerData {
 }
 
 interface MapMarkersResponse {
-  data: MapMarkerData[];
-  total: number;
+  data: Array<{
+    householdId: string;
+    householdNumber: string;
+    address: string;
+    block: string;
+    latitude: number | null;
+    longitude: number | null;
+    residentCount: number;
+    headOfHousehold: string;
+  }>;
 }
 
 async function fetchMapMarkers(filters: {
   block?: string;
   status?: string;
   category?: string;
-}): Promise<MapMarkersResponse> {
+}): Promise<{ data: MapMarkerData[]; total: number }> {
   const params = new URLSearchParams();
   if (filters.block) params.set('block', filters.block);
   if (filters.status) params.set('status', filters.status);
-  if (filters.category) params.set('category', filters.category);
+  if (filters.category) params.set('categories', filters.category);
 
   const res = await fetch(`/api/map?${params.toString()}`);
 
@@ -38,7 +46,23 @@ async function fetchMapMarkers(filters: {
     throw new Error(body.message ?? 'Failed to fetch map markers');
   }
 
-  return (await res.json()) as MapMarkersResponse;
+  const json = (await res.json()) as MapMarkersResponse;
+  const mapped = json.data
+    .filter(m => m.latitude != null && m.longitude != null)
+    .map(m => ({
+      id: m.householdId,
+      lat: m.latitude!,
+      lng: m.longitude!,
+      householdNumber: m.householdNumber,
+      address: m.address,
+      headOfHousehold: m.headOfHousehold ?? '-',
+      residentCount: m.residentCount ?? 0,
+      block: m.block ?? '',
+      status: 'active',
+      categories: [],
+    }));
+
+  return { data: mapped, total: mapped.length };
 }
 
 export function useMapViewModel() {

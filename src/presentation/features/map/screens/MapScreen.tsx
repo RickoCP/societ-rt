@@ -1,35 +1,39 @@
 'use client';
 
+import { useState } from 'react';
 import { MapContainer, type MapMarker } from '@components/organisms/MapContainer';
 import { Spinner } from '@components/atoms/Spinner';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
 import { useMapViewModel } from '../viewModel/useMapViewModel';
 
 export function MapScreen() {
-  const {
-    markers,
-    isLoading,
-    isError,
-    error,
-    blockFilter,
-    setBlockFilter,
-    statusFilter,
-    setStatusFilter,
-    categoryFilter,
-    setCategoryFilter,
-  } = useMapViewModel();
+  const { markers, isLoading, isError, error } = useMapViewModel();
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const mapMarkers: MapMarker[] = markers.map(m => ({
+  const filteredMarkers = markers.filter(m => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return m.headOfHousehold.toLowerCase().includes(q) || m.address.toLowerCase().includes(q);
+  });
+
+  const mapMarkers: MapMarker[] = filteredMarkers.map(m => ({
     id: m.id,
     lat: m.lat,
     lng: m.lng,
-    label: m.householdNumber,
+    label: m.headOfHousehold,
     popupContent: (
       <div className="text-sm">
-        <p className="font-semibold">{m.householdNumber}</p>
+        <p className="font-semibold">{m.headOfHousehold}</p>
         <p>{m.address}</p>
-        <p>Head: {m.headOfHousehold}</p>
-        <p>Residents: {m.residentCount}</p>
+        <p>Penghuni: {m.residentCount}</p>
+        <a
+          href={`https://www.google.com/maps?q=${m.lat},${m.lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 inline-block rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 no-underline"
+        >
+          � Buka di Google Maps
+        </a>
       </div>
     ),
   }));
@@ -40,39 +44,22 @@ export function MapScreen() {
         Resident Map
       </h1>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <input
           type="text"
-          placeholder="Filter by block"
-          value={blockFilter}
-          onChange={e => setBlockFilter(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-          aria-label="Filter by block"
+          placeholder="Cari nama kepala keluarga atau alamat..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+          aria-label="Search by name or address"
         />
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-          aria-label="Filter by status">
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-        <select
-          value={categoryFilter}
-          onChange={e => setCategoryFilter(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-          aria-label="Filter by category">
-          <option value="">All categories</option>
-          <option value="lansia">Lansia</option>
-          <option value="balita">Balita</option>
-        </select>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {filteredMarkers.length} / {markers.length} titik
+        </span>
       </div>
 
       {isError && (
-        <ErrorMessage
-          message={error?.message ?? 'Failed to load map data'}
-        />
+        <ErrorMessage message={error?.message ?? 'Failed to load map data'} />
       )}
 
       {isLoading ? (
@@ -82,6 +69,14 @@ export function MapScreen() {
       ) : (
         <MapContainer
           markers={mapMarkers}
+          center={mapMarkers.length > 0
+            ? [
+                mapMarkers.reduce((sum, m) => sum + m.lat, 0) / mapMarkers.length,
+                mapMarkers.reduce((sum, m) => sum + m.lng, 0) / mapMarkers.length,
+              ]
+            : [-6.2, 106.8]
+          }
+          zoom={mapMarkers.length > 0 ? 16 : 12}
           className="h-[500px]"
         />
       )}
