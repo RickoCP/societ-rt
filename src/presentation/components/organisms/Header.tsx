@@ -10,6 +10,7 @@ export interface HeaderProps {
   impersonatorName?: string;
   unreadCount?: number;
   onNotificationClick?: () => void;
+  onLogout?: () => void;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ export function Header({
   impersonatorName,
   unreadCount = 0,
   onNotificationClick,
+  onLogout,
   className = '',
 }: HeaderProps) {
   return (
@@ -63,6 +65,15 @@ export function Header({
             {userName}
           </span>
         </div>
+        {onLogout && (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            aria-label="Logout">
+            Logout
+          </button>
+        )}
       </div>
     </header>
   );

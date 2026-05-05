@@ -50,7 +50,7 @@ export function PlatformDashboardScreen() {
         <MetricCard label="Active Tenants" value={metrics.activeTenants} />
         <MetricCard label="Suspended Tenants" value={metrics.suspendedTenants} />
         <MetricCard label="Total Users" value={metrics.totalUsers} />
-        <MetricCard label="Monthly Revenue" value={`Rp ${metrics.monthlyRevenue.toLocaleString()}`} />
+        <MetricCard label="Monthly Revenue" value={`Rp ${(metrics.monthlyRevenue ?? 0).toLocaleString()}`} />
         <MetricCard label="Pending Invoices" value={metrics.pendingInvoices} />
       </div>
     </div>

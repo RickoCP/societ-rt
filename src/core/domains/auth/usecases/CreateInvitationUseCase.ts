@@ -35,6 +35,7 @@ export interface CreateInvitationUseCase {
 // ---------------------------------------------------------------------------
 
 const ALLOWED_ROLES: ReadonlySet<UserRole> = new Set([
+  UserRole.Super_Admin,
   UserRole.Ketua_RT,
   UserRole.Pengurus,
 ]);
