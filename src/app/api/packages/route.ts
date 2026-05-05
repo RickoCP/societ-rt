@@ -22,7 +22,7 @@ import type { LogPackageUseCase } from '@core/domains/visitor/usecases';
 // ---------------------------------------------------------------------------
 
 const logPackageSchema = z.object({
-  recipientHouseholdId: z.string().uuid('recipientHouseholdId must be a valid UUID'),
+  recipientHouseholdId: z.string().min(1, 'recipientHouseholdId is required'),
   courierName: z.string().min(1, 'Courier name is required'),
   description: z.string().min(1, 'Description is required'),
 });
@@ -110,14 +110,34 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Get collected_at via raw query (field not in generated client)
+    const collectedData = await prismaClient.$queryRawUnsafe<Array<{ id: string; collected_at: Date | null }>>(
+      `SELECT id, collected_at FROM package_logs WHERE tenant_id = $1`,
+      authContext.tenantId,
+    );
+    const collectedMap = new Map(collectedData.map(r => [r.id, r.collected_at]));
+
+    // Get household info for recipients
+    const householdIds = [...new Set(packages.map(p => p.recipientHouseholdId))];
+    const households = householdIds.length > 0
+      ? await prismaClient.household.findMany({
+          where: { id: { in: householdIds } },
+          select: { id: true, householdNumber: true, address: true },
+        })
+      : [];
+    const hhMap = new Map(households.map(h => [h.id, h]));
+
     return NextResponse.json(
       {
         data: packages.map((p) => ({
           id: p.id,
           recipientHouseholdId: p.recipientHouseholdId,
+          recipientHousehold: hhMap.get(p.recipientHouseholdId)?.householdNumber ?? '-',
+          recipientAddress: hhMap.get(p.recipientHouseholdId)?.address ?? '-',
           courierName: p.courierName,
           description: p.description,
           arrivalTimestamp: p.arrivalTimestamp.toISOString(),
+          collectedAt: collectedMap.get(p.id)?.toISOString() ?? null,
           loggedBy: p.loggedBy,
           createdAt: p.createdAt.toISOString(),
         })),

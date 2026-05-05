@@ -571,14 +571,15 @@ model VisitorLog {
 
 /// PackageLog represents a package delivery log within a tenant.
 model PackageLog {
-  id                   String   @id @default(uuid()) @map("id")
-  tenantId             String   @map("tenant_id")
-  recipientHouseholdId String   @map("recipient_household_id")
-  courierName          String   @map("courier_name")
-  description          String   @map("description")
-  arrivalTimestamp     DateTime @default(now()) @map("arrival_timestamp")
-  loggedBy             String   @map("logged_by")
-  createdAt            DateTime @default(now()) @map("created_at")
+  id                   String    @id @default(uuid()) @map("id")
+  tenantId             String    @map("tenant_id")
+  recipientHouseholdId String    @map("recipient_household_id")
+  courierName          String    @map("courier_name")
+  description          String    @map("description")
+  arrivalTimestamp     DateTime  @default(now()) @map("arrival_timestamp")
+  collectedAt          DateTime? @map("collected_at")
+  loggedBy             String    @map("logged_by")
+  createdAt            DateTime  @default(now()) @map("created_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 

@@ -17,6 +17,7 @@ const navItems: NavItem[] = [
   { label: 'Map', href: '/map' },
   { label: 'Security', href: '/security/patrols', roles: ['Ketua_RT', 'Pengurus', 'Security_Guard', 'Super_Admin'] },
   { label: 'Visitors', href: '/visitors', roles: ['Ketua_RT', 'Pengurus', 'Security_Guard', 'Super_Admin'] },
+  { label: 'Packages', href: '/packages', roles: ['Ketua_RT', 'Pengurus', 'Security_Guard', 'Super_Admin'] },
   { label: 'Administration', href: '/administration/letters' },
   { label: 'Notifications', href: '/notifications' },
   { label: 'Audit Log', href: '/audit', roles: ['Ketua_RT', 'Super_Admin'] },
