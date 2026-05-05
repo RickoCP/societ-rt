@@ -91,7 +91,8 @@ export function RegisterScreen() {
         <FormField
           name="invitationToken"
           label="Invitation Token"
-          placeholder="Optional"
+          placeholder="Paste your invitation token"
+          required
         />
 
         <Button type="submit" loading={isPending} className="w-full">

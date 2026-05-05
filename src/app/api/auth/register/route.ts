@@ -25,7 +25,7 @@ const registerSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   invitationToken: z.string().min(1, 'Invitation token is required'),
   consentVersion: z.string().min(1, 'Consent version is required'),
-  tenantId: z.string().uuid('Invalid tenant ID'),
+  tenantId: z.string().min(1, 'Tenant ID is required'),
 });
 
 // ---------------------------------------------------------------------------

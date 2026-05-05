@@ -29,6 +29,7 @@ const AUTH_COOKIE_NAME = 'societ_rt_auth_token';
 const PUBLIC_PATHS = [
   '/api/auth/login',
   '/api/auth/register',
+  '/api/tenants/resolve',
   '/api/health',
   '/login',
   '/register',

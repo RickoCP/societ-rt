@@ -61,6 +61,21 @@ export function LoginScreen() {
             Register
           </a>
         </p>
+
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+            <p className="font-semibold mb-1">Dev Credentials:</p>
+            <table className="w-full text-left">
+              <tbody>
+                <tr><td className="pr-2">Super_Admin:</td><td>admin@societ-rt.com</td><td>Admin@123456</td></tr>
+                <tr><td className="pr-2">Ketua_RT:</td><td>ketua@societ-rt.com</td><td>Test@12345</td></tr>
+                <tr><td className="pr-2">Pengurus:</td><td>pengurus@societ-rt.com</td><td>Test@12345</td></tr>
+                <tr><td className="pr-2">Warga:</td><td>warga@societ-rt.com</td><td>Test@12345</td></tr>
+                <tr><td className="pr-2">Security:</td><td>security@societ-rt.com</td><td>Test@12345</td></tr>
+              </tbody>
+            </table>
+          </div>
+        )}
       </form>
     </FormProvider>
   );
