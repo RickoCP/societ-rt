@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Button } from '@components/atoms/Button';
 import { Badge } from '@components/atoms/Badge';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
+import { MapPicker } from '@components/molecules/MapPicker';
 import Link from 'next/link';
 
 interface ResidentData {
@@ -26,6 +27,8 @@ interface HouseholdData {
   householdNumber: string;
   address: string;
   block: string | null;
+  latitude: number | null;
+  longitude: number | null;
   residents: ResidentData[];
 }
 
@@ -44,6 +47,8 @@ export default function HouseholdDetailPage() {
   const [hhNumber, setHhNumber] = useState('');
   const [hhAddress, setHhAddress] = useState('');
   const [hhBlock, setHhBlock] = useState('');
+  const [hhLat, setHhLat] = useState('');
+  const [hhLng, setHhLng] = useState('');
   const [hhSaving, setHhSaving] = useState(false);
   const [hhMsg, setHhMsg] = useState<string | null>(null);
 
@@ -67,6 +72,8 @@ export default function HouseholdDetailPage() {
       setHhNumber(json.data.householdNumber);
       setHhAddress(json.data.address);
       setHhBlock(json.data.block ?? '');
+      setHhLat(json.data.latitude?.toString() ?? '');
+      setHhLng(json.data.longitude?.toString() ?? '');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error');
     } finally {
@@ -83,7 +90,13 @@ export default function HouseholdDetailPage() {
       const res = await fetch(`/api/residents/households/${householdId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ householdNumber: hhNumber, address: hhAddress, block: hhBlock }),
+        body: JSON.stringify({
+          householdNumber: hhNumber,
+          address: hhAddress,
+          block: hhBlock,
+          latitude: hhLat ? parseFloat(hhLat) : null,
+          longitude: hhLng ? parseFloat(hhLng) : null,
+        }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -174,6 +187,28 @@ export default function HouseholdDetailPage() {
                 <input type="text" value={hhBlock} onChange={e => setHhBlock(e.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
               </div>
             </div>
+            {/* Koordinat Section */}
+            <div className="mt-4 rounded-md border border-gray-200 p-4 dark:border-gray-700">
+              <h4 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">📍 Koordinat Lokasi</h4>
+              <div className="mb-3 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">Latitude</label>
+                  <input type="number" step="any" value={hhLat} onChange={e => setHhLat(e.target.value)} placeholder="-6.2088" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">Longitude</label>
+                  <input type="number" step="any" value={hhLng} onChange={e => setHhLng(e.target.value)} placeholder="106.8456" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
+                </div>
+              </div>
+              <MapPicker
+                latitude={hhLat ? parseFloat(hhLat) : -6.2}
+                longitude={hhLng ? parseFloat(hhLng) : 106.8}
+                onLocationChange={(lat, lng) => {
+                  setHhLat(lat.toFixed(6));
+                  setHhLng(lng.toFixed(6));
+                }}
+              />
+            </div>
             <div>
               <Button onClick={handleSaveHousehold} disabled={hhSaving} variant="primary" size="sm">
                 {hhSaving ? 'Saving...' : 'Save'}
@@ -186,6 +221,20 @@ export default function HouseholdDetailPage() {
             <div><span className="text-gray-500 dark:text-gray-400">No. KK:</span> <strong>{household.householdNumber}</strong></div>
             <div><span className="text-gray-500 dark:text-gray-400">Alamat:</span> <strong>{household.address}</strong></div>
             <div><span className="text-gray-500 dark:text-gray-400">Block:</span> <strong>{household.block ?? '-'}</strong></div>
+            <div><span className="text-gray-500 dark:text-gray-400">Latitude:</span> <strong>{household.latitude ?? '-'}</strong></div>
+            <div><span className="text-gray-500 dark:text-gray-400">Longitude:</span> <strong>{household.longitude ?? '-'}</strong></div>
+            {household.latitude && household.longitude && (
+              <div>
+                <a
+                  href={`https://www.openstreetmap.org/?mlat=${household.latitude}&mlon=${household.longitude}#map=17/${household.latitude}/${household.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  📍 Lihat di Map
+                </a>
+              </div>
+            )}
           </div>
         )}
       </div>

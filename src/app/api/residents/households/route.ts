@@ -25,6 +25,8 @@ const createHouseholdSchema = z.object({
   householdNumber: z.string().min(1, 'Household number is required'),
   address: z.string().min(1, 'Address is required'),
   block: z.string().optional(),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
 });
 
 // ---------------------------------------------------------------------------

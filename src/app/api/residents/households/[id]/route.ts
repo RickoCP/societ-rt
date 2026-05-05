@@ -78,6 +78,8 @@ export async function GET(
         householdNumber: household.householdNumber,
         address: household.address,
         block: household.block,
+        latitude: household.latitude,
+        longitude: household.longitude,
         residents: household.residents.map(r => ({
           ...r,
           dateOfBirth: r.dateOfBirth.toISOString().slice(0, 10),
@@ -100,6 +102,8 @@ const updateHouseholdSchema = z.object({
   householdNumber: z.string().min(1).optional(),
   address: z.string().min(1).optional(),
   block: z.string().optional(),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
 });
 
 export async function PATCH(
