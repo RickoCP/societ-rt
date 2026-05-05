@@ -64,7 +64,15 @@ export function ResidentListScreen() {
         </button>
       ),
     },
-    { key: 'householdNumber', header: 'No. KK' },
+    {
+      key: 'householdNumber',
+      header: 'No. KK',
+      render: row => (
+        <a href={`/residents/${row.id}`} className="text-blue-600 hover:underline dark:text-blue-400">
+          {row.householdNumber}
+        </a>
+      ),
+    },
     { key: 'headOfHousehold', header: 'Head of Household' },
     { key: 'address', header: 'Address' },
     { key: 'block', header: 'Block' },

@@ -68,7 +68,7 @@ export const CastVoteUseCaseImpl = ({
       return fail(votingDeadlinePassed());
     }
 
-    // 3. Check if user already voted
+    // 3. Check if user already voted — if yes, update their vote
     const hasVotedResult = await votingRepository.hasUserVoted(
       authContext.tenantId,
       voteId,
@@ -79,11 +79,7 @@ export const CastVoteUseCaseImpl = ({
       return fail(hasVotedResult.error);
     }
 
-    if (hasVotedResult.data) {
-      return fail(votingAlreadyVoted());
-    }
-
-    // 4. Cast vote via repository
+    // 4. Cast or update vote via repository
     const castResult = await votingRepository.castVote(
       authContext.tenantId,
       voteId,

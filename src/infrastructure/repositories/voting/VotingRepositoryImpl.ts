@@ -140,20 +140,41 @@ export const VotingRepositoryImpl = ({
     ): Promise<DomainResult<void>> {
       try {
         await prismaClient.$transaction(async (tx) => {
-          // 1. Create Ballot record (unique constraint on voteId+userId prevents duplicates)
-          await tx.ballot.create({
-            data: {
-              voteId,
-              userId,
-              optionId,
-            },
+          // Check if user already has a ballot
+          const existingBallot = await tx.ballot.findUnique({
+            where: { voteId_userId: { voteId, userId } },
           });
 
-          // 2. Increment VoteOption.voteCount atomically
-          await tx.voteOption.update({
-            where: { id: optionId },
-            data: { voteCount: { increment: 1 } },
-          });
+          if (existingBallot) {
+            // User is changing their vote — decrement old option, update ballot, increment new option
+            if (existingBallot.optionId !== optionId) {
+              await tx.voteOption.update({
+                where: { id: existingBallot.optionId },
+                data: { voteCount: { decrement: 1 } },
+              });
+
+              await tx.ballot.update({
+                where: { voteId_userId: { voteId, userId } },
+                data: { optionId },
+              });
+
+              await tx.voteOption.update({
+                where: { id: optionId },
+                data: { voteCount: { increment: 1 } },
+              });
+            }
+            // If same option, do nothing
+          } else {
+            // First vote — create ballot and increment
+            await tx.ballot.create({
+              data: { voteId, userId, optionId },
+            });
+
+            await tx.voteOption.update({
+              where: { id: optionId },
+              data: { voteCount: { increment: 1 } },
+            });
+          }
         });
 
         return ok(undefined);

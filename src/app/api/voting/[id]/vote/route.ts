@@ -20,7 +20,7 @@ import type { CastVoteUseCase } from '@core/domains/voting/usecases';
 // ---------------------------------------------------------------------------
 
 const castVoteSchema = z.object({
-  optionId: z.string().uuid('optionId must be a valid UUID'),
+  optionId: z.string().min(1, 'optionId is required'),
 });
 
 // ---------------------------------------------------------------------------

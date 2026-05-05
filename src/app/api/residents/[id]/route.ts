@@ -14,8 +14,11 @@ import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { UserRole } from '@core/protocols';
 import type { UpdateResidentStatusUseCase } from '@core/domains/resident/usecases';
 import type { PrismaClient } from '@prisma/client';
+
+const EDIT_ROLES = [UserRole.Super_Admin, UserRole.Ketua_RT, UserRole.Pengurus];
 
 // ---------------------------------------------------------------------------
 // Input schema
@@ -173,6 +176,129 @@ export async function DELETE(
         message: 'Internal server error',
         correlationId,
       },
+      { status: 500 },
+    );
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// PUT handler — Edit resident data
+// ---------------------------------------------------------------------------
+
+const updateResidentSchema = z.object({
+  name: z.string().min(1).optional(),
+  nik: z.string().length(16).optional(),
+  dateOfBirth: z.string().optional(),
+  gender: z.enum(['male', 'female']).optional(),
+  phone: z.string().optional().nullable(),
+  status: z.enum(['tetap', 'kontrak', 'kos', 'pindah']).optional(),
+  categories: z.array(z.string()).optional(),
+  emergencyContactName: z.string().optional().nullable(),
+  emergencyContactPhone: z.string().optional().nullable(),
+  emergencyContactRelationship: z.string().optional().nullable(),
+});
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const correlationId =
+    request.headers.get('x-correlation-id') ?? generateCorrelationId();
+
+  const authContext = resolveAuthContext(request);
+  if (!authContext) {
+    return NextResponse.json(
+      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
+      { status: 401 },
+    );
+  }
+
+  const { id: residentId } = await params;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
+      { status: 400 },
+    );
+  }
+
+  const validation = updateResidentSchema.safeParse(body);
+  if (!validation.success) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const prisma = container.resolve<PrismaClient>('prismaClient');
+
+    // Find resident and verify tenant
+    const resident = await prisma.resident.findFirst({
+      where: { id: residentId, tenantId: authContext.tenantId, deletedAt: null },
+      select: { id: true, householdId: true },
+    });
+
+    if (!resident) {
+      return NextResponse.json(
+        { code: 'COMMON_NOT_FOUND', message: 'Resident not found', correlationId },
+        { status: 404 },
+      );
+    }
+
+    // Permission check: admin roles OR member of same household
+    const isAdminRole = EDIT_ROLES.includes(authContext.role as UserRole);
+    if (!isAdminRole) {
+      const isMember = await prisma.resident.findFirst({
+        where: { householdId: resident.householdId, tenantId: authContext.tenantId },
+        select: { id: true },
+      });
+      if (!isMember) {
+        return NextResponse.json(
+          { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission to edit this resident.', correlationId },
+          { status: 403 },
+        );
+      }
+    }
+
+    // Build update data
+    const updateData: Record<string, unknown> = {};
+    const d = validation.data;
+    if (d.name !== undefined) updateData.name = d.name;
+    if (d.nik !== undefined) updateData.nik = d.nik;
+    if (d.dateOfBirth !== undefined) updateData.dateOfBirth = new Date(d.dateOfBirth);
+    if (d.gender !== undefined) updateData.gender = d.gender;
+    if (d.phone !== undefined) updateData.phone = d.phone;
+    if (d.status !== undefined) updateData.status = d.status;
+    if (d.categories !== undefined) updateData.categories = d.categories;
+    if (d.emergencyContactName !== undefined) updateData.emergencyContactName = d.emergencyContactName;
+    if (d.emergencyContactPhone !== undefined) updateData.emergencyContactPhone = d.emergencyContactPhone;
+    if (d.emergencyContactRelationship !== undefined) updateData.emergencyContactRelationship = d.emergencyContactRelationship;
+
+    const updated = await prisma.resident.update({
+      where: { id: residentId },
+      data: updateData,
+    });
+
+    return NextResponse.json({
+      data: {
+        id: updated.id,
+        name: updated.name,
+        nik: updated.nik,
+        dateOfBirth: updated.dateOfBirth.toISOString().slice(0, 10),
+        gender: updated.gender,
+        phone: updated.phone,
+        status: updated.status,
+        categories: updated.categories,
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
     );
   }

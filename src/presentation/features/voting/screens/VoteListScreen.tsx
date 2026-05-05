@@ -23,7 +23,15 @@ function isActive(deadline: string): boolean {
 }
 
 const columns: DataTableColumn<VoteRow>[] = [
-  { key: 'title', header: 'Title' },
+  {
+    key: 'title',
+    header: 'Title',
+    render: row => (
+      <a href={`/voting/${row.id}`} className="text-blue-600 hover:underline dark:text-blue-400">
+        {row.title}
+      </a>
+    ),
+  },
   {
     key: 'mode',
     header: 'Mode',
