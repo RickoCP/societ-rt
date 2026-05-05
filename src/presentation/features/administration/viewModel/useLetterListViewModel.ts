@@ -4,22 +4,23 @@ import { useQuery } from '@tanstack/react-query';
 
 interface LetterRequest {
   id: string;
-  type: string;
+  letterType: string;
+  purpose: string;
   status: 'pending' | 'approved' | 'rejected';
-  requestedBy: string;
+  userId: string;
+  rejectionReason: string | null;
   documentUrl: string | null;
+  decidedBy: string | null;
+  decidedAt: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 interface LetterListResponse {
   data: LetterRequest[];
-  total: number;
-  page: number;
-  totalPages: number;
+  pagination: { total: number; page: number; pageSize: number };
 }
 
-async function fetchLetters(page: number): Promise<LetterListResponse> {
+async function fetchLetters(page: number): Promise<{ data: LetterRequest[]; totalPages: number }> {
   const res = await fetch(`/api/administration/letters?page=${page}`);
 
   if (!res.ok) {
@@ -27,7 +28,9 @@ async function fetchLetters(page: number): Promise<LetterListResponse> {
     throw new Error(body.message ?? 'Failed to fetch letter requests');
   }
 
-  return (await res.json()) as LetterListResponse;
+  const json = (await res.json()) as LetterListResponse;
+  const totalPages = Math.ceil((json.pagination?.total ?? 0) / (json.pagination?.pageSize ?? 20)) || 1;
+  return { data: json.data, totalPages };
 }
 
 export function useLetterListViewModel(page = 1) {

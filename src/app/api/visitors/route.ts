@@ -24,7 +24,7 @@ import type { VisitorRepository } from '@core/domains/visitor/repositories/Visit
 const logVisitorSchema = z.object({
   visitorName: z.string().min(1, 'Visitor name is required'),
   purpose: z.string().min(1, 'Purpose is required'),
-  destinationHouseholdId: z.string().uuid('destinationHouseholdId must be a valid UUID'),
+  destinationHouseholdId: z.string().min(1, 'destinationHouseholdId is required'),
 });
 
 // ---------------------------------------------------------------------------
