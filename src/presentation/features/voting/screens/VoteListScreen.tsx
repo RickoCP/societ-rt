@@ -64,8 +64,16 @@ const columns: DataTableColumn<VoteRow>[] = [
 
 export function VoteListScreen() {
   const [page, setPage] = useState(1);
-  const { votes, totalPages, isLoading, isError, error } =
+  const { votes, totalPages, isLoading, isError, error, refetch } =
     useVoteListViewModel(page);
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Delete vote "${title}" and all its ballots?`)) return;
+    try {
+      const res = await fetch(`/api/voting/${id}`, { method: 'DELETE' });
+      if (res.ok) refetch();
+    } catch { /* ignore */ }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -83,7 +91,23 @@ export function VoteListScreen() {
       )}
 
       <DataTable<VoteRow>
-        columns={columns}
+        columns={[
+          ...columns,
+          {
+            key: 'createdAt',
+            header: 'Actions',
+            render: row => (
+              <button
+                type="button"
+                onClick={() => handleDelete(row.id, row.title)}
+                className="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                aria-label={`Delete ${row.title}`}
+              >
+                Delete
+              </button>
+            ),
+          },
+        ]}
         data={votes}
         loading={isLoading}
         page={page}

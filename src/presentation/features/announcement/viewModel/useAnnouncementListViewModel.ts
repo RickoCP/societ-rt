@@ -21,8 +21,11 @@ interface AnnouncementListResponse {
 
 async function fetchAnnouncements(
   page: number,
+  category?: string,
 ): Promise<AnnouncementListResponse> {
-  const res = await fetch(`/api/announcements?page=${page}`);
+  const params = new URLSearchParams({ page: String(page) });
+  if (category) params.set('category', category);
+  const res = await fetch(`/api/announcements?${params.toString()}`);
 
   if (!res.ok) {
     const body = (await res.json()) as { message?: string };
@@ -32,10 +35,10 @@ async function fetchAnnouncements(
   return (await res.json()) as AnnouncementListResponse;
 }
 
-export function useAnnouncementListViewModel(page = 1) {
+export function useAnnouncementListViewModel(page = 1, category?: string) {
   const query = useQuery({
-    queryKey: ['announcements', page],
-    queryFn: () => fetchAnnouncements(page),
+    queryKey: ['announcements', page, category],
+    queryFn: () => fetchAnnouncements(page, category),
   });
 
   return {
