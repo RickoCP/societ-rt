@@ -35,6 +35,6 @@ export interface EmergencyAlert {
 
 /** Data required to create a new emergency alert. */
 export interface CreateEmergencyAlertInput {
-  readonly latitude?: number;
-  readonly longitude?: number;
+  readonly latitude?: number | null;
+  readonly longitude?: number | null;
 }

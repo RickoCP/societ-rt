@@ -22,8 +22,10 @@ export function EmergencyScreen() {
     isLoading,
     isError,
     error,
+    refetch,
     triggerAlert,
     isTriggering,
+    triggerError,
     updateStatus,
     isUpdating,
   } = useEmergencyViewModel();
@@ -52,14 +54,25 @@ export function EmergencyScreen() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Emergency Alerts
         </h1>
-        <Button variant="danger" loading={isTriggering} onClick={handleTrigger}>
-          Trigger Emergency
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => refetch()}>
+            Refresh
+          </Button>
+          <Button variant="danger" loading={isTriggering} onClick={handleTrigger}>
+            Trigger Emergency
+          </Button>
+        </div>
       </div>
 
       {isError && (
         <ErrorMessage
           message={error?.message ?? 'Failed to load emergency alerts'}
+        />
+      )}
+
+      {triggerError && (
+        <ErrorMessage
+          message={triggerError.message ?? 'Failed to trigger emergency alert'}
         />
       )}
 

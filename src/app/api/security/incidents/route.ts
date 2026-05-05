@@ -22,6 +22,7 @@ import type { SecurityRepository } from '@core/domains/security/repositories/Sec
 // ---------------------------------------------------------------------------
 
 const createIncidentSchema = z.object({
+  title: z.string().min(1).optional(),
   date: z.string().datetime(),
   time: z.string().min(1),
   description: z.string().min(1),

@@ -78,7 +78,7 @@ export const EmergencyRepositoryImpl = ({
     ): Promise<DomainResult<EmergencyAlert>> {
       try {
         const hasCoords =
-          data.latitude !== undefined && data.longitude !== undefined;
+          data.latitude != null && data.longitude != null;
 
         const alert = await alertRepo.create(tenantId, {
           data: {

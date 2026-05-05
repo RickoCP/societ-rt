@@ -14,7 +14,6 @@ interface EmergencyAlert {
 
 interface EmergencyListResponse {
   data: EmergencyAlert[];
-  total: number;
 }
 
 async function fetchEmergencies(): Promise<EmergencyListResponse> {
@@ -25,7 +24,8 @@ async function fetchEmergencies(): Promise<EmergencyListResponse> {
     throw new Error(body.message ?? 'Failed to fetch emergencies');
   }
 
-  return (await res.json()) as EmergencyListResponse;
+  const json = (await res.json()) as EmergencyListResponse;
+  return json;
 }
 
 async function triggerAlertRequest(params: {
@@ -66,7 +66,6 @@ export function useEmergencyViewModel() {
   const query = useQuery({
     queryKey: ['emergencies'],
     queryFn: fetchEmergencies,
-    refetchInterval: 10_000,
   });
 
   const triggerMutation = useMutation({
@@ -85,12 +84,13 @@ export function useEmergencyViewModel() {
 
   return {
     alerts: query.data?.data ?? [],
-    total: query.data?.total ?? 0,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
+    refetch: query.refetch,
     triggerAlert: triggerMutation.mutate,
     isTriggering: triggerMutation.isPending,
+    triggerError: triggerMutation.error,
     updateStatus: statusMutation.mutate,
     isUpdating: statusMutation.isPending,
   };
