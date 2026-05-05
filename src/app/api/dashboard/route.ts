@@ -1,8 +1,7 @@
 /**
- * GET /api/dashboard — Ketua_RT dashboard metrics.
+ * GET /api/dashboard — Dashboard metrics for the current tenant.
  *
- * BFF pattern: resolve auth → execute use case → return safe response.
- * Cached via Redis with 5 min TTL.
+ * BFF pattern: resolve auth → query DB → return safe response.
  *
  * @see Requirements 28.1
  */
@@ -10,9 +9,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
-import type { GetKetuaDashboardUseCase } from '@core/domains/dashboard/usecases';
+import type { PrismaClient } from '@prisma/client';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const correlationId =
@@ -26,14 +24,60 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const useCase = container.resolve<GetKetuaDashboardUseCase>(
-    'getKetuaDashboardUseCase',
-  );
-  const result = await useCase.execute({ tenantId: authContext.tenantId });
+  try {
+    const prisma = container.resolve<PrismaClient>('prismaClient');
+    const tenantId = authContext.tenantId;
 
-  if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    const [
+      totalResidents,
+      totalHouseholds,
+      pendingLetters,
+      activeEmergencies,
+      upcomingEvents,
+      unpaidIuran,
+    ] = await Promise.all([
+      prisma.resident.count({ where: { tenantId, deletedAt: null } }),
+      prisma.household.count({ where: { tenantId } }),
+      prisma.letterRequest.count({ where: { tenantId, status: 'pending' } }).catch(() => 0),
+      prisma.emergencyAlert.count({ where: { tenantId, status: 'active' } }).catch(() => 0),
+      prisma.communityEvent.count({
+        where: { tenantId, date: { gte: new Date() } },
+      }).catch(() => 0),
+      prisma.iuranStatus.count({ where: { tenantId, status: 'unpaid' } }).catch(() => 0),
+    ]);
+
+    // Calculate current balance from financial transactions
+    let currentBalance = 0;
+    try {
+      const income = await prisma.financialTransaction.aggregate({
+        where: { tenantId, type: 'income' },
+        _sum: { amount: true },
+      });
+      const expense = await prisma.financialTransaction.aggregate({
+        where: { tenantId, type: 'expense' },
+        _sum: { amount: true },
+      });
+      currentBalance =
+        (Number(income._sum.amount) || 0) - (Number(expense._sum.amount) || 0);
+    } catch {
+      currentBalance = 0;
+    }
+
+    return NextResponse.json({
+      data: {
+        totalResidents,
+        totalHouseholds,
+        pendingLetters,
+        activeEmergencies,
+        upcomingEvents,
+        unpaidIuran,
+        currentBalance,
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
+      { status: 500 },
+    );
   }
-
-  return NextResponse.json({ data: result.data }, { status: 200 });
 }

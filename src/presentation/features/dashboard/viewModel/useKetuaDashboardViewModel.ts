@@ -20,7 +20,8 @@ async function fetchDashboard(): Promise<DashboardMetrics> {
     throw new Error(body.message ?? 'Failed to fetch dashboard');
   }
 
-  return (await res.json()) as DashboardMetrics;
+  const json = (await res.json()) as { data: DashboardMetrics };
+  return json.data;
 }
 
 export function useKetuaDashboardViewModel() {

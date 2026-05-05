@@ -155,6 +155,14 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
   if (!token) {
+    // For page requests (non-API), redirect to login
+    if (!pathname.startsWith('/api/')) {
+      const loginUrl = new URL('/login', request.url);
+      const redirectResponse = NextResponse.redirect(loginUrl);
+      setSecurityHeaders(redirectResponse, correlationId);
+      return redirectResponse;
+    }
+
     const errorResponse = NextResponse.json(
       {
         code: 'AUTH_TOKEN_INVALID',
@@ -186,6 +194,14 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
     payload = { userId, tenantId, role };
   } catch {
+    // For page requests (non-API), redirect to login
+    if (!pathname.startsWith('/api/')) {
+      const loginUrl = new URL('/login', request.url);
+      const redirectResponse = NextResponse.redirect(loginUrl);
+      setSecurityHeaders(redirectResponse, correlationId);
+      return redirectResponse;
+    }
+
     const errorResponse = NextResponse.json(
       {
         code: 'AUTH_TOKEN_INVALID',

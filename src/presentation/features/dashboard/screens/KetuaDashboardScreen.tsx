@@ -52,7 +52,7 @@ export function KetuaDashboardScreen() {
         <MetricCard label="Active Emergencies" value={metrics.activeEmergencies} />
         <MetricCard label="Upcoming Events" value={metrics.upcomingEvents} />
         <MetricCard label="Unpaid Iuran" value={metrics.unpaidIuran} />
-        <MetricCard label="Current Balance" value={`Rp ${metrics.currentBalance.toLocaleString()}`} />
+        <MetricCard label="Current Balance" value={`Rp ${(metrics.currentBalance ?? 0).toLocaleString()}`} />
       </div>
     </div>
   );
