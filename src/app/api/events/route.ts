@@ -16,6 +16,7 @@ import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import type { CreateEventUseCase } from '@core/domains/event/usecases';
 import type { EventRepository } from '@core/domains/event/repositories/EventRepository';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas
@@ -27,6 +28,7 @@ const createEventSchema = z.object({
   date: z.string().datetime({ message: 'Date must be a valid ISO datetime' }),
   time: z.string().min(1, 'Time is required'),
   location: z.string().min(1, 'Location is required'),
+  maxRsvp: z.number().int().positive().optional().nullable(),
 });
 
 // ---------------------------------------------------------------------------
@@ -144,6 +146,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
+  // Get RSVP counts for all events
+  const prisma = container.resolve<PrismaClient>('prismaClient');
+  const eventIds = result.data.map(e => e.id);
+  let rsvpMap = new Map<string, number>();
+  if (eventIds.length > 0) {
+    try {
+      const rsvpCounts = await prisma.eventRsvp.groupBy({
+        by: ['eventId'],
+        where: { eventId: { in: eventIds }, response: 'attending' },
+        _count: { eventId: true },
+      });
+      rsvpMap = new Map(rsvpCounts.map(r => [r.eventId, r._count.eventId]));
+    } catch { /* ignore if table doesn't exist */ }
+  }
+
   return NextResponse.json(
     {
       data: result.data.map((e) => ({
@@ -154,6 +171,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         time: e.time,
         location: e.location,
         createdBy: e.createdBy,
+        rsvpCount: rsvpMap.get(e.id) ?? 0,
         createdAt: e.createdAt.toISOString(),
       })),
     },

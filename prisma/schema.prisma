@@ -517,6 +517,7 @@ model CommunityEvent {
   date        DateTime @map("date")
   time        String   @map("time")
   location    String   @map("location")
+  maxRsvp     Int?     @map("max_rsvp")
   createdBy   String   @map("created_by")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")

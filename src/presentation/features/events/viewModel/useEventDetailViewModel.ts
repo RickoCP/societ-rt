@@ -9,8 +9,11 @@ interface EventDetail {
   location: string;
   eventDate: string;
   rsvpCount: number;
+  maxRsvp: number | null;
   createdBy: string;
   createdAt: string;
+  myRsvpStatus: string | null;
+  attendees: Array<{ userName: string; response: string; respondedAt: string }>;
 }
 
 async function fetchEventDetail(id: string): Promise<EventDetail> {
@@ -21,11 +24,29 @@ async function fetchEventDetail(id: string): Promise<EventDetail> {
     throw new Error(body.message ?? 'Failed to fetch event detail');
   }
 
-  return (await res.json()) as EventDetail;
+  const json = (await res.json()) as { data: { id: string; title: string; description: string; location: string; date: string; time: string; rsvpCount: number; maxRsvp: number | null; createdBy: string; createdAt: string; myRsvpStatus: string | null; attendees: Array<{ userName: string; response: string; respondedAt: string }> } };
+  const d = json.data;
+  return {
+    id: d.id,
+    title: d.title,
+    description: d.description,
+    location: d.location,
+    eventDate: d.date ? new Date(d.date).toLocaleString() : '',
+    rsvpCount: d.rsvpCount ?? 0,
+    maxRsvp: d.maxRsvp ?? null,
+    createdBy: d.createdBy ?? '',
+    createdAt: d.createdAt ?? '',
+    myRsvpStatus: d.myRsvpStatus ?? null,
+    attendees: d.attendees ?? [],
+  };
 }
 
-async function submitRsvp(eventId: string): Promise<void> {
-  const res = await fetch(`/api/events/${eventId}/rsvp`, { method: 'POST' });
+async function submitRsvp(eventId: string, response: 'attending' | 'not_attending'): Promise<void> {
+  const res = await fetch(`/api/events/${eventId}/rsvp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ response }),
+  });
 
   if (!res.ok) {
     const body = (await res.json()) as { message?: string };
@@ -43,7 +64,7 @@ export function useEventDetailViewModel(id: string) {
   });
 
   const rsvpMutation = useMutation({
-    mutationFn: () => submitRsvp(id),
+    mutationFn: (response: 'attending' | 'not_attending') => submitRsvp(id, response),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['event', id] });
     },

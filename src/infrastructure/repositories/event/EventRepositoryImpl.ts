@@ -144,20 +144,16 @@ export const EventRepositoryImpl = ({
       response: RsvpResponse,
     ): Promise<DomainResult<EventRsvp>> {
       try {
-        const rsvp = await prismaClient.eventRsvp.create({
-          data: {
-            eventId,
-            userId,
-            response,
+        const rsvp = await prismaClient.eventRsvp.upsert({
+          where: {
+            eventId_userId: { eventId, userId },
           },
+          update: { response },
+          create: { eventId, userId, response },
         });
 
         return ok(mapPrismaRsvpToDomain(rsvp as unknown as PrismaEventRsvp));
       } catch (error) {
-        if (isPrismaUniqueConstraintError(error)) {
-          return fail(eventDuplicateRsvp());
-        }
-
         return fail(
           technicalError(
             'EVENT_RSVP_SUBMIT_FAILED',

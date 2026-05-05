@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DataTable, type DataTableColumn } from '@components/organisms/DataTable';
+import { DataTable } from '@components/organisms/DataTable';
 import { Button } from '@components/atoms/Button';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
 import { useEventListViewModel } from '../viewModel/useEventListViewModel';
@@ -17,22 +17,18 @@ interface EventRow {
   createdAt: string;
 }
 
-const columns: DataTableColumn<EventRow>[] = [
-  { key: 'title', header: 'Title' },
-  { key: 'location', header: 'Location' },
-  { key: 'eventDate', header: 'Date' },
-  {
-    key: 'rsvpCount',
-    header: 'RSVPs',
-    render: row => <span>{row.rsvpCount}</span>,
-  },
-  { key: 'createdBy', header: 'Organizer' },
-];
-
 export function EventListScreen() {
   const [page, setPage] = useState(1);
-  const { events, totalPages, isLoading, isError, error } =
+  const { events, totalPages, isLoading, isError, error, refetch } =
     useEventListViewModel(page);
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Delete event "${title}"?`)) return;
+    try {
+      const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
+      if (res.ok) refetch();
+    } catch { /* ignore */ }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,7 +46,36 @@ export function EventListScreen() {
       )}
 
       <DataTable<EventRow>
-        columns={columns}
+        columns={[
+          {
+            key: 'title',
+            header: 'Title',
+            render: row => (
+              <a href={`/events/${row.id}`} className="text-blue-600 hover:underline dark:text-blue-400">{row.title}</a>
+            ),
+          },
+          { key: 'location', header: 'Location' },
+          { key: 'eventDate', header: 'Date' },
+          {
+            key: 'rsvpCount',
+            header: 'RSVPs',
+            render: row => <span>{row.rsvpCount}</span>,
+          },
+          {
+            key: 'createdAt',
+            header: 'Actions',
+            render: row => (
+              <button
+                type="button"
+                onClick={() => handleDelete(row.id, row.title)}
+                className="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400"
+                aria-label={`Delete ${row.title}`}
+              >
+                Delete
+              </button>
+            ),
+          },
+        ]}
         data={events}
         loading={isLoading}
         page={page}

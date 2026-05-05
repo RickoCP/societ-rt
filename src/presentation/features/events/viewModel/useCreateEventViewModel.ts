@@ -6,7 +6,9 @@ interface CreateEventInput {
   title: string;
   description: string;
   location: string;
-  eventDate: string;
+  date: string;
+  time: string;
+  maxRsvp?: number;
 }
 
 async function createEvent(input: CreateEventInput): Promise<{ id: string }> {

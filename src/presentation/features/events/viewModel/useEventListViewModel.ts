@@ -14,13 +14,20 @@ interface CommunityEvent {
 }
 
 interface EventListResponse {
-  data: CommunityEvent[];
-  total: number;
-  page: number;
-  totalPages: number;
+  data: Array<{
+    id: string;
+    title: string;
+    description: string;
+    date: string;
+    time: string;
+    location: string;
+    createdBy: string;
+    rsvpCount: number;
+    createdAt: string;
+  }>;
 }
 
-async function fetchEvents(page: number): Promise<EventListResponse> {
+async function fetchEvents(page: number): Promise<{ data: CommunityEvent[]; totalPages: number }> {
   const res = await fetch(`/api/events?page=${page}`);
 
   if (!res.ok) {
@@ -28,7 +35,20 @@ async function fetchEvents(page: number): Promise<EventListResponse> {
     throw new Error(body.message ?? 'Failed to fetch events');
   }
 
-  return (await res.json()) as EventListResponse;
+  const json = (await res.json()) as EventListResponse;
+  return {
+    data: json.data.map(e => ({
+      id: e.id,
+      title: e.title,
+      description: e.description,
+      location: e.location,
+      eventDate: e.date ? new Date(e.date).toLocaleDateString() : '',
+      rsvpCount: e.rsvpCount ?? 0,
+      createdBy: e.createdBy,
+      createdAt: e.createdAt,
+    })),
+    totalPages: 1,
+  };
 }
 
 export function useEventListViewModel(page = 1) {

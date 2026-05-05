@@ -14,6 +14,7 @@ import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import type { SubmitRsvpUseCase } from '@core/domains/event/usecases';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schema
@@ -76,7 +77,32 @@ export async function POST(
     );
   }
 
-  // 3. Execute use case via DI
+  // 3. Check quota if attending
+  if (validation.data.response === 'attending') {
+    try {
+      const prisma = container.resolve<PrismaClient>('prismaClient');
+      const event = await prisma.communityEvent.findFirst({
+        where: { id, tenantId: authContext.tenantId },
+        select: { maxRsvp: true },
+      });
+
+      if (event?.maxRsvp) {
+        const attendingCount = await prisma.eventRsvp.count({
+          where: { eventId: id, response: 'attending', userId: { not: authContext.userId } },
+        });
+        if (attendingCount >= event.maxRsvp) {
+          return NextResponse.json(
+            { code: 'EVENT_RSVP_FULL', message: 'Event has reached maximum capacity.', correlationId },
+            { status: 409 },
+          );
+        }
+      }
+    } catch {
+      // If max_rsvp column doesn't exist yet or query fails, skip quota check
+    }
+  }
+
+  // 4. Execute use case via DI
   const useCase = container.resolve<SubmitRsvpUseCase>('submitRsvpUseCase');
   const result = await useCase.execute({
     authContext,
