@@ -1,0 +1,8 @@
+household_number,name,nik,date_of_birth,gender,phone,status,categories,emergency_contact_name,emergency_contact_phone,emergency_contact_relationship
+3201010101010001,Bambang Suryadi,3201010101060001,1982-04-20,male,081299900001,tetap,,Siti Rahayu,081234567002,istri
+3201010101010001,Rina Suryadi,3201010101060002,1985-09-15,female,081299900002,tetap,,Bambang Suryadi,081299900001,suami
+3201010101010002,Tono Prasetyo,3201010101060003,1990-12-01,male,081299900003,kontrak,,Ahmad Hidayat,081234567004,teman
+3201010101010002,Wati Prasetyo,3201010101060004,1993-06-18,female,,kontrak,,Tono Prasetyo,081299900003,suami
+3201010101010003,Dimas Saputra,3201010101060005,2000-01-25,male,081299900005,kos,,,,
+3201010101010004,Anisa Putri,3201010101060006,1998-07-30,female,081299900006,tetap,lansia,Rudi Hartono,081234567010,ayah
+3201010101010005,Galih Permana,3201010101060007,2019-03-12,male,,tetap,balita,Hendra Wijaya,081234567013,kakek

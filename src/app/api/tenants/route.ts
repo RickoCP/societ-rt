@@ -1,4 +1,5 @@
 /**
+ * GET /api/tenants — Lists all tenants (paginated).
  * POST /api/tenants — Registers a new tenant (RT/RW community).
  *
  * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
@@ -16,6 +17,71 @@ import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import type { RegisterTenantUseCase } from '@core/domains/tenant/usecases';
+import type { PrismaClient } from '@prisma/client';
+
+// ---------------------------------------------------------------------------
+// GET — List tenants (Super_Admin only)
+// ---------------------------------------------------------------------------
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const correlationId =
+    request.headers.get('x-correlation-id') ?? generateCorrelationId();
+
+  const authContext = resolveAuthContext(request);
+  if (!authContext) {
+    return NextResponse.json(
+      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
+      { status: 401 },
+    );
+  }
+
+  if (authContext.role !== UserRole.Super_Admin) {
+    return NextResponse.json(
+      { code: 'AUTH_INSUFFICIENT_ROLE', message: 'Forbidden', correlationId },
+      { status: 403 },
+    );
+  }
+
+  const page = Math.max(1, Number(request.nextUrl.searchParams.get('page')) || 1);
+  const pageSize = 20;
+
+  try {
+    const prisma = container.resolve<PrismaClient>('prismaClient');
+
+    const [tenants, total] = await Promise.all([
+      prisma.tenant.findMany({
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          subdomain: true,
+          status: true,
+          rtRwNumber: true,
+          region: true,
+          createdAt: true,
+        },
+      }),
+      prisma.tenant.count(),
+    ]);
+
+    return NextResponse.json({
+      data: tenants.map(t => ({
+        ...t,
+        createdAt: t.createdAt.toISOString(),
+      })),
+      total,
+      page,
+      totalPages: Math.ceil(total / pageSize),
+    });
+  } catch {
+    return NextResponse.json(
+      { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
+      { status: 500 },
+    );
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Input schema

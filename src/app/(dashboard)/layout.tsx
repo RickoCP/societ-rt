@@ -9,6 +9,7 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/' },
   { label: 'Residents', href: '/residents', roles: ['Ketua_RT', 'Pengurus', 'Super_Admin'] },
   { label: 'Users', href: '/users', roles: ['Ketua_RT', 'Super_Admin'] },
+  { label: 'Tenants', href: '/admin/tenants', roles: ['Super_Admin'] },
   { label: 'Finance', href: '/finance', roles: ['Ketua_RT', 'Pengurus', 'Super_Admin'] },
   { label: 'Voting', href: '/voting' },
   { label: 'Announcements', href: '/announcements' },

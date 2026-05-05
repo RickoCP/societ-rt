@@ -1,5 +1,6 @@
 /**
  * PATCH /api/residents/:id — Update a resident's residency status.
+ * DELETE /api/residents/:id — Remove a resident.
  *
  * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
  *
@@ -14,6 +15,7 @@ import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import type { UpdateResidentStatusUseCase } from '@core/domains/resident/usecases';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schema
@@ -105,4 +107,73 @@ export async function PATCH(
     },
     { status: 200 },
   );
+}
+
+
+// ---------------------------------------------------------------------------
+// DELETE handler — Remove a resident
+// ---------------------------------------------------------------------------
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const correlationId =
+    request.headers.get('x-correlation-id') ?? generateCorrelationId();
+
+  // 1. Resolve auth context
+  const authContext = resolveAuthContext(request);
+  if (!authContext) {
+    return NextResponse.json(
+      {
+        code: 'AUTH_TOKEN_INVALID',
+        message: 'Unauthorized',
+        correlationId,
+      },
+      { status: 401 },
+    );
+  }
+
+  // 2. Extract route param
+  const { id: residentId } = await params;
+
+  // 3. Delete resident via Prisma
+  try {
+    const prisma = container.resolve<PrismaClient>('prismaClient');
+
+    // Verify resident belongs to the same tenant
+    const resident = await prisma.resident.findFirst({
+      where: {
+        id: residentId,
+        household: { tenantId: authContext.tenantId },
+      },
+    });
+
+    if (!resident) {
+      return NextResponse.json(
+        {
+          code: 'COMMON_NOT_FOUND',
+          message: 'Resident not found',
+          correlationId,
+        },
+        { status: 404 },
+      );
+    }
+
+    await prisma.resident.delete({ where: { id: residentId } });
+
+    return NextResponse.json(
+      { data: { id: residentId, deleted: true } },
+      { status: 200 },
+    );
+  } catch {
+    return NextResponse.json(
+      {
+        code: 'COMMON_UNEXPECTED_ERROR',
+        message: 'Internal server error',
+        correlationId,
+      },
+      { status: 500 },
+    );
+  }
 }
