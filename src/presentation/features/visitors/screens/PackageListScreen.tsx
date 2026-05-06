@@ -1,100 +1,47 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@components/atoms/Button';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
-
-interface PackageRow {
-  id: string;
-  recipientHouseholdId: string;
-  recipientHousehold: string;
-  recipientAddress: string;
-  courierName: string;
-  description: string;
-  arrivalTimestamp: string;
-  collectedAt: string | null;
-  loggedBy: string;
-  createdAt: string;
-}
-
-interface Household {
-  id: string;
-  householdNumber: string;
-  address: string;
-}
+import { usePackageListViewModel } from '../viewModel/usePackageListViewModel';
 
 export function PackageListScreen() {
-  const [packages, setPackages] = useState<PackageRow[]>([]);
-  const [households, setHouseholds] = useState<Household[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    packages,
+    households,
+    isLoading,
+    isError,
+    error,
+    createPackage,
+    isCreating,
+    createError,
+    collectPackage,
+  } = usePackageListViewModel();
 
-  // Add form
+  // Form state
   const [showForm, setShowForm] = useState(false);
   const [courierName, setCourierName] = useState('');
   const [description, setDescription] = useState('');
   const [recipientHousehold, setRecipientHousehold] = useState('');
-  const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
-
-  const fetchPackages = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/packages');
-      const json = await res.json();
-      if (res.ok) setPackages(json.data ?? []);
-      else setError(json.message ?? 'Failed');
-    } catch { setError('Network error'); }
-    finally { setLoading(false); }
-  };
-
-  const fetchHouseholds = async () => {
-    try {
-      const res = await fetch('/api/residents/households?page=1');
-      const json = await res.json();
-      if (res.ok) setHouseholds(json.data ?? []);
-    } catch { /* ignore */ }
-  };
-
-  useEffect(() => { fetchPackages(); fetchHouseholds(); }, []);
 
   const handleSubmit = async () => {
     if (!courierName || !description || !recipientHousehold) {
       setSubmitError('Semua field harus diisi');
       return;
     }
-    setSubmitLoading(true);
     setSubmitError(null);
     try {
-      const res = await fetch('/api/packages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courierName, description, recipientHouseholdId: recipientHousehold }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setSubmitError(json.message ?? json.code ?? 'Failed');
-        return;
-      }
+      await createPackage({ courierName, description, recipientHouseholdId: recipientHousehold });
       setCourierName('');
       setDescription('');
       setShowForm(false);
-      fetchPackages();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Network error');
-    } finally {
-      setSubmitLoading(false);
     }
-  };
-
-  const handleCollect = async (id: string) => {
-    try {
-      await fetch(`/api/packages/${id}/collect`, { method: 'POST' });
-      fetchPackages();
-    } catch { /* ignore */ }
   };
 
   const filteredPackages = packages.filter(p => {
@@ -136,11 +83,13 @@ export function PackageListScreen() {
             </div>
           </div>
           <div className="mt-4">
-            <Button onClick={handleSubmit} disabled={submitLoading} variant="primary">
-              {submitLoading ? 'Menyimpan...' : 'Catat Paket'}
+            <Button onClick={handleSubmit} disabled={isCreating} variant="primary">
+              {isCreating ? 'Menyimpan...' : 'Catat Paket'}
             </Button>
           </div>
-          {submitError && <div className="mt-3"><ErrorMessage message={submitError} /></div>}
+          {(submitError ?? createError?.message) && (
+            <div className="mt-3"><ErrorMessage message={submitError ?? createError?.message ?? 'Error'} /></div>
+          )}
         </div>
       )}
 
@@ -153,10 +102,10 @@ export function PackageListScreen() {
         className="rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
       />
 
-      {error && <ErrorMessage message={error} />}
+      {isError && <ErrorMessage message={error?.message ?? 'Failed to load packages'} />}
 
       {/* Package List */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-8">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
         </div>
@@ -196,7 +145,7 @@ export function PackageListScreen() {
                     {!p.collectedAt && (
                       <button
                         type="button"
-                        onClick={() => handleCollect(p.id)}
+                        onClick={() => collectPackage(p.id)}
                         className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-200"
                       >
                         ✓ Sudah Diambil

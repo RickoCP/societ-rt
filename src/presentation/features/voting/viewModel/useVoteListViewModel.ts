@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface Vote {
   id: string;
@@ -31,10 +31,27 @@ async function fetchVotes(page: number): Promise<VoteListResponse> {
   return (await res.json()) as VoteListResponse;
 }
 
+async function deleteVoteRequest(id: string): Promise<void> {
+  const res = await fetch(`/api/voting/${id}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const body = (await res.json()) as { message?: string };
+    throw new Error(body.message ?? 'Failed to delete vote');
+  }
+}
+
 export function useVoteListViewModel(page = 1) {
+  const queryClient = useQueryClient();
+
   const query = useQuery({
     queryKey: ['votes', page],
     queryFn: () => fetchVotes(page),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteVoteRequest,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['votes'] });
+    },
   });
 
   return {
@@ -45,5 +62,7 @@ export function useVoteListViewModel(page = 1) {
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
+    deleteVote: deleteMutation.mutate,
+    isDeleting: deleteMutation.isPending,
   };
 }

@@ -51,8 +51,13 @@ const columns: DataTableColumn<TransactionRow>[] = [
 
 export function FinanceScreen() {
   const [page, setPage] = useState(1);
-  const { transactions, balance, totalPages, isLoading, isError, error, refetch } =
-    useTransactionListViewModel(page);
+  const {
+    transactions, balance, totalPages, isLoading, isError, error, refetch,
+    createTransaction, isCreatingTx,
+    recordIuran, isRecordingIuran,
+    checkIuran,
+    fetchReport, isFetchingReport,
+  } = useTransactionListViewModel(page);
 
   // Add Transaction form
   const [showAddTx, setShowAddTx] = useState(false);
@@ -98,17 +103,8 @@ export function FinanceScreen() {
     setTxError(null);
     setTxSuccess(null);
     try {
-      const res = await fetch('/api/finance/transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: txType, amount, description: txDesc, category: txCategory, date: txDate }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setTxError(json.message ?? json.code ?? 'Failed');
-        return;
-      }
-      setTxSuccess(`Transaction recorded: ${json.data.id}`);
+      const result = await createTransaction({ type: txType, amount, description: txDesc, category: txCategory, date: txDate });
+      setTxSuccess(`Transaction recorded: ${result.id}`);
       setTxAmount('');
       setTxDesc('');
       refetch();
@@ -128,16 +124,7 @@ export function FinanceScreen() {
     setIuranError(null);
     setIuranSuccess(null);
     try {
-      const res = await fetch('/api/finance/iuran', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ householdId: iuranHouseholdId, month: iuranMonth, transactionId: iuranTxId }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setIuranError(json.message ?? json.code ?? 'Failed');
-        return;
-      }
+      await recordIuran({ householdId: iuranHouseholdId, month: iuranMonth, transactionId: iuranTxId });
       setIuranSuccess('Iuran payment recorded!');
     } catch (err) {
       setIuranError(err instanceof Error ? err.message : 'Network error');
@@ -154,13 +141,8 @@ export function FinanceScreen() {
     setIuranCheckError(null);
     setIuranStatus(null);
     try {
-      const res = await fetch(`/api/finance/iuran?householdId=${iuranCheckHhId}&month=${iuranCheckMonth}`);
-      const json = await res.json();
-      if (!res.ok) {
-        setIuranCheckError(json.message ?? json.code ?? 'Not found');
-        return;
-      }
-      setIuranStatus(JSON.stringify(json.data, null, 2));
+      const data = await checkIuran({ householdId: iuranCheckHhId, month: iuranCheckMonth });
+      setIuranStatus(JSON.stringify(data, null, 2));
     } catch (err) {
       setIuranCheckError(err instanceof Error ? err.message : 'Network error');
     }
@@ -175,13 +157,8 @@ export function FinanceScreen() {
     setReportError(null);
     setReportData(null);
     try {
-      const res = await fetch(`/api/finance/report?startDate=${reportStart}&endDate=${reportEnd}`);
-      const json = await res.json();
-      if (!res.ok) {
-        setReportError(json.message ?? json.code ?? 'Failed');
-        return;
-      }
-      setReportData(JSON.stringify(json.data, null, 2));
+      const data = await fetchReport({ startDate: reportStart, endDate: reportEnd });
+      setReportData(JSON.stringify(data, null, 2));
     } catch (err) {
       setReportError(err instanceof Error ? err.message : 'Network error');
     } finally {

@@ -45,6 +45,30 @@ async function assignRoleRequest(params: {
   }
 }
 
+interface InvitationResult {
+  token: string;
+  expiresAt: string;
+}
+
+async function inviteUserRequest(params: {
+  email: string;
+  role: string;
+}): Promise<InvitationResult> {
+  const res = await fetch('/api/auth/invitation', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!res.ok) {
+    const body = (await res.json()) as { message?: string; code?: string };
+    throw new Error(body.message ?? body.code ?? 'Failed to create invitation');
+  }
+
+  const json = (await res.json()) as { data: InvitationResult };
+  return json.data;
+}
+
 export function useUserListViewModel(page = 1) {
   const queryClient = useQueryClient();
 
@@ -60,6 +84,10 @@ export function useUserListViewModel(page = 1) {
     },
   });
 
+  const inviteMutation = useMutation({
+    mutationFn: inviteUserRequest,
+  });
+
   return {
     users: query.data?.data ?? [],
     total: query.data?.total ?? 0,
@@ -69,5 +97,8 @@ export function useUserListViewModel(page = 1) {
     error: query.error,
     assignRole: roleMutation.mutate,
     isAssigning: roleMutation.isPending,
+    inviteUser: inviteMutation.mutateAsync,
+    isInviting: inviteMutation.isPending,
+    inviteError: inviteMutation.error,
   };
 }

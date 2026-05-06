@@ -20,7 +20,7 @@ const ROLES = ['Warga', 'Pengurus', 'Security_Guard', 'Ketua_RT'] as const;
 
 export function UserManagementScreen() {
   const [page, setPage] = useState(1);
-  const { users, totalPages, isLoading, isError, error, assignRole, isAssigning } =
+  const { users, totalPages, isLoading, isError, error, assignRole, isAssigning, inviteUser, isInviting } =
     useUserListViewModel(page);
 
   // Invitation state
@@ -45,18 +45,9 @@ export function UserManagementScreen() {
     setCopied(false);
 
     try {
-      const res = await fetch('/api/auth/invitation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setInviteError(json.message ?? json.code ?? 'Failed to create invitation');
-        return;
-      }
-      setInviteToken(json.data.token);
-      setInviteExpiry(json.data.expiresAt);
+      const result = await inviteUser({ email: inviteEmail, role: inviteRole });
+      setInviteToken(result.token);
+      setInviteExpiry(result.expiresAt);
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : 'Network error');
     } finally {

@@ -1,99 +1,48 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Badge } from '@components/atoms/Badge';
 import { Button } from '@components/atoms/Button';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
-
-interface VisitorRow {
-  id: string;
-  visitorName: string;
-  purpose: string;
-  destinationHouseholdId: string;
-  entryTimestamp: string;
-  exitTimestamp: string | null;
-  loggedBy: string;
-  createdAt: string;
-}
-
-interface Household {
-  id: string;
-  householdNumber: string;
-  address: string;
-}
+import { useVisitorListViewModel } from '../viewModel/useVisitorListViewModel';
 
 export function VisitorListScreen() {
-  const [visitors, setVisitors] = useState<VisitorRow[]>([]);
-  const [households, setHouseholds] = useState<Household[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    visitors,
+    households,
+    isLoading,
+    isError,
+    error,
+    createVisitor,
+    isCreating,
+    createError,
+    checkoutVisitor,
+  } = useVisitorListViewModel();
 
-  // Add form state
+  // Form state
   const [showForm, setShowForm] = useState(false);
   const [visitorName, setVisitorName] = useState('');
   const [purpose, setPurpose] = useState('');
   const [destHousehold, setDestHousehold] = useState('');
-  const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
-
-  const fetchVisitors = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/visitors');
-      const json = await res.json();
-      if (res.ok) setVisitors(json.data ?? []);
-      else setError(json.message ?? 'Failed');
-    } catch { setError('Network error'); }
-    finally { setLoading(false); }
-  };
-
-  const fetchHouseholds = async () => {
-    try {
-      const res = await fetch('/api/residents/households?page=1');
-      const json = await res.json();
-      if (res.ok) setHouseholds(json.data ?? []);
-    } catch { /* ignore */ }
-  };
-
-  useEffect(() => { fetchVisitors(); fetchHouseholds(); }, []);
 
   const handleSubmit = async () => {
     if (!visitorName || !purpose || !destHousehold) {
       setSubmitError('Semua field harus diisi');
       return;
     }
-    setSubmitLoading(true);
     setSubmitError(null);
     try {
-      const res = await fetch('/api/visitors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visitorName, purpose, destinationHouseholdId: destHousehold }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setSubmitError(json.message ?? json.code ?? 'Failed');
-        return;
-      }
+      await createVisitor({ visitorName, purpose, destinationHouseholdId: destHousehold });
       setVisitorName('');
       setPurpose('');
       setShowForm(false);
-      fetchVisitors();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Network error');
-    } finally {
-      setSubmitLoading(false);
     }
-  };
-
-  const handleCheckout = async (id: string) => {
-    try {
-      await fetch(`/api/visitors/${id}/checkout`, { method: 'POST' });
-      fetchVisitors();
-    } catch { /* ignore */ }
   };
 
   const filteredVisitors = visitors.filter(v => {
@@ -135,11 +84,13 @@ export function VisitorListScreen() {
             </div>
           </div>
           <div className="mt-4">
-            <Button onClick={handleSubmit} disabled={submitLoading} variant="primary">
-              {submitLoading ? 'Menyimpan...' : 'Catat Masuk'}
+            <Button onClick={handleSubmit} disabled={isCreating} variant="primary">
+              {isCreating ? 'Menyimpan...' : 'Catat Masuk'}
             </Button>
           </div>
-          {submitError && <div className="mt-3"><ErrorMessage message={submitError} /></div>}
+          {(submitError ?? createError?.message) && (
+            <div className="mt-3"><ErrorMessage message={submitError ?? createError?.message ?? 'Error'} /></div>
+          )}
         </div>
       )}
 
@@ -152,10 +103,10 @@ export function VisitorListScreen() {
         className="rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
       />
 
-      {error && <ErrorMessage message={error} />}
+      {isError && <ErrorMessage message={error?.message ?? 'Failed to load visitors'} />}
 
       {/* Visitor List */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-8">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
         </div>
@@ -190,7 +141,7 @@ export function VisitorListScreen() {
                     {!v.exitTimestamp && (
                       <button
                         type="button"
-                        onClick={() => handleCheckout(v.id)}
+                        onClick={() => checkoutVisitor(v.id)}
                         className="rounded bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700 hover:bg-orange-200"
                       >
                         Checkout

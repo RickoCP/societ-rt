@@ -64,15 +64,12 @@ const columns: DataTableColumn<VoteRow>[] = [
 
 export function VoteListScreen() {
   const [page, setPage] = useState(1);
-  const { votes, totalPages, isLoading, isError, error, refetch } =
+  const { votes, totalPages, isLoading, isError, error, deleteVote, isDeleting } =
     useVoteListViewModel(page);
 
-  const handleDelete = async (id: string, title: string) => {
+  const handleDelete = (id: string, title: string) => {
     if (!confirm(`Delete vote "${title}" and all its ballots?`)) return;
-    try {
-      const res = await fetch(`/api/voting/${id}`, { method: 'DELETE' });
-      if (res.ok) refetch();
-    } catch { /* ignore */ }
+    deleteVote(id);
   };
 
   return (
