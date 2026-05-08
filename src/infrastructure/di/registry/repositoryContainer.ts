@@ -27,6 +27,15 @@ import { DashboardRepositoryImpl } from '@infrastructure/repositories/dashboard/
 import { FileStorageRepositoryImpl } from '@infrastructure/repositories/fileStorage/FileStorageRepositoryImpl';
 import { PrivacyRepositoryImpl } from '@infrastructure/repositories/privacy/PrivacyRepositoryImpl';
 import { OperationalRepositoryImpl } from '@infrastructure/repositories/operational/OperationalRepositoryImpl';
+import { IoTRepositoryImpl } from '@infrastructure/repositories/iot/IoTRepositoryImpl';
+import { IncidentRepositoryImpl } from '@infrastructure/repositories/incident/IncidentRepositoryImpl';
+import { GateRepositoryImpl } from '@infrastructure/repositories/gate/GateRepositoryImpl';
+import { CctvRepositoryImpl } from '@infrastructure/repositories/cctv/CctvRepositoryImpl';
+import { PatrolRepositoryImpl } from '@infrastructure/repositories/patrol/PatrolRepositoryImpl';
+import { AlarmRepositoryImpl } from '@infrastructure/repositories/alarm/AlarmRepositoryImpl';
+import { AutomationRepositoryImpl } from '@infrastructure/repositories/automation/AutomationRepositoryImpl';
+import { HomeRepositoryImpl } from '@infrastructure/repositories/societHome/HomeRepositoryImpl';
+import { SecurityCenterRepositoryImpl } from '@infrastructure/repositories/securityCenter/SecurityCenterRepositoryImpl';
 
 export function registerRepositories(container: AwilixContainer): void {
   container.register({
@@ -51,5 +60,14 @@ export function registerRepositories(container: AwilixContainer): void {
     fileStorageRepository: asFunction(FileStorageRepositoryImpl).singleton(),
     privacyRepository: asFunction(PrivacyRepositoryImpl).singleton(),
     operationalRepository: asFunction(OperationalRepositoryImpl).singleton(),
+    iotRepository: asFunction(IoTRepositoryImpl).singleton(),
+    incidentRepository: asFunction(IncidentRepositoryImpl).singleton(),
+    gateRepository: asFunction(GateRepositoryImpl).singleton(),
+    cctvRepository: asFunction(CctvRepositoryImpl).singleton(),
+    patrolRepository: asFunction(PatrolRepositoryImpl).singleton(),
+    alarmRepository: asFunction(AlarmRepositoryImpl).singleton(),
+    automationRepository: asFunction(AutomationRepositoryImpl).singleton(),
+    homeRepository: asFunction(HomeRepositoryImpl).singleton(),
+    securityCenterRepository: asFunction(SecurityCenterRepositoryImpl).singleton(),
   });
 }

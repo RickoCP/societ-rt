@@ -8,6 +8,10 @@
  * - FileStorageProtocol → S3Adapter
  * - AuditQueueProtocol → AuditQueueStub (delegates to QueueProtocol, processed by auditWorker)
  * - NotificationQueueProtocol → NotificationQueueStub (delegates to QueueProtocol, processed by notificationWorker)
+ * - RealtimeBusProtocol → RedisPubSubAdapter (Redis pub/sub for cross-instance event distribution)
+ * - WebSocketProtocol → WebSocketServerImpl (ws library on separate port with JWT auth)
+ * - IoTGatewayProtocol → TuyaGatewayAdapter (Tuya IoT Cloud integration with OAuth 2.0, retry, HMAC-SHA256)
+ * - CircuitBreakerProtocol → CircuitBreakerImpl (circuit breaker for Tuya Cloud API resilience)
  *
  * HttpProtocol is intentionally omitted here — it will be registered
  * when a concrete HTTP adapter is implemented.
@@ -22,6 +26,12 @@ import { BullMQAdapter } from '@infrastructure/networking/BullMQAdapter';
 import { S3Adapter } from '@infrastructure/storage/S3Adapter';
 import { AuditQueueStub } from '@infrastructure/queue/AuditQueueStub';
 import { NotificationQueueStub } from '@infrastructure/queue/NotificationQueueStub';
+import { RedisPubSubAdapter } from '@infrastructure/realtime/RedisPubSubAdapter';
+import { WebSocketServerImpl } from '@infrastructure/realtime/WebSocketServer';
+import { TuyaGatewayAdapter } from '@infrastructure/iot/TuyaGatewayAdapter';
+import { CircuitBreakerImpl } from '@infrastructure/iot/CircuitBreakerImpl';
+import { IoTMetricsEmitterImpl } from '@infrastructure/iot/IoTMetricsEmitter';
+import { AutomationEngineImpl } from '@infrastructure/automation/AutomationEngineImpl';
 
 export function registerModules(container: AwilixContainer): void {
   container.register({
@@ -37,5 +47,11 @@ export function registerModules(container: AwilixContainer): void {
     fileStorageProtocol: asFunction(S3Adapter).singleton(),
     auditQueueProtocol: asFunction(AuditQueueStub).singleton(),
     notificationQueueProtocol: asFunction(NotificationQueueStub).singleton(),
+    realtimeBusProtocol: asFunction(RedisPubSubAdapter).singleton(),
+    webSocketProtocol: asFunction(WebSocketServerImpl).singleton(),
+    iotGatewayProtocol: asFunction(TuyaGatewayAdapter).singleton(),
+    circuitBreakerProtocol: asFunction(CircuitBreakerImpl).singleton(),
+    iotMetricsEmitter: asFunction(IoTMetricsEmitterImpl).singleton(),
+    automationEngineProtocol: asFunction(AutomationEngineImpl).singleton(),
   });
 }

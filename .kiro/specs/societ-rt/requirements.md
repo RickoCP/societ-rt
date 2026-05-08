@@ -41,6 +41,23 @@ SocieT-RT adalah platform digital multi-tenant SaaS untuk pengelolaan RT/RW/peru
 - **Soft_Delete**: Pola penghapusan data di mana record ditandai sebagai dihapus tetapi tetap tersimpan di database untuk keperluan audit dan recovery.
 - **Invoice**: Dokumen tagihan yang dihasilkan oleh Billing_System untuk setiap siklus pembayaran subscription tenant.
 - **PWA**: Progressive Web App — aplikasi web yang dapat diinstal di perangkat mobile dengan kemampuan offline dan push notification.
+- **Security_Center**: Subsistem dashboard keamanan realtime yang mengintegrasikan incident management, gate monitoring, CCTV monitoring, patrol management, dan security analytics dalam satu tampilan terpadu.
+- **Incident_Manager**: Subsistem yang menangani lifecycle insiden keamanan dari pelaporan, eskalasi, penanganan, hingga resolusi.
+- **Gate_Monitor**: Subsistem yang menangani monitoring status gerbang komunitas secara realtime melalui sensor IoT.
+- **CCTV_System**: Subsistem yang menangani monitoring kamera CCTV termasuk live streaming (RTSP/WebRTC), snapshot capture, motion detection, dan storage management.
+- **Patrol_Manager**: Subsistem yang menangani manajemen patroli keamanan termasuk route planning, GPS tracking, checkpoint verification, dan patrol analytics.
+- **Alarm_System**: Subsistem yang menangani smart alarm termasuk siren activation, alarm zones, alarm scheduling, dan alarm event processing.
+- **SocieT_Home**: Subsistem yang memungkinkan warga memasangkan dan mengontrol perangkat smart home (Tuya-based) dari dalam aplikasi SocieT-RT.
+- **IoT_Gateway**: Subsistem yang menangani integrasi dengan Tuya IoT Cloud termasuk device pairing, synchronization, command execution, webhook processing, dan health monitoring.
+- **Automation_Engine**: Subsistem rule engine yang memproses aturan IF/THEN untuk event keamanan dan IoT, mengeksekusi aksi otomatis berdasarkan kondisi yang terpenuhi.
+- **Realtime_Bus**: Subsistem event bus realtime yang menangani WebSocket connections, Redis pub/sub, event routing, dan notification queue untuk seluruh event keamanan dan IoT.
+- **IoT_Device**: Perangkat smart home yang terhubung ke platform melalui Tuya IoT Cloud, termasuk panic button, smart siren, smart lock, CCTV, motion sensor, smoke detector, door sensor, gate sensor, smart switch, dan smart lighting.
+- **Device_Event**: Event yang dihasilkan oleh IoT_Device seperti panic_button_pressed, gate_open, gate_closed, motion_detected, smoke_detected, alarm_triggered, smart_lock_opened, cctv_motion_detected, device_online, device_offline, battery_low, dan emergency_alert.
+- **Automation_Rule**: Aturan IF/THEN yang didefinisikan oleh Ketua_RT atau Pengurus untuk mengotomasi respons terhadap Device_Event tertentu.
+- **Security_Event**: Event keamanan yang dihasilkan dari Device_Event, incident, atau alert yang memerlukan perhatian Security_Guard atau Ketua_RT.
+- **Home_Owner**: Warga yang memiliki rumah dan berhak memasangkan serta mengontrol IoT_Device pada rumahnya sendiri.
+- **Shared_Security_Event**: Subset dari Device_Event yang bersifat keamanan publik dan dapat diakses oleh Ketua_RT, Pengurus, dan Security_Guard (panic_button_pressed, smoke_detected, gate_open_too_long, alarm_triggered, emergency_alert, motion_detection_alert).
+- **Private_Home_Event**: Device_Event yang bersifat privat dan hanya dapat diakses oleh Home_Owner dari rumah yang bersangkutan (smart_lock_opened, smart_switch_toggled, lighting_changed, device_online, device_offline).
 
 ## Requirements
 
@@ -434,3 +451,249 @@ SocieT-RT adalah platform digital multi-tenant SaaS untuk pengelolaan RT/RW/peru
 6. WHEN an impersonation session expires or is ended, THE Platform SHALL immediately revoke the impersonation token and log the session end event.
 7. THE Platform SHALL display a visible impersonation indicator in the UI during an active impersonation session to prevent accidental actions.
 8. WHEN a tenant is suspended, reactivated, or impersonated, THE Audit_Logger SHALL record the event with the Super_Admin actor, timestamp, tenant, and action details.
+
+### Requirement 31: Security Center Dashboard
+
+**User Story:** As a Ketua_RT, I want a unified realtime security dashboard that aggregates all security-related information (incidents, alerts, gate status, CCTV feeds, patrol status, device events), so that I can monitor and respond to security situations from a single interface.
+
+#### Acceptance Criteria
+
+1. THE Security_Center SHALL display a realtime dashboard showing: active incident count, active emergency alerts, gate status summary, CCTV camera status, patrol status, and recent security events within the current tenant.
+2. THE Security_Center SHALL update dashboard data in realtime via WebSocket connection without requiring page refresh, with a maximum latency of 2 seconds from event occurrence to dashboard display.
+3. THE Security_Center SHALL display an incident timeline showing all security events (incidents, alerts, device events, patrol check-ins) in chronological order within a configurable time range (default: last 24 hours).
+4. THE Security_Center SHALL provide a neighborhood alert system that allows Ketua_RT or Security_Guard to broadcast a security alert to all residents within the tenant with severity level (low, medium, high, critical) and alert message.
+5. WHEN a neighborhood alert is broadcast, THE Notification_Engine SHALL dispatch notifications to all Warga within the tenant via push notification and in-app inbox within 5 seconds.
+6. THE Security_Center SHALL display security analytics including: incident count by severity over time, average response time, incidents by category, patrol coverage percentage, and device event frequency.
+7. THE Security_Center SHALL support emergency escalation where unresolved critical incidents are automatically escalated to Ketua_RT after 5 minutes and to emergency contacts after 15 minutes.
+8. IF a critical security event (panic_button_pressed, smoke_detected, emergency_alert) occurs, THEN THE Security_Center SHALL display a prominent visual and audio alert on the dashboard for all active Security_Guard and Ketua_RT sessions.
+9. THE Security_Center SHALL restrict access to users with Ketua_RT, Pengurus, or Security_Guard roles only.
+10. WHEN a security event occurs or an alert is broadcast, THE Audit_Logger SHALL record the event with actor, timestamp, event type, severity, and tenant context.
+
+### Requirement 32: Incident Management
+
+**User Story:** As a Security_Guard, I want to create, track, and resolve security incidents with full lifecycle management, so that all security events are properly documented and handled.
+
+#### Acceptance Criteria
+
+1. WHEN a Security_Guard or Ketua_RT creates an incident with valid data (title, description, location, severity level, category, GPS coordinates), THE Incident_Manager SHALL create an incident record with status "open" within the current tenant.
+2. THE Incident_Manager SHALL support the following incident statuses: open, acknowledged, in_progress, escalated, resolved, and closed.
+3. THE Incident_Manager SHALL support the following incident categories: theft, vandalism, trespassing, fire, flood, suspicious_activity, noise_complaint, device_alert, and other.
+4. WHEN a Security_Guard updates an incident status, THE Incident_Manager SHALL record the status change with timestamp, actor, and optional notes in the incident log.
+5. WHEN an incident is created or its status changes, THE Notification_Engine SHALL notify all Security_Guard and Ketua_RT users within the tenant.
+6. THE Incident_Manager SHALL support attaching evidence files (photos, videos, up to 5 files, each up to 20MB) to an incident record.
+7. THE Incident_Manager SHALL automatically create an incident when a critical Device_Event (panic_button_pressed, smoke_detected, emergency_alert) is received from the IoT_Gateway.
+8. WHEN an incident with severity "critical" or "high" remains in "open" status for more than 5 minutes, THE Incident_Manager SHALL escalate the incident by changing status to "escalated" and notifying Ketua_RT and registered emergency contacts.
+9. THE Incident_Manager SHALL display incidents on an interactive map showing incident locations with severity-based color coding.
+10. WHEN an incident is created, updated, or resolved, THE Audit_Logger SHALL record the event with actor, timestamp, incident ID, status change, and severity.
+
+### Requirement 33: Gate Monitoring
+
+**User Story:** As a Security_Guard, I want to monitor all community gates in realtime with open/close status and duration tracking, so that I can detect unauthorized access or gates left open.
+
+#### Acceptance Criteria
+
+1. THE Gate_Monitor SHALL display realtime status (open or closed) of all registered gate sensors within the current tenant, updated via WebSocket within 1 second of state change.
+2. WHEN a gate sensor reports a state change (open or closed), THE Gate_Monitor SHALL record the event with timestamp, gate identifier, new state, and duration of previous state.
+3. THE Gate_Monitor SHALL track gate open duration and display a warning indicator when a gate has been open for more than a configurable threshold (default: 2 minutes).
+4. IF a gate remains open beyond the configured threshold, THEN THE Gate_Monitor SHALL trigger a `gate_open_too_long` event and notify Security_Guard users via the Realtime_Bus.
+5. THE Gate_Monitor SHALL display gate locations on an interactive map with color-coded status indicators (green for closed, red for open, yellow for warning).
+6. THE Gate_Monitor SHALL maintain a gate event history log showing all open/close events with timestamps, filterable by gate and date range.
+7. WHEN a Ketua_RT or Pengurus registers a new gate with valid data (gate name, location description, GPS coordinates, associated IoT_Device ID), THE Gate_Monitor SHALL store the gate configuration within the current tenant.
+8. THE Gate_Monitor SHALL calculate and display gate analytics: average open duration, open frequency by time of day, and anomaly detection for unusual patterns.
+9. IF a gate sensor goes offline (no heartbeat for more than 60 seconds), THEN THE Gate_Monitor SHALL mark the gate status as "offline" and notify Security_Guard users.
+10. WHEN a gate event occurs, THE Audit_Logger SHALL record the event with gate ID, state change, duration, and timestamp.
+
+### Requirement 34: CCTV Monitoring
+
+**User Story:** As a Security_Guard, I want to view live CCTV feeds, capture snapshots, and receive motion detection alerts, so that I can visually monitor the community and gather evidence.
+
+#### Acceptance Criteria
+
+1. THE CCTV_System SHALL support registering CCTV cameras with valid data (camera name, RTSP stream URL, location description, GPS coordinates, resolution, associated tenant) and store the configuration securely with encrypted stream credentials.
+2. THE CCTV_System SHALL provide live video streaming from registered cameras using WebRTC for low-latency browser-based viewing.
+3. WHEN a Security_Guard requests a snapshot from a specific camera, THE CCTV_System SHALL capture a still image from the live stream and store it with timestamp and camera identifier.
+4. THE CCTV_System SHALL support motion detection events from cameras and process `cctv_motion_detected` events received from the IoT_Gateway.
+5. WHEN a motion detection event is received, THE CCTV_System SHALL automatically capture a snapshot, associate it with the event, and notify Security_Guard users if the event occurs during configured alert hours.
+6. THE CCTV_System SHALL display all camera locations on an interactive map with status indicators (online: green, offline: red, motion detected: orange).
+7. THE CCTV_System SHALL manage recording storage with configurable retention periods (default: 7 days for continuous recording, 30 days for event-triggered recordings).
+8. IF a camera goes offline (no stream data for more than 30 seconds), THEN THE CCTV_System SHALL mark the camera status as "offline" and notify Security_Guard users with error code `CCTV_CAMERA_OFFLINE`.
+9. THE CCTV_System SHALL restrict live stream access to users with Security_Guard, Pengurus, or Ketua_RT roles within the same tenant.
+10. THE CCTV_System SHALL encrypt all stored RTSP credentials and stream URLs at rest using AES-256 encryption.
+11. WHEN a CCTV event occurs (snapshot captured, motion detected, camera offline), THE Audit_Logger SHALL record the event with camera ID, event type, and timestamp.
+
+### Requirement 35: Security Patrol Management (Enhanced)
+
+**User Story:** As a Ketua_RT, I want to manage security patrols with route planning, GPS tracking, checkpoint verification, and analytics, so that patrol coverage is comprehensive and verifiable.
+
+#### Acceptance Criteria
+
+1. WHEN a Ketua_RT or Pengurus creates a patrol route with valid data (route name, ordered list of checkpoint GPS coordinates, estimated duration), THE Patrol_Manager SHALL store the route within the current tenant.
+2. THE Patrol_Manager SHALL display patrol routes on an interactive map showing checkpoints, route paths, and current patrol positions.
+3. WHEN a Security_Guard starts a patrol, THE Patrol_Manager SHALL track the guard's GPS position in realtime and display it on the Security_Center map, updating every 10 seconds.
+4. WHEN a Security_Guard arrives at a checkpoint (within 50 meters of checkpoint GPS coordinates), THE Patrol_Manager SHALL automatically record the checkpoint visit with timestamp and GPS coordinates.
+5. THE Patrol_Manager SHALL calculate patrol completion percentage based on checkpoints visited versus total checkpoints on the assigned route.
+6. IF a Security_Guard deviates more than 200 meters from the assigned patrol route for more than 5 minutes, THEN THE Patrol_Manager SHALL send a deviation alert to Ketua_RT.
+7. THE Patrol_Manager SHALL provide patrol analytics: average patrol duration, checkpoint coverage rate, patrol frequency by time slot, and guard performance metrics.
+8. WHEN a patrol is completed, THE Patrol_Manager SHALL generate a patrol summary report containing: route covered, checkpoints visited, duration, distance traveled, and any incidents reported during the patrol.
+9. THE Patrol_Manager SHALL support assigning multiple patrol routes to different time slots and guards within a weekly schedule.
+10. WHEN a patrol event occurs (started, checkpoint visited, completed, deviation detected), THE Audit_Logger SHALL record the event with guard ID, route ID, timestamp, and GPS coordinates.
+
+### Requirement 36: Smart Alarm System
+
+**User Story:** As a Ketua_RT, I want to manage smart alarm/siren devices that can be triggered automatically by security events or manually by authorized users, so that the community has an audible alert system for emergencies.
+
+#### Acceptance Criteria
+
+1. WHEN a Ketua_RT or Pengurus registers a smart siren device with valid data (device name, location, associated IoT_Device ID, alarm zones), THE Alarm_System SHALL store the siren configuration within the current tenant.
+2. WHEN an authorized user (Ketua_RT, Pengurus, or Security_Guard) manually triggers a siren, THE Alarm_System SHALL send an activation command to the specified siren device via the IoT_Gateway.
+3. THE Alarm_System SHALL support automatic siren activation triggered by Automation_Rules (e.g., panic button pressed, gate open too long, smoke detected).
+4. WHEN a siren is activated, THE Alarm_System SHALL record the activation event with trigger source (manual or automation rule ID), timestamp, duration, and actor.
+5. THE Alarm_System SHALL support configurable alarm duration (default: 60 seconds, maximum: 300 seconds) and automatic deactivation after the configured duration.
+6. THE Alarm_System SHALL support alarm zones where specific sirens are associated with specific areas of the community, allowing zone-targeted activation.
+7. THE Alarm_System SHALL support alarm scheduling where sirens are automatically armed during configured hours (e.g., 22:00-06:00) and disarmed outside those hours.
+8. WHEN a siren is activated or deactivated, THE Notification_Engine SHALL notify all Security_Guard and Ketua_RT users within the tenant.
+9. IF a siren device fails to respond to an activation command within 5 seconds, THEN THE Alarm_System SHALL log the failure with error code `ALARM_DEVICE_UNRESPONSIVE` and notify Security_Guard users.
+10. WHEN an alarm event occurs (activated, deactivated, failed, scheduled arm/disarm), THE Audit_Logger SHALL record the event with device ID, trigger source, actor, and timestamp.
+
+### Requirement 37: SocieT-Home Module
+
+**User Story:** As a Home_Owner, I want to pair, monitor, and control my smart home devices (Tuya-based) from within the SocieT-RT application, so that I can manage my home security and automation from a single platform.
+
+#### Acceptance Criteria
+
+1. WHEN a Home_Owner initiates device pairing, THE SocieT_Home SHALL guide the user through the Tuya device pairing flow and associate the paired device with the Home_Owner's Household.
+2. THE SocieT_Home SHALL display a device dashboard showing all paired devices for the Home_Owner's Household with current status (online, offline, battery level, last activity).
+3. THE SocieT_Home SHALL support the following device types: panic button, smart siren, smart lock, CCTV camera, motion sensor, smoke detector, door sensor, gate sensor, smart switch, and smart lighting.
+4. WHEN a Home_Owner sends a command to a device (e.g., lock/unlock, turn on/off, activate siren), THE SocieT_Home SHALL execute the command via the IoT_Gateway and display the result within 3 seconds.
+5. THE SocieT_Home SHALL display realtime device events (door opened, motion detected, smoke detected) for the Home_Owner's devices via WebSocket connection.
+6. THE SocieT_Home SHALL enforce device ownership validation: only the Home_Owner of the Household where the device is registered can view device details and send commands to Private_Home_Event devices.
+7. THE SocieT_Home SHALL allow Home_Owners to configure device alert preferences (which events trigger push notifications, quiet hours).
+8. WHEN a device generates a Shared_Security_Event (panic_button_pressed, smoke_detected, alarm_triggered, emergency_alert), THE SocieT_Home SHALL forward the event to the Security_Center and Realtime_Bus for processing by Security_Guard and Ketua_RT.
+9. WHEN a device generates a Private_Home_Event (smart_lock_opened, smart_switch_toggled, lighting_changed), THE SocieT_Home SHALL deliver the event ONLY to the Home_Owner of the associated Household and SHALL NOT expose the event to Ketua_RT, Pengurus, or Security_Guard.
+10. IF a paired device goes offline (no heartbeat for more than 120 seconds), THEN THE SocieT_Home SHALL mark the device as offline and notify the Home_Owner.
+11. WHEN a Home_Owner unpairs a device, THE SocieT_Home SHALL remove the device association from the Household and revoke all access tokens for that device.
+12. WHEN a device is paired, unpaired, or a command is executed, THE Audit_Logger SHALL record the event with Home_Owner ID, device ID, action, and timestamp.
+
+### Requirement 38: Tuya IoT Integration
+
+**User Story:** As a developer, I want a robust integration layer with Tuya IoT Cloud that handles device lifecycle, event processing, and command execution with proper error handling and retry mechanisms, so that IoT devices communicate reliably with the platform.
+
+#### Acceptance Criteria
+
+1. THE IoT_Gateway SHALL authenticate with Tuya IoT Cloud using OAuth 2.0 client credentials flow and manage token lifecycle (acquisition, refresh, expiry handling).
+2. THE IoT_Gateway SHALL support device pairing by generating Tuya pairing tokens and processing pairing completion callbacks.
+3. THE IoT_Gateway SHALL synchronize device status from Tuya Cloud at configurable intervals (default: every 60 seconds) and on-demand when requested.
+4. THE IoT_Gateway SHALL process incoming Tuya webhook events, validate webhook signatures using HMAC-SHA256, and route events to the appropriate tenant and device.
+5. WHEN a webhook event is received, THE IoT_Gateway SHALL parse the event payload, map it to the corresponding Device_Event type, and publish it to the Realtime_Bus within 500ms.
+6. WHEN a device command is requested, THE IoT_Gateway SHALL send the command to Tuya Cloud API, await confirmation, and return the result to the caller within 5 seconds.
+7. IF a device command fails, THEN THE IoT_Gateway SHALL retry the command up to 3 times with exponential backoff (1s, 2s, 4s) before returning error code `IOT_COMMAND_FAILED`.
+8. THE IoT_Gateway SHALL maintain a device registry storing: device_id, tuya_device_id, device_type, household_id, tenant_id, online_status, last_seen_timestamp, and device_metadata.
+9. THE IoT_Gateway SHALL detect offline devices (no status update for more than 120 seconds) and emit a `device_offline` event to the Realtime_Bus.
+10. THE IoT_Gateway SHALL validate device ownership on every command request, ensuring the requesting user is the Home_Owner of the Household where the device is registered.
+11. IF a Tuya webhook signature validation fails, THEN THE IoT_Gateway SHALL reject the webhook with HTTP 401 and log the rejection with error code `IOT_WEBHOOK_SIGNATURE_INVALID`.
+12. THE IoT_Gateway SHALL encrypt and store Tuya API credentials (client_id, client_secret, access_token) using AES-256 encryption at rest.
+13. THE IoT_Gateway SHALL implement circuit breaker pattern for Tuya Cloud API calls: open circuit after 5 consecutive failures, half-open after 30 seconds, close after 3 successful calls.
+14. WHEN a device event is processed, a command is executed, or a device goes offline, THE Audit_Logger SHALL record the event with device ID, event type, result, and timestamp.
+
+### Requirement 39: Automation Rule Engine
+
+**User Story:** As a Ketua_RT, I want to define IF/THEN automation rules that automatically trigger actions when specific security events occur, so that the community can respond to threats faster than manual intervention allows.
+
+#### Acceptance Criteria
+
+1. WHEN a Ketua_RT or Pengurus creates an automation rule with valid data (rule name, trigger event type, conditions, action list), THE Automation_Engine SHALL store the rule within the current tenant.
+2. THE Automation_Engine SHALL support the following trigger event types: panic_button_pressed, gate_open, gate_closed, motion_detected, smoke_detected, alarm_triggered, smart_lock_opened, cctv_motion_detected, device_online, device_offline, battery_low, and emergency_alert.
+3. THE Automation_Engine SHALL support the following condition operators: equals, not_equals, greater_than, less_than, time_between (for time-of-day conditions), and duration_exceeds (for duration-based conditions).
+4. THE Automation_Engine SHALL support the following actions: create_incident, notify_security_guard, notify_ketua_rt, notify_emergency_contact, trigger_siren, capture_cctv_snapshot, broadcast_neighborhood_alert, and send_push_notification.
+5. WHEN a Device_Event matches an active automation rule's trigger and conditions, THE Automation_Engine SHALL execute all configured actions for that rule within 3 seconds of event receipt.
+6. THE Automation_Engine SHALL support rule chaining where the output of one rule can trigger another rule, with a maximum chain depth of 5 to prevent infinite loops.
+7. THE Automation_Engine SHALL support enabling and disabling individual rules without deleting them.
+8. THE Automation_Engine SHALL log every rule execution with: rule_id, trigger_event, conditions_evaluated, actions_executed, execution_duration_ms, and success/failure status.
+9. IF an automation action fails (e.g., siren unresponsive, notification failed), THEN THE Automation_Engine SHALL log the failure, continue executing remaining actions in the rule, and notify Ketua_RT of the partial failure.
+10. THE Automation_Engine SHALL support scheduling rules to be active only during specific time windows (e.g., motion detection rules active only between 22:00 and 06:00).
+11. THE Automation_Engine SHALL enforce a maximum of 50 active automation rules per tenant to prevent performance degradation.
+12. FOR ALL automation rules, THE Automation_Engine SHALL validate rule definitions at creation time to ensure trigger events, conditions, and actions reference valid types and parameters (rule validation property).
+13. WHEN a rule is created, updated, enabled, disabled, or executed, THE Audit_Logger SHALL record the event with rule ID, actor, action, and timestamp.
+
+### Requirement 40: Realtime Security Event System
+
+**User Story:** As a developer, I want a robust realtime event system using WebSocket and Redis pub/sub that delivers security events to connected clients with minimal latency, so that the Security Center and SocieT-Home dashboards update in realtime.
+
+#### Acceptance Criteria
+
+1. THE Realtime_Bus SHALL establish WebSocket connections with authenticated clients using JWT token validation on connection handshake.
+2. THE Realtime_Bus SHALL use Redis pub/sub as the message broker for distributing events across multiple application server instances.
+3. THE Realtime_Bus SHALL support the following event channels per tenant: `security_events`, `device_events`, `incident_updates`, `gate_events`, `cctv_events`, `patrol_events`, and `alarm_events`.
+4. THE Realtime_Bus SHALL enforce tenant isolation on WebSocket channels: clients can only subscribe to channels belonging to their authenticated tenant.
+5. THE Realtime_Bus SHALL enforce privacy rules on device event channels: Private_Home_Events are delivered ONLY to WebSocket connections authenticated as the Home_Owner of the associated Household.
+6. THE Realtime_Bus SHALL enforce that Shared_Security_Events (panic_button_pressed, smoke_detected, gate_open_too_long, alarm_triggered, emergency_alert, motion_detection_alert) are delivered to Security_Guard, Pengurus, and Ketua_RT WebSocket connections within the tenant.
+7. THE Realtime_Bus SHALL maintain a notification queue using BullMQ for guaranteed delivery of critical events (emergency alerts, panic button, smoke detection) even if the target client is temporarily disconnected.
+8. WHEN a client reconnects after disconnection, THE Realtime_Bus SHALL deliver any queued critical events that occurred during the disconnection period (up to 1 hour of event history).
+9. THE Realtime_Bus SHALL support WebSocket heartbeat with 30-second ping/pong intervals and automatically disconnect clients that fail to respond to 3 consecutive pings.
+10. THE Realtime_Bus SHALL handle connection scaling to support at least 500 concurrent WebSocket connections per tenant without message delivery latency exceeding 2 seconds.
+11. IF the Redis pub/sub connection is lost, THEN THE Realtime_Bus SHALL attempt reconnection with exponential backoff and buffer events locally for up to 30 seconds before discarding.
+12. THE Realtime_Bus SHALL expose connection metrics: active connections per tenant, message throughput, average delivery latency, and failed delivery count.
+
+### Requirement 41: Security and Privacy for IoT Data
+
+**User Story:** As a Home_Owner, I want my private smart home data to be protected from unauthorized access, so that only I can see my device controls and personal device events while security-relevant events are shared appropriately.
+
+#### Acceptance Criteria
+
+1. THE Platform SHALL classify all Device_Events into two categories: Shared_Security_Event (accessible by Ketua_RT, Pengurus, Security_Guard) and Private_Home_Event (accessible only by Home_Owner).
+2. THE Platform SHALL classify the following as Shared_Security_Events: panic_button_pressed, smoke_detected, gate_open_too_long, alarm_triggered, emergency_alert, and motion_detection_alert (during armed hours only).
+3. THE Platform SHALL classify the following as Private_Home_Events: smart_lock_opened, smart_switch_toggled, lighting_changed, device_online, device_offline (for non-security devices), and battery_low (for non-security devices).
+4. THE Platform SHALL validate device ownership on every API request to `/api/iot/devices/{deviceId}` and `/api/iot/commands`, ensuring the requesting user is the Home_Owner of the Household where the device is registered.
+5. IF a user who is not the Home_Owner attempts to access a Private_Home_Event or send a command to a private device, THEN THE Platform SHALL reject the request with error code `IOT_DEVICE_ACCESS_DENIED` and HTTP status 403.
+6. THE Platform SHALL allow Ketua_RT and Security_Guard to view Shared_Security_Events from any device within the tenant WITHOUT exposing the device's private controls, configuration, or Private_Home_Events.
+7. THE Platform SHALL encrypt all device credentials, stream URLs, and sensitive device metadata at rest using AES-256 encryption.
+8. THE Platform SHALL enforce API rate limiting on IoT command endpoints: maximum 30 commands per minute per device to prevent abuse.
+9. THE Platform SHALL maintain a separate access log for all IoT device access attempts (successful and denied) with user_id, device_id, action, result, and timestamp.
+10. WHEN a device ownership transfer occurs (e.g., resident moves out), THE Platform SHALL revoke all previous owner's access to the device and its event history immediately.
+
+### Requirement 42: Security Maps and GIS
+
+**User Story:** As a Ketua_RT, I want interactive maps showing security-related information (incidents, CCTV locations, panic alerts, gates, patrol routes), so that I can visualize the security landscape of the community.
+
+#### Acceptance Criteria
+
+1. THE Map_System SHALL display an integrated security map layer showing: incident locations (color-coded by severity), CCTV camera positions (with online/offline status), panic alert locations, gate positions (with open/close status), and patrol routes with guard positions.
+2. THE Map_System SHALL support toggling individual map layers (incidents, CCTV, panic alerts, gates, patrols) on and off independently.
+3. THE Map_System SHALL use Leaflet or Mapbox for map rendering with support for custom markers, polylines (patrol routes), and real-time position updates.
+4. WHEN a new security event occurs (incident created, panic alert triggered, gate opened), THE Map_System SHALL display the event on the map in realtime via WebSocket without page refresh.
+5. THE Map_System SHALL support clicking on map markers to display detailed information: incident details, camera live preview thumbnail, gate status history, or patrol guard information.
+6. THE Map_System SHALL support geofencing visualization where alarm zones and patrol areas are displayed as colored polygons on the map.
+7. THE Map_System SHALL provide a heatmap view showing incident density over a configurable time period (last 7 days, 30 days, 90 days).
+8. THE Map_System SHALL restrict security map access to users with Ketua_RT, Pengurus, or Security_Guard roles within the tenant.
+
+### Requirement 43: Enhanced Notification System for Security
+
+**User Story:** As a Ketua_RT, I want security notifications to be delivered through multiple channels (push, WhatsApp, SMS, email, siren, dashboard) with escalation support, so that critical alerts reach the right people through the most effective channel.
+
+#### Acceptance Criteria
+
+1. THE Notification_Engine SHALL support the following notification channels for security events: push notification, WhatsApp (via API integration), SMS (via API integration), email, realtime dashboard alert, and siren activation.
+2. WHEN a critical security event occurs (panic_button_pressed, smoke_detected, emergency_alert), THE Notification_Engine SHALL dispatch notifications through ALL configured channels simultaneously to ensure delivery.
+3. THE Notification_Engine SHALL support notification escalation tiers: Tier 1 (Security_Guard, immediate), Tier 2 (Ketua_RT, after 5 minutes if unacknowledged), Tier 3 (emergency contacts, after 15 minutes if unacknowledged).
+4. WHEN a notification is acknowledged by any recipient, THE Notification_Engine SHALL stop further escalation for that specific event.
+5. THE Notification_Engine SHALL support configurable notification preferences per user: which channels to use, quiet hours (during which only critical alerts are delivered), and event type filters.
+6. THE Notification_Engine SHALL maintain delivery status tracking for each notification: sent, delivered, read, failed, with timestamps for each status transition.
+7. IF a notification delivery fails on one channel, THEN THE Notification_Engine SHALL attempt delivery on the next configured channel as fallback and log the failure with error code `NOTIFICATION_CHANNEL_FAILED`.
+8. THE Notification_Engine SHALL enforce rate limiting on non-critical notifications: maximum 10 notifications per user per hour for non-critical events to prevent notification fatigue.
+9. THE Notification_Engine SHALL support WhatsApp message templates for security alerts with pre-approved template messages containing: alert type, location, timestamp, and action required.
+10. WHEN a notification is dispatched, delivered, or fails, THE Audit_Logger SHALL record the event with notification ID, channel, recipient, status, and timestamp.
+
+### Requirement 44: IoT Device Health and Observability
+
+**User Story:** As a developer, I want comprehensive health monitoring and observability for all IoT devices and integrations, so that device failures are detected quickly and system reliability is maintained.
+
+#### Acceptance Criteria
+
+1. THE IoT_Gateway SHALL monitor device health by tracking: online/offline status, last heartbeat timestamp, battery level (for battery-powered devices), signal strength, and error count.
+2. THE IoT_Gateway SHALL emit device health metrics to the observability stack (OpenTelemetry) including: device_online_count, device_offline_count, command_success_rate, command_latency_p95, webhook_processing_latency, and token_refresh_count.
+3. WHEN a device's battery level drops below 20%, THE IoT_Gateway SHALL emit a `battery_low` event and notify the Home_Owner via the Notification_Engine.
+4. THE IoT_Gateway SHALL maintain a device status dashboard showing: total devices per tenant, online/offline ratio, devices with low battery, devices with high error rates, and last synchronization timestamp.
+5. THE IoT_Gateway SHALL implement health check endpoints at `/api/iot/health` returning: Tuya Cloud API connectivity status, Redis connectivity, WebSocket server status, and device synchronization lag.
+6. IF the Tuya Cloud API becomes unreachable, THEN THE IoT_Gateway SHALL activate circuit breaker, queue pending commands for up to 5 minutes, and notify Ketua_RT with error code `IOT_CLOUD_UNAVAILABLE`.
+7. THE IoT_Gateway SHALL log all Tuya API interactions with: request_id, endpoint, method, response_status, latency_ms, and correlation_id for distributed tracing.
+8. THE IoT_Gateway SHALL expose Prometheus-compatible metrics for: tuya_api_requests_total, tuya_api_errors_total, tuya_api_latency_seconds, device_events_processed_total, and websocket_connections_active.

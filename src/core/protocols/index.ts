@@ -16,3 +16,15 @@ export type {
   NotificationQueueProtocol,
   NotificationInput,
 } from './NotificationQueueProtocol';
+export type { WebSocketProtocol } from './WebSocketProtocol';
+export type { RealtimeBusProtocol } from './RealtimeBusProtocol';
+export type { IoTGatewayProtocol } from './IoTGatewayProtocol';
+export type {
+  CircuitBreakerProtocol,
+  CircuitBreakerState,
+} from './CircuitBreakerProtocol';
+export type {
+  AutomationEngineProtocol,
+  RuleEvaluationContext,
+  RuleExecutionResult,
+} from './AutomationEngineProtocol';

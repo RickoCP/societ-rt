@@ -1075,3 +1075,956 @@ Each correctness property from the design document gets a dedicated property-bas
 - File upload with invalid MIME types and oversized files
 - Open redirect prevention
 - XSS prevention in user-generated content
+
+---
+
+## Architecture Updates (Requirements 31-44)
+
+### Extended High-Level Architecture
+
+```mermaid
+graph TB
+    subgraph Client["Client - Browser / PWA"]
+        UI[Next.js App - RSC + Client Components]
+        WSClient[WebSocket Client]
+    end
+
+    subgraph NextJS["Next.js Server"]
+        AppRouter[App Router - Routing Layer]
+        Middleware[Auth + Tenant Middleware]
+        RouteHandlers[Route Handlers - BFF Layer]
+        WSServer[WebSocket Server]
+    end
+
+    subgraph Core["Core Layer - Business Logic"]
+        UseCases[Use Cases]
+        Entities[Domain Entities]
+        RepoInterfaces[Repository Interfaces]
+        Protocols[Protocols / Abstractions]
+    end
+
+    subgraph Infra["Infrastructure Layer"]
+        RepoImpl[Repository Implementations]
+        DIContainer[Awilix DI Container]
+        Adapters[Storage / Cache / Queue Adapters]
+        RealtimeBus[Realtime Bus - Redis Pub/Sub]
+        AutomationEngine[Automation Engine]
+    end
+
+    subgraph External["External Services"]
+        PostgreSQL[(PostgreSQL)]
+        Redis[(Redis + Pub/Sub)]
+        BullMQ[BullMQ Workers]
+        S3[S3-Compatible Storage]
+        PaymentGW[Midtrans / Xendit]
+        PushService[Web Push Service]
+        TuyaCloud[Tuya IoT Cloud]
+        WhatsAppAPI[WhatsApp Business API]
+        SMSAPI[SMS Gateway]
+    end
+
+    UI --> AppRouter
+    WSClient <--> WSServer
+    AppRouter --> Middleware
+    Middleware --> RouteHandlers
+    RouteHandlers --> UseCases
+    UseCases --> RepoInterfaces
+    RepoInterfaces -.-> RepoImpl
+    RepoImpl --> PostgreSQL
+    RepoImpl --> Redis
+    RepoImpl --> S3
+    Adapters --> BullMQ
+    Adapters --> PaymentGW
+    Adapters --> PushService
+    Adapters --> TuyaCloud
+    Adapters --> WhatsAppAPI
+    Adapters --> SMSAPI
+    WSServer --> RealtimeBus
+    RealtimeBus --> Redis
+    TuyaCloud -->|Webhooks| RouteHandlers
+    AutomationEngine --> RealtimeBus
+    AutomationEngine --> UseCases
+    DIContainer -.-> RepoImpl
+    DIContainer -.-> UseCases
+    DIContainer -.-> Adapters
+    DIContainer -.-> AutomationEngine
+```
+
+### New External Services
+
+| Service | Purpose | Integration Method |
+|---------|---------|-------------------|
+| **Tuya IoT Cloud** | Smart home device management, commands, webhooks | REST API + OAuth 2.0 + HMAC-SHA256 webhooks |
+| **WebSocket Server** | Realtime event delivery to connected clients | ws library on separate port or Socket.io |
+| **Redis Pub/Sub** | Cross-instance event distribution | ioredis pub/sub channels |
+| **WhatsApp Business API** | Critical security alert delivery | REST API with template messages |
+| **SMS Gateway** | Fallback notification channel | REST API |
+| **WebRTC (TURN/STUN)** | Low-latency CCTV live streaming | Browser-native WebRTC |
+
+---
+
+## New Domain Modules (Requirements 31-44)
+
+Added to `src/core/domains/`:
+
+```
+src/core/domains/
+ ... (existing modules)
+ securityCenter/    # Security dashboard, neighborhood alerts, analytics
+ incident/          # Incident lifecycle management, escalation
+ gate/              # Gate monitoring, sensors, duration tracking
+ cctv/              # CCTV streams, snapshots, motion detection
+ patrol/            # Enhanced patrol with GPS, routes, checkpoints
+ alarm/             # Smart alarm/siren management, zones, scheduling
+ societHome/        # Device pairing, home dashboard, device commands
+ iot/               # Tuya integration, device registry, webhooks
+ automation/        # Rule engine, conditions, actions, chaining
+ realtimeBus/       # WebSocket, Redis pub/sub, event routing
+```
+
+---
+
+## New Interfaces and Protocols
+
+```typescript
+// WebSocket connection management
+export interface WebSocketProtocol {
+  broadcast(tenantId: string, channel: string, event: RealtimeEvent): Promise<void>;
+  sendToUser(userId: string, event: RealtimeEvent): Promise<void>;
+  sendToRole(tenantId: string, role: UserRole, event: RealtimeEvent): Promise<void>;
+  getActiveConnections(tenantId: string): Promise<number>;
+  disconnectUser(userId: string): Promise<void>;
+}
+
+// Realtime event bus (Redis pub/sub abstraction)
+export interface RealtimeBusProtocol {
+  publish(channel: string, event: RealtimeEvent): Promise<void>;
+  subscribe(channel: string, handler: (event: RealtimeEvent) => void): Promise<void>;
+  unsubscribe(channel: string): Promise<void>;
+  getChannelSubscriberCount(channel: string): Promise<number>;
+}
+
+// IoT device gateway (Tuya Cloud abstraction)
+export interface IoTGatewayProtocol {
+  pairDevice(tenantId: string, householdId: string, pairingToken: string): Promise<DomainResult<IoTDevice>>;
+  sendCommand(deviceId: string, command: DeviceCommand): Promise<DomainResult<CommandResult>>;
+  syncDeviceStatus(deviceId: string): Promise<DomainResult<DeviceStatus>>;
+  getDeviceList(householdId: string): Promise<DomainResult<IoTDevice[]>>;
+  unpairDevice(deviceId: string): Promise<DomainResult<void>>;
+  validateWebhookSignature(payload: string, signature: string, timestamp: string): boolean;
+  refreshToken(): Promise<DomainResult<void>>;
+}
+
+// Automation rule engine
+export interface AutomationEngineProtocol {
+  evaluateRule(rule: AutomationRule, event: DeviceEvent): Promise<DomainResult<boolean>>;
+  executeActions(rule: AutomationRule, triggerEvent: DeviceEvent): Promise<DomainResult<AutomationExecution>>;
+  validateRuleDefinition(rule: CreateAutomationRuleInput): DomainResult<void>;
+  getActiveRulesForEvent(tenantId: string, eventType: string): Promise<DomainResult<AutomationRule[]>>;
+}
+
+// Circuit breaker for external API calls
+export interface CircuitBreakerProtocol {
+  execute<T>(operation: () => Promise<T>): Promise<DomainResult<T>>;
+  getState(): 'closed' | 'open' | 'half-open';
+  reset(): void;
+}
+
+// Realtime event types
+export interface RealtimeEvent {
+  id: string;
+  tenantId: string;
+  channel: string;
+  eventType: string;
+  payload: Record<string, unknown>;
+  privacy: 'shared' | 'private';
+  targetHouseholdId?: string;
+  timestamp: Date;
+}
+
+export type DeviceCommand = {
+  deviceId: string;
+  commandType: string;
+  params: Record<string, unknown>;
+  requestedBy: string;
+};
+
+export type CommandResult = {
+  success: boolean;
+  deviceId: string;
+  commandType: string;
+  responseTime: number;
+  error?: string;
+};
+```
+
+---
+
+## New Entity Definitions (Requirements 31-44)
+
+```typescript
+// Incident (Requirement 32)
+export interface Incident {
+  id: string;
+  tenantId: string;
+  title: string;
+  description: string;
+  location: string;
+  latitude: number | null;
+  longitude: number | null;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  category: 'theft' | 'vandalism' | 'trespassing' | 'fire' | 'flood'
+    | 'suspicious_activity' | 'noise_complaint' | 'device_alert' | 'other';
+  status: 'open' | 'acknowledged' | 'in_progress' | 'escalated' | 'resolved' | 'closed';
+  reportedBy: string;
+  assignedTo: string | null;
+  escalatedAt: Date | null;
+  resolvedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// IncidentLog (Requirement 32)
+export interface IncidentLog {
+  id: string;
+  incidentId: string;
+  status: Incident['status'];
+  notes: string | null;
+  actorId: string;
+  timestamp: Date;
+}
+
+// Gate (Requirement 33)
+export interface Gate {
+  id: string;
+  tenantId: string;
+  name: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  deviceId: string;
+  status: 'open' | 'closed' | 'offline';
+  lastStateChange: Date;
+  createdAt: Date;
+}
+
+// GateEvent (Requirement 33)
+export interface GateEvent {
+  id: string;
+  gateId: string;
+  tenantId: string;
+  state: 'open' | 'closed';
+  duration: number; // seconds of previous state
+  timestamp: Date;
+}
+
+// CctvCamera (Requirement 34)
+export interface CctvCamera {
+  id: string;
+  tenantId: string;
+  name: string;
+  rtspUrl: string; // encrypted at rest
+  location: string;
+  latitude: number;
+  longitude: number;
+  resolution: string;
+  status: 'online' | 'offline' | 'motion_detected';
+  lastOnline: Date;
+  createdAt: Date;
+}
+
+// CctvSnapshot (Requirement 34)
+export interface CctvSnapshot {
+  id: string;
+  cameraId: string;
+  tenantId: string;
+  fileUrl: string;
+  triggerType: 'manual' | 'motion' | 'scheduled';
+  timestamp: Date;
+}
+
+// PatrolRoute (Requirement 35)
+export interface PatrolRoute {
+  id: string;
+  tenantId: string;
+  name: string;
+  checkpoints: { latitude: number; longitude: number; label: string }[];
+  estimatedDuration: number; // minutes
+  createdBy: string;
+  createdAt: Date;
+}
+
+// PatrolSession (Requirement 35)
+export interface PatrolSession {
+  id: string;
+  tenantId: string;
+  routeId: string;
+  guardId: string;
+  status: 'active' | 'completed' | 'abandoned';
+  startedAt: Date;
+  completedAt: Date | null;
+  checkpointsVisited: number;
+  distanceTraveled: number; // meters
+}
+
+// PatrolCheckpointVisit (Requirement 35)
+export interface PatrolCheckpointVisit {
+  id: string;
+  sessionId: string;
+  checkpointIndex: number;
+  latitude: number;
+  longitude: number;
+  visitedAt: Date;
+}
+
+// AlarmDevice (Requirement 36)
+export interface AlarmDevice {
+  id: string;
+  tenantId: string;
+  name: string;
+  location: string;
+  deviceId: string;
+  zones: string[];
+  scheduleArm: string | null; // HH:mm format
+  scheduleDisarm: string | null; // HH:mm format
+  status: 'armed' | 'disarmed' | 'triggered' | 'offline';
+  createdAt: Date;
+}
+
+// AlarmEvent (Requirement 36)
+export interface AlarmEvent {
+  id: string;
+  alarmDeviceId: string;
+  tenantId: string;
+  triggerSource: 'manual' | 'automation' | 'schedule';
+  triggerType: string;
+  duration: number; // seconds
+  activatedAt: Date;
+  deactivatedAt: Date | null;
+}
+
+// IoTDevice (Requirements 37, 38)
+export interface IoTDevice {
+  id: string;
+  tenantId: string;
+  householdId: string;
+  tuyaDeviceId: string;
+  deviceType: 'panic_button' | 'smart_siren' | 'smart_lock' | 'cctv'
+    | 'motion_sensor' | 'smoke_detector' | 'door_sensor' | 'gate_sensor'
+    | 'smart_switch' | 'smart_lighting';
+  name: string;
+  onlineStatus: 'online' | 'offline';
+  batteryLevel: number | null;
+  lastSeen: Date;
+  metadata: Record<string, unknown>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// DeviceEvent (Requirements 37, 38, 40)
+export interface DeviceEvent {
+  id: string;
+  deviceId: string;
+  tenantId: string;
+  eventType: 'panic_button_pressed' | 'gate_open' | 'gate_closed'
+    | 'motion_detected' | 'smoke_detected' | 'alarm_triggered'
+    | 'smart_lock_opened' | 'cctv_motion_detected' | 'device_online'
+    | 'device_offline' | 'battery_low' | 'emergency_alert'
+    | 'smart_switch_toggled' | 'lighting_changed' | 'gate_open_too_long'
+    | 'motion_detection_alert';
+  payload: Record<string, unknown>;
+  isSharedSecurity: boolean;
+  processedAt: Date | null;
+  createdAt: Date;
+}
+
+// AutomationRule (Requirement 39)
+export interface AutomationRule {
+  id: string;
+  tenantId: string;
+  name: string;
+  triggerEventType: DeviceEvent['eventType'];
+  conditions: AutomationCondition[];
+  actions: AutomationAction[];
+  enabled: boolean;
+  scheduleStart: string | null; // HH:mm
+  scheduleEnd: string | null; // HH:mm
+  maxChainDepth: number;
+  executionCount: number;
+  lastExecutedAt: Date | null;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AutomationCondition {
+  field: string;
+  operator: 'equals' | 'not_equals' | 'greater_than' | 'less_than'
+    | 'time_between' | 'duration_exceeds';
+  value: string | number;
+}
+
+export interface AutomationAction {
+  type: 'create_incident' | 'notify_security_guard' | 'notify_ketua_rt'
+    | 'notify_emergency_contact' | 'trigger_siren' | 'capture_cctv_snapshot'
+    | 'broadcast_neighborhood_alert' | 'send_push_notification';
+  params: Record<string, unknown>;
+}
+
+// AutomationExecution (Requirement 39)
+export interface AutomationExecution {
+  id: string;
+  ruleId: string;
+  tenantId: string;
+  triggerEvent: DeviceEvent;
+  conditionsEvaluated: boolean;
+  actionsExecuted: string[];
+  durationMs: number;
+  status: 'success' | 'partial_failure' | 'failure';
+  error: string | null;
+  executedAt: Date;
+}
+
+// Home (Requirement 37)
+export interface Home {
+  id: string;
+  tenantId: string;
+  householdId: string;
+  ownerId: string;
+  createdAt: Date;
+}
+```
+
+---
+
+## New Database Indexes (Requirements 31-44)
+
+```sql
+-- Incidents
+CREATE INDEX idx_incidents_tenant_status ON incidents(tenant_id, status);
+CREATE INDEX idx_incidents_tenant_severity ON incidents(tenant_id, severity);
+CREATE INDEX idx_incidents_tenant_created ON incidents(tenant_id, created_at);
+CREATE INDEX idx_incident_logs_incident ON incident_logs(incident_id, timestamp);
+
+-- Gates
+CREATE INDEX idx_gates_tenant_status ON gates(tenant_id, status);
+CREATE INDEX idx_gate_events_gate_timestamp ON gate_events(gate_id, timestamp);
+CREATE INDEX idx_gate_events_tenant ON gate_events(tenant_id, timestamp);
+
+-- CCTV
+CREATE INDEX idx_cctv_cameras_tenant_status ON cctv_cameras(tenant_id, status);
+CREATE INDEX idx_cctv_snapshots_camera ON cctv_snapshots(camera_id, timestamp);
+CREATE INDEX idx_cctv_snapshots_tenant ON cctv_snapshots(tenant_id, timestamp);
+
+-- Patrol
+CREATE INDEX idx_patrol_routes_tenant ON patrol_routes(tenant_id);
+CREATE INDEX idx_patrol_sessions_tenant_status ON patrol_sessions(tenant_id, status);
+CREATE INDEX idx_patrol_sessions_guard ON patrol_sessions(guard_id, started_at);
+CREATE INDEX idx_patrol_checkpoint_visits_session ON patrol_checkpoint_visits(session_id);
+
+-- Alarm
+CREATE INDEX idx_alarm_devices_tenant_status ON alarm_devices(tenant_id, status);
+CREATE INDEX idx_alarm_events_device ON alarm_events(alarm_device_id, activated_at);
+CREATE INDEX idx_alarm_events_tenant ON alarm_events(tenant_id, activated_at);
+
+-- IoT Devices
+CREATE INDEX idx_iot_devices_tenant_household ON iot_devices(tenant_id, household_id);
+CREATE INDEX idx_iot_devices_tenant_status ON iot_devices(tenant_id, online_status);
+CREATE INDEX idx_iot_devices_tuya_id ON iot_devices(tuya_device_id);
+CREATE INDEX idx_device_events_device ON device_events(device_id, created_at);
+CREATE INDEX idx_device_events_tenant_type ON device_events(tenant_id, event_type, created_at);
+CREATE INDEX idx_device_events_shared ON device_events(tenant_id, is_shared_security, created_at);
+
+-- Automation
+CREATE INDEX idx_automation_rules_tenant_enabled ON automation_rules(tenant_id, enabled);
+CREATE INDEX idx_automation_rules_trigger ON automation_rules(tenant_id, trigger_event_type, enabled);
+CREATE INDEX idx_automation_executions_rule ON automation_executions(rule_id, executed_at);
+CREATE INDEX idx_automation_executions_tenant ON automation_executions(tenant_id, executed_at);
+
+-- Homes
+CREATE INDEX idx_homes_tenant_household ON homes(tenant_id, household_id);
+CREATE INDEX idx_homes_owner ON homes(owner_id);
+```
+
+---
+
+## New Caching Strategy Entries (Requirements 31-44)
+
+| Key Pattern | TTL | Purpose |
+|------------|-----|---------|
+| `security_dashboard:{tenantId}` | 10 sec | Security center dashboard metrics |
+| `gate_status:{tenantId}` | 5 sec | Current gate statuses for tenant |
+| `device_status:{deviceId}` | 30 sec | IoT device online/offline status |
+| `device_list:{householdId}` | 60 sec | Devices for a household |
+| `automation_rules:{tenantId}:{eventType}` | 5 min | Active rules for event type |
+| `patrol_active:{tenantId}` | 10 sec | Active patrol sessions |
+| `cctv_status:{tenantId}` | 10 sec | Camera online/offline statuses |
+| `alarm_status:{tenantId}` | 10 sec | Alarm device statuses |
+| `circuit_breaker:tuya` | N/A | Circuit breaker state (in-memory) |
+| `ws_connections:{tenantId}` | 30 sec | Active WebSocket connection count |
+| `escalation_timer:{incidentId}` | 15 min | Incident escalation countdown |
+| `notification_ack:{eventId}` | 1 hour | Notification acknowledgment status |
+
+---
+
+## Realtime Architecture (Requirements 40, 31)
+
+### WebSocket Server Architecture
+
+```mermaid
+graph TB
+    subgraph Clients["Connected Clients"]
+        C1[Security Guard - WS]
+        C2[Ketua RT - WS]
+        C3[Home Owner - WS]
+    end
+
+    subgraph WSLayer["WebSocket Layer"]
+        WSServer[WebSocket Server]
+        AuthHandler[JWT Auth on Handshake]
+        ChannelRouter[Channel Router]
+        PrivacyFilter[Privacy Filter]
+    end
+
+    subgraph PubSub["Redis Pub/Sub"]
+        SecurityCh[security_events:{tenantId}]
+        DeviceCh[device_events:{tenantId}]
+        IncidentCh[incident_updates:{tenantId}]
+        GateCh[gate_events:{tenantId}]
+        CctvCh[cctv_events:{tenantId}]
+        PatrolCh[patrol_events:{tenantId}]
+        AlarmCh[alarm_events:{tenantId}]
+    end
+
+    subgraph Queue["Guaranteed Delivery"]
+        BullMQ[BullMQ - Critical Events Queue]
+        ReplayBuffer[Event Replay Buffer - 1hr]
+    end
+
+    C1 <--> WSServer
+    C2 <--> WSServer
+    C3 <--> WSServer
+    WSServer --> AuthHandler
+    AuthHandler --> ChannelRouter
+    ChannelRouter --> PrivacyFilter
+    PrivacyFilter --> SecurityCh
+    PrivacyFilter --> DeviceCh
+    PrivacyFilter --> IncidentCh
+    PrivacyFilter --> GateCh
+    PrivacyFilter --> CctvCh
+    PrivacyFilter --> PatrolCh
+    PrivacyFilter --> AlarmCh
+    SecurityCh --> BullMQ
+    BullMQ --> ReplayBuffer
+```
+
+### Event Routing Logic
+
+```typescript
+// Event classification and routing
+const SHARED_SECURITY_EVENTS = [
+  'panic_button_pressed',
+  'smoke_detected',
+  'gate_open_too_long',
+  'alarm_triggered',
+  'emergency_alert',
+  'motion_detection_alert',
+] as const;
+
+const PRIVATE_HOME_EVENTS = [
+  'smart_lock_opened',
+  'smart_switch_toggled',
+  'lighting_changed',
+  'device_online',
+  'device_offline',
+  'battery_low',
+] as const;
+
+// Routing decision
+function routeEvent(event: DeviceEvent): EventRouting {
+  if (SHARED_SECURITY_EVENTS.includes(event.eventType)) {
+    return {
+      privacy: 'shared',
+      targetRoles: ['Ketua_RT', 'Pengurus', 'Security_Guard'],
+      channels: ['security_events', 'device_events'],
+    };
+  }
+  return {
+    privacy: 'private',
+    targetHouseholdId: event.householdId,
+    channels: ['device_events'],
+  };
+}
+```
+
+### Tenant Isolation on Channels
+
+- Each Redis pub/sub channel is namespaced by 	enantId: {channel}:{tenantId}
+- WebSocket connections are tagged with 	enantId and userId on handshake
+- Channel subscriptions are validated against the authenticated tenant
+- Cross-tenant message delivery is impossible by design
+
+### Privacy Enforcement on Event Delivery
+
+1. Event arrives at Realtime Bus
+2. Event is classified as shared or private
+3. If shared: broadcast to all Security_Guard, Pengurus, Ketua_RT connections in tenant
+4. If private: deliver ONLY to WebSocket connections where userId matches the Home_Owner of the device's household
+5. Privacy filter runs on every message before delivery  no bypass path exists
+
+### Reconnection and Event Replay
+
+- Critical events (panic, smoke, emergency) are queued in BullMQ with 1-hour TTL
+- On client reconnect, server checks for queued events since last disconnect timestamp
+- Non-critical events are not replayed (client fetches latest state via REST)
+
+### Connection Scaling
+
+- Target: 500 concurrent connections per tenant
+- WebSocket server runs as a separate process (not in Next.js request lifecycle)
+- Redis pub/sub enables horizontal scaling across multiple WS server instances
+- Heartbeat: 30-second ping/pong, disconnect after 3 missed pongs
+
+---
+
+## Tuya IoT Integration Architecture (Requirements 38, 44)
+
+### OAuth Token Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant App as IoT Gateway
+    participant Redis as Redis Cache
+    participant Tuya as Tuya Cloud
+
+    App->>Redis: Check cached access_token
+    alt Token valid
+        Redis-->>App: Return cached token
+    else Token expired or missing
+        App->>Tuya: POST /v1.0/token (client_credentials)
+        Tuya-->>App: access_token + refresh_token + expires_in
+        App->>Redis: Cache token (TTL = expires_in - 60s)
+    end
+    App->>Tuya: API call with access_token
+```
+
+### Webhook Processing Flow
+
+```mermaid
+sequenceDiagram
+    participant Tuya as Tuya Cloud
+    participant API as Webhook Endpoint
+    participant Validator as Signature Validator
+    participant Router as Event Router
+    participant Bus as Realtime Bus
+    participant Auto as Automation Engine
+
+    Tuya->>API: POST /api/iot/webhook (payload + signature)
+    API->>Validator: Validate HMAC-SHA256 signature
+    alt Invalid signature
+        Validator-->>API: Reject
+        API-->>Tuya: 401 Unauthorized
+    end
+    Validator-->>API: Valid
+    API->>Router: Parse event, resolve tenant + device
+    Router->>Bus: Publish DeviceEvent to Realtime Bus
+    Router->>Auto: Trigger automation rule evaluation
+    Bus-->>Clients: Deliver to connected WebSocket clients
+    Auto-->>Actions: Execute matched rule actions
+```
+
+### Device Command Execution with Retry
+
+```typescript
+// Retry strategy: exponential backoff (1s, 2s, 4s), max 3 attempts
+async function executeDeviceCommand(
+  deviceId: string,
+  command: DeviceCommand,
+): Promise<DomainResult<CommandResult>> {
+  const maxRetries = 3;
+  const baseDelay = 1000; // 1 second
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const result = await iotGateway.sendCommand(deviceId, command);
+    if (result.success) return result;
+
+    if (attempt < maxRetries) {
+      const delay = baseDelay * Math.pow(2, attempt - 1); // 1s, 2s, 4s
+      await sleep(delay);
+    }
+  }
+
+  return {
+    success: false,
+    error: { type: 'technical', code: 'IOT_COMMAND_FAILED', message: '...' },
+  };
+}
+```
+
+### Circuit Breaker Pattern
+
+```mermaid
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Open: 5 consecutive failures
+    Open --> HalfOpen: 30 seconds elapsed
+    HalfOpen --> Closed: 3 successful calls
+    HalfOpen --> Open: Any failure
+```
+
+- **Closed**: All requests pass through normally
+- **Open**: All requests immediately fail with IOT_CLOUD_UNAVAILABLE, commands queued for up to 5 minutes
+- **Half-Open**: Limited requests pass through (probe), 3 successes required to close
+
+### Device Health Monitoring
+
+- Heartbeat check: every 60 seconds per device
+- Offline threshold: no status update for 120 seconds
+- Battery alert: below 20% triggers attery_low event
+- Metrics emitted to OpenTelemetry: online count, offline count, command latency p95
+
+---
+
+## Automation Engine Architecture (Requirement 39)
+
+### Rule Evaluation Pipeline
+
+```mermaid
+graph LR
+    A[Device Event Received] --> B[Find Active Rules for Event Type]
+    B --> C[Filter by Schedule Window]
+    C --> D[Evaluate Conditions]
+    D --> E{All Conditions Met?}
+    E -->|Yes| F[Execute Actions]
+    E -->|No| G[Skip Rule]
+    F --> H[Log Execution]
+    F --> I{Chain Depth < 5?}
+    I -->|Yes| J[Check for Chained Rules]
+    I -->|No| K[Stop - Max Depth Reached]
+    J --> B
+```
+
+### Condition Evaluation
+
+```typescript
+function evaluateCondition(
+  condition: AutomationCondition,
+  event: DeviceEvent,
+): boolean {
+  const fieldValue = event.payload[condition.field];
+
+  switch (condition.operator) {
+    case 'equals': return fieldValue === condition.value;
+    case 'not_equals': return fieldValue !== condition.value;
+    case 'greater_than': return Number(fieldValue) > Number(condition.value);
+    case 'less_than': return Number(fieldValue) < Number(condition.value);
+    case 'time_between': return isCurrentTimeBetween(condition.value as string);
+    case 'duration_exceeds': return Number(fieldValue) > Number(condition.value);
+    default: return false;
+  }
+}
+```
+
+### Action Execution
+
+- Actions execute sequentially within a rule
+- If one action fails, remaining actions still execute (partial failure)
+- Failed actions are logged with error details
+- Ketua_RT is notified of partial failures
+- Each execution is recorded with: rule_id, trigger_event, conditions_evaluated, actions_executed, duration_ms, status
+
+### Rule Chaining with Depth Limit
+
+- Maximum chain depth: 5 levels
+- Chain depth counter is passed through the evaluation pipeline
+- If depth >= 5, rule evaluation stops and logs a warning
+- Prevents infinite loops from circular rule dependencies
+
+### Scheduling
+
+- Rules can have scheduleStart and scheduleEnd (HH:mm format)
+- Rules outside their schedule window are skipped during evaluation
+- Schedule check happens before condition evaluation (fast path)
+
+---
+
+## Correctness Properties (Requirements 31-44)
+
+### Property 16: Device Ownership Isolation
+
+*For any* IoT device and any user, if the user is NOT the Home_Owner of the Household where the device is registered, the system SHALL reject any attempt to view device details, send commands, or access Private_Home_Events for that device with error code IOT_DEVICE_ACCESS_DENIED.
+
+**Validates: Requirements 37.6, 38.10, 41.4, 41.5**
+
+### Property 17: Event Classification Correctness
+
+*For any* DeviceEvent, the system SHALL classify it as a Shared_Security_Event if and only if its eventType is one of: panic_button_pressed, smoke_detected, gate_open_too_long, alarm_triggered, emergency_alert, or motion_detection_alert. All other event types SHALL be classified as Private_Home_Events. The classification function SHALL be deterministic and total (every event gets exactly one classification).
+
+**Validates: Requirements 41.1, 41.2, 41.3**
+
+### Property 18: Automation Rule Validation and Chain Safety
+
+*For any* automation rule definition, the system SHALL accept it if and only if: the trigger event type is a valid DeviceEvent type, all conditions reference valid operators and field types, all actions reference valid action types with required parameters, and the rule does not create a chain cycle. Additionally, *for any* rule chain execution, the system SHALL halt execution when chain depth reaches 5, preventing infinite loops.
+
+**Validates: Requirements 39.6, 39.12**
+
+### Property 19: Automation Execution Completeness
+
+*For any* automation rule with N configured actions, when the rule is triggered and conditions are met, the system SHALL attempt to execute all N actions regardless of individual action failures. The execution log SHALL record exactly which actions succeeded and which failed, and the total count of attempted actions SHALL equal N.
+
+**Validates: Requirements 39.5, 39.9**
+
+### Property 20: Gate Duration Alert Correctness
+
+*For any* gate and any configured threshold duration T, the system SHALL trigger a gate_open_too_long event if and only if the gate has been continuously open for a duration exceeding T. Gates open for duration less than or equal to T SHALL NOT trigger the alert. Gates that close before exceeding T SHALL NOT trigger the alert.
+
+**Validates: Requirements 33.3, 33.4**
+
+### Property 21: Incident Lifecycle Validity
+
+*For any* incident, the system SHALL only allow the following state transitions: open to acknowledged, open to in_progress, open to escalated, acknowledged to in_progress, acknowledged to escalated, in_progress to escalated, in_progress to resolved, escalated to in_progress, escalated to resolved, resolved to closed. Any transition not in this set SHALL be rejected.
+
+**Validates: Requirements 32.2, 32.4**
+
+### Property 22: WebSocket Tenant Isolation
+
+*For any* WebSocket client authenticated with tenant T1 and any event published to tenant T2 where T1 != T2, the client SHALL NOT receive the event. Conversely, *for any* event published to tenant T1, all connected clients authenticated with tenant T1 (with appropriate role/ownership) SHALL receive the event.
+
+**Validates: Requirements 40.4**
+
+### Property 23: Webhook Signature Validation
+
+*For any* incoming Tuya webhook request, the system SHALL accept the request if and only if the HMAC-SHA256 signature computed from the request payload and the stored client secret matches the provided signature header. Requests with invalid, missing, or tampered signatures SHALL be rejected with HTTP 401.
+
+**Validates: Requirements 38.4, 38.11**
+
+### Property 24: IoT Command Retry Correctness
+
+*For any* device command that fails, the system SHALL retry exactly 3 times with exponential backoff delays of 1 second, 2 seconds, and 4 seconds respectively. After the third failure, the system SHALL return error code IOT_COMMAND_FAILED without further retries. If any retry succeeds, the system SHALL return success immediately without further retries.
+
+**Validates: Requirements 38.7**
+
+### Property 25: Alarm Zone Targeting
+
+*For any* zone-targeted alarm activation request specifying zone Z, the system SHALL activate only siren devices that are associated with zone Z. Siren devices associated with other zones SHALL NOT be activated. The set of activated sirens SHALL be exactly the set of sirens whose zone list contains Z.
+
+**Validates: Requirements 36.6**
+
+### Property 26: Patrol Checkpoint Verification
+
+*For any* Security_Guard GPS position and any checkpoint on their assigned route, the system SHALL record a checkpoint visit if and only if the Haversine distance between the guard's position and the checkpoint coordinates is less than or equal to 50 meters. Positions beyond 50 meters SHALL NOT trigger a checkpoint visit.
+
+**Validates: Requirements 35.4**
+
+### Property 27: Notification Escalation Correctness
+
+*For any* security event with escalation tiers, if a notification is acknowledged by any recipient at any tier, the system SHALL immediately stop all further escalation for that event. No higher-tier notifications SHALL be dispatched after acknowledgment. Conversely, if no acknowledgment is received within the tier timeout, escalation SHALL proceed to the next tier.
+
+**Validates: Requirements 43.3, 43.4**
+
+### Property 28: CCTV Credential Encryption
+
+*For any* CCTV camera registration containing RTSP credentials, the stored value in the database SHALL NOT equal the plaintext input. The stored value SHALL be an AES-256 encrypted ciphertext that, when decrypted with the correct key, produces the original plaintext. Reading credentials from the database without decryption SHALL never expose usable RTSP URLs.
+
+**Validates: Requirements 34.10, 41.7**
+
+### Property 29: Circuit Breaker State Machine
+
+*For any* sequence of Tuya API call results, the circuit breaker SHALL transition from Closed to Open after exactly 5 consecutive failures, from Open to Half-Open after 30 seconds of no requests, from Half-Open to Closed after 3 consecutive successes, and from Half-Open back to Open after any single failure. No other state transitions SHALL occur.
+
+**Validates: Requirements 38.13**
+
+### Property 30: Private Event Privacy
+
+*For any* Private_Home_Event (smart_lock_opened, smart_switch_toggled, lighting_changed, device_online, device_offline, battery_low for non-security devices), the Realtime Bus SHALL deliver the event ONLY to WebSocket connections authenticated as the Home_Owner of the device's Household. The event SHALL NOT be delivered to any Ketua_RT, Pengurus, or Security_Guard connection, regardless of their role privileges.
+
+**Validates: Requirements 37.9, 40.5**
+
+---
+
+## Updated Error Handling (Requirements 31-44)
+
+### New Error Codes
+
+| Module | Error Code | Type | HTTP Status | Description |
+|--------|-----------|------|-------------|-------------|
+| IoT | IOT_COMMAND_FAILED | technical | 502 | Device command failed after all retries |
+| IoT | IOT_DEVICE_ACCESS_DENIED | authorization | 403 | User is not the device owner |
+| IoT | IOT_WEBHOOK_SIGNATURE_INVALID | authentication | 401 | Webhook HMAC signature mismatch |
+| IoT | IOT_CLOUD_UNAVAILABLE | technical | 503 | Tuya Cloud API unreachable (circuit open) |
+| IoT | IOT_DEVICE_OFFLINE | business | 409 | Device is offline, command cannot be delivered |
+| IoT | IOT_PAIRING_FAILED | technical | 502 | Device pairing process failed |
+| IoT | IOT_RATE_LIMIT_EXCEEDED | business | 429 | Too many commands per device per minute |
+| Security | INCIDENT_INVALID_TRANSITION | business | 409 | Invalid incident status transition |
+| Security | INCIDENT_ALREADY_RESOLVED | business | 409 | Cannot modify a resolved/closed incident |
+| CCTV | CCTV_CAMERA_OFFLINE | business | 409 | Camera is offline, cannot capture snapshot |
+| CCTV | CCTV_STREAM_UNAVAILABLE | technical | 503 | RTSP stream not accessible |
+| Alarm | ALARM_DEVICE_UNRESPONSIVE | technical | 502 | Siren did not respond to activation |
+| Alarm | ALARM_ZONE_NOT_FOUND | not_found | 404 | Specified alarm zone does not exist |
+| Automation | AUTOMATION_RULE_INVALID | validation | 400 | Rule definition has invalid structure |
+| Automation | AUTOMATION_RULE_LIMIT_EXCEEDED | business | 409 | Tenant has reached 50 active rules |
+| Automation | AUTOMATION_CHAIN_DEPTH_EXCEEDED | business | 409 | Rule chain exceeded max depth of 5 |
+| Patrol | PATROL_ROUTE_NOT_FOUND | not_found | 404 | Patrol route does not exist |
+| Patrol | PATROL_ALREADY_ACTIVE | business | 409 | Guard already has an active patrol session |
+| Gate | GATE_SENSOR_OFFLINE | business | 409 | Gate sensor is not responding |
+| Notification | NOTIFICATION_CHANNEL_FAILED | technical | 502 | Notification channel delivery failed |
+| WebSocket | WS_AUTH_FAILED | authentication | 401 | WebSocket handshake JWT validation failed |
+| WebSocket | WS_TENANT_MISMATCH | authorization | 403 | Client attempted cross-tenant subscription |
+
+---
+
+## Updated Testing Strategy (Requirements 31-44)
+
+### New Property Test Focus (P16-P30)
+
+| Property | Test Strategy |
+|----------|--------------|
+| P16: Device Ownership Isolation | Generate random users + devices + households, verify access control decisions |
+| P17: Event Classification | Generate random DeviceEvents with all event types, verify shared/private classification |
+| P18: Automation Rule Validation | Generate random rule definitions (valid/invalid), verify acceptance/rejection + chain depth halt |
+| P19: Automation Execution Completeness | Generate random action lists with injected failures, verify all actions attempted |
+| P20: Gate Duration Alert | Generate random gate open durations + thresholds, verify alert triggers exactly at threshold |
+| P21: Incident Lifecycle | Generate random status transition sequences, verify only valid transitions succeed |
+| P22: WebSocket Tenant Isolation | Generate random multi-tenant event scenarios, verify delivery scoping |
+| P23: Webhook Signature Validation | Generate random payloads + valid/invalid HMAC signatures, verify accept/reject |
+| P24: IoT Command Retry | Generate random failure sequences, verify retry count (3) + backoff timing (1s, 2s, 4s) |
+| P25: Alarm Zone Targeting | Generate random zone configs + activation requests, verify correct siren set |
+| P26: Patrol Checkpoint Verification | Generate random GPS coordinates + checkpoints, verify 50m threshold |
+| P27: Notification Escalation | Generate random acknowledgment timings, verify escalation stops on ack |
+| P28: CCTV Credential Encryption | Generate random RTSP URLs, verify stored != plaintext and decrypt roundtrip |
+| P29: Circuit Breaker State Machine | Generate random success/failure sequences, verify state transitions |
+| P30: Private Event Privacy | Generate random private events + connected clients, verify delivery only to owner |
+
+### New Integration Test Focus Areas
+
+- WebSocket connection lifecycle (connect, authenticate, subscribe, receive, disconnect)
+- Redis pub/sub message delivery across multiple server instances
+- Tuya webhook endpoint with signature validation
+- IoT device command execution with circuit breaker
+- Automation rule evaluation pipeline end-to-end
+- Gate sensor event processing and duration tracking
+- CCTV snapshot capture workflow
+- Patrol GPS tracking and checkpoint auto-verification
+- Alarm activation and deactivation flow
+- Notification escalation timer with acknowledgment
+- Device pairing flow with Tuya Cloud mock
+
+### New E2E Test Paths
+
+8. **Security Center flow**: View dashboard, create incident, update status, resolve
+9. **IoT device flow**: Pair device, view status, send command, receive event
+10. **Automation flow**: Create rule, trigger event, verify action execution
+11. **Gate monitoring flow**: Register gate, receive open/close events, verify alert
+12. **Patrol flow**: Create route, start patrol, visit checkpoints, complete patrol
+13. **CCTV flow**: Register camera, view live stream, capture snapshot
+14. **Alarm flow**: Register siren, trigger alarm, verify zone targeting
+
+### New Security Testing
+
+- IoT device ownership validation (cross-household access attempts)
+- Private event privacy enforcement (role-based access attempts)
+- Webhook signature tampering detection
+- WebSocket tenant isolation (cross-tenant subscription attempts)
+- CCTV credential encryption verification
+- IoT command rate limiting enforcement
+- Automation rule injection prevention (invalid rule definitions)

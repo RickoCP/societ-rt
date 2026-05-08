@@ -1,10 +1,10 @@
 /**
- * POST /api/security/incidents — Create a new incident report.
- * GET  /api/security/incidents — List incident reports for the tenant.
+ * POST /api/security/incidents — Create a new security incident.
+ * GET  /api/security/incidents — List incidents for the tenant (paginated, filterable).
  *
  * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
  *
- * @see Requirements 12.3, 12.4
+ * @see Requirements 32.1, 32.2, 32.4, 32.7, 32.8
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -14,24 +14,58 @@ import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
-import type { CreateIncidentReportUseCase } from '@core/domains/security/usecases';
-import type { SecurityRepository } from '@core/domains/security/repositories/SecurityRepository';
+import type { CreateIncidentUseCase } from '@core/domains/incident/usecases';
+import type { IncidentRepository } from '@core/domains/incident/repositories/IncidentRepository';
 
 // ---------------------------------------------------------------------------
-// Input schema
+// Input schemas
 // ---------------------------------------------------------------------------
 
 const createIncidentSchema = z.object({
-  title: z.string().min(1).optional(),
-  date: z.string().datetime(),
-  time: z.string().min(1),
-  description: z.string().min(1),
-  location: z.string().min(1),
-  severityLevel: z.enum(['low', 'medium', 'high', 'critical']),
+  title: z.string().min(1).max(200),
+  description: z.string().min(1).max(2000),
+  location: z.string().min(1).max(500),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']),
+  category: z.enum([
+    'theft',
+    'vandalism',
+    'trespassing',
+    'fire',
+    'flood',
+    'suspicious_activity',
+    'noise_complaint',
+    'device_alert',
+    'other',
+  ]),
+  assignedTo: z.string().uuid().nullable().optional(),
+});
+
+const listQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  status: z
+    .enum(['open', 'acknowledged', 'in_progress', 'escalated', 'resolved', 'closed'])
+    .optional(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  category: z
+    .enum([
+      'theft',
+      'vandalism',
+      'trespassing',
+      'fire',
+      'flood',
+      'suspicious_activity',
+      'noise_complaint',
+      'device_alert',
+      'other',
+    ])
+    .optional(),
 });
 
 // ---------------------------------------------------------------------------
-// POST handler — Create incident report
+// POST handler — Create incident
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -79,17 +113,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   // 3. Execute use case via DI
-  const useCase = container.resolve<CreateIncidentReportUseCase>(
-    'createIncidentReportUseCase',
-  );
+  const useCase = container.resolve<CreateIncidentUseCase>('createIncidentUseCase');
   const result = await useCase.execute({
     authContext,
     data: {
-      date: new Date(validation.data.date),
-      time: validation.data.time,
+      title: validation.data.title,
       description: validation.data.description,
       location: validation.data.location,
-      severityLevel: validation.data.severityLevel,
+      latitude: validation.data.latitude ?? null,
+      longitude: validation.data.longitude ?? null,
+      severity: validation.data.severity,
+      category: validation.data.category,
+      reportedBy: authContext.userId,
+      assignedTo: validation.data.assignedTo ?? null,
     },
   });
 
@@ -98,19 +134,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
-  const report = result.data;
+  const incident = result.data;
 
   return NextResponse.json(
     {
       data: {
-        id: report.id,
-        date: report.date.toISOString(),
-        time: report.time,
-        description: report.description,
-        location: report.location,
-        severityLevel: report.severityLevel,
-        reportedBy: report.reportedBy,
-        createdAt: report.createdAt.toISOString(),
+        id: incident.id,
+        title: incident.title,
+        description: incident.description,
+        location: incident.location,
+        latitude: incident.latitude,
+        longitude: incident.longitude,
+        severity: incident.severity,
+        category: incident.category,
+        status: incident.status,
+        reportedBy: incident.reportedBy,
+        assignedTo: incident.assignedTo,
+        evidenceUrls: incident.evidenceUrls,
+        createdAt: incident.createdAt.toISOString(),
+        updatedAt: incident.updatedAt.toISOString(),
       },
     },
     { status: 201 },
@@ -118,7 +160,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 }
 
 // ---------------------------------------------------------------------------
-// GET handler — List incident reports
+// GET handler — List incidents (paginated)
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -138,29 +180,71 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 2. Query repository for incidents
-  const securityRepository =
-    container.resolve<SecurityRepository>('securityRepository');
-  const result = await securityRepository.findIncidentsByTenant(
+  // 2. Parse query parameters
+  const { searchParams } = new URL(request.url);
+  const queryValidation = listQuerySchema.safeParse({
+    page: searchParams.get('page') ?? undefined,
+    pageSize: searchParams.get('pageSize') ?? undefined,
+    status: searchParams.get('status') ?? undefined,
+    severity: searchParams.get('severity') ?? undefined,
+    category: searchParams.get('category') ?? undefined,
+  });
+
+  if (!queryValidation.success) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        fields: formatZodErrors(queryValidation.error),
+        correlationId,
+      },
+      { status: 400 },
+    );
+  }
+
+  const { page, pageSize, status, severity, category } = queryValidation.data;
+
+  // 3. Query repository for incidents
+  const incidentRepository =
+    container.resolve<IncidentRepository>('incidentRepository');
+  const result = await incidentRepository.findByTenant(
     authContext.tenantId,
+    page,
+    pageSize,
+    { status, severity, category },
   );
 
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
+  const { data: incidents, total } = result.data;
+
   return NextResponse.json(
     {
-      data: result.data.map((report) => ({
-        id: report.id,
-        date: report.date.toISOString(),
-        time: report.time,
-        description: report.description,
-        location: report.location,
-        severityLevel: report.severityLevel,
-        reportedBy: report.reportedBy,
-        createdAt: report.createdAt.toISOString(),
+      data: incidents.map((incident) => ({
+        id: incident.id,
+        title: incident.title,
+        description: incident.description,
+        location: incident.location,
+        latitude: incident.latitude,
+        longitude: incident.longitude,
+        severity: incident.severity,
+        category: incident.category,
+        status: incident.status,
+        reportedBy: incident.reportedBy,
+        assignedTo: incident.assignedTo,
+        evidenceUrls: incident.evidenceUrls,
+        escalatedAt: incident.escalatedAt?.toISOString() ?? null,
+        resolvedAt: incident.resolvedAt?.toISOString() ?? null,
+        createdAt: incident.createdAt.toISOString(),
+        updatedAt: incident.updatedAt.toISOString(),
       })),
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
     },
     { status: 200 },
   );

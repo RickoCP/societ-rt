@@ -829,6 +829,558 @@ This implementation plan converts the SocieT-RT design into incremental coding t
 
 - [x] 29. Final checkpoint - Run all tests, fix failures, and document unresolved issues in CHECKPOINT_REPORT.md
 
+- [x] 30. Realtime infrastructure (WebSocket server, Redis pub/sub, Realtime Bus)
+  - [x] 30.1 Implement realtime bus domain protocols and entities
+    - Create `src/core/protocols/WebSocketProtocol.ts` interface with: broadcast, sendToUser, sendToRole, getActiveConnections, disconnectUser
+    - Create `src/core/protocols/RealtimeBusProtocol.ts` interface with: publish, subscribe, unsubscribe, getChannelSubscriberCount
+    - Create `src/core/domains/realtimeBus/entities/` with RealtimeEvent type (id, tenantId, channel, eventType, payload, privacy, targetHouseholdId, timestamp)
+    - Define event channel constants: `security_events`, `device_events`, `incident_updates`, `gate_events`, `cctv_events`, `patrol_events`, `alarm_events`
+    - Define shared security event types and private home event types as const arrays
+    - Create event routing function: classify events as shared or private based on eventType
+    - Define error codes: `WS_AUTH_FAILED`, `WS_TENANT_MISMATCH`
+    - _Requirements: 40.1, 40.2, 40.3, 40.4, 40.5, 40.6, 41.1, 41.2, 41.3_
+
+  - [x] 30.2 Implement WebSocket server and Redis pub/sub adapter
+    - Create `src/infrastructure/realtime/WebSocketServer.ts` using `ws` library on a separate port
+    - Implement JWT authentication on WebSocket handshake (validate token, extract tenantId and userId)
+    - Implement channel subscription with tenant isolation (clients can only subscribe to their tenant's channels)
+    - Implement privacy filter: shared events broadcast to Security_Guard/Pengurus/Ketua_RT, private events only to Home_Owner
+    - Create `src/infrastructure/realtime/RedisPubSubAdapter.ts` implementing `RealtimeBusProtocol`
+    - Implement heartbeat with 30-second ping/pong, disconnect after 3 missed pongs
+    - Implement reconnection with exponential backoff for Redis pub/sub connection loss
+    - Implement event replay buffer using BullMQ for critical events (1-hour TTL)
+    - Register `WebSocketProtocol` and `RealtimeBusProtocol` implementations in DI container
+    - _Requirements: 40.1, 40.2, 40.4, 40.5, 40.6, 40.7, 40.8, 40.9, 40.10, 40.11, 40.12_
+
+  - [ ]* 30.3 Write property test for WebSocket tenant isolation
+    - **Property 22: WebSocket Tenant Isolation**
+    - Generate random multi-tenant event scenarios, verify clients only receive events from their own tenant
+    - **Validates: Requirements 40.4**
+
+  - [ ]* 30.4 Write property test for event classification correctness
+    - **Property 17: Event Classification Correctness**
+    - Generate random DeviceEvents with all event types, verify shared/private classification is deterministic and total
+    - **Validates: Requirements 41.1, 41.2, 41.3**
+
+  - [ ]* 30.5 Write property test for private event privacy
+    - **Property 30: Private Event Privacy**
+    - Generate random private events + connected clients, verify delivery only to Home_Owner
+    - **Validates: Requirements 37.9, 40.5**
+
+  - [ ]* 30.6 Write unit tests for realtime bus
+    - Test event routing logic: shared events to correct roles, private events only to owner
+    - Test WebSocket handshake JWT validation: valid token, expired token, missing token
+    - Test tenant isolation: cross-tenant subscription rejected
+    - Test heartbeat: disconnect after 3 missed pongs
+    - Test reconnection: Redis pub/sub reconnect with backoff
+    - _Requirements: 40.1, 40.4, 40.5, 40.9, 40.11_
+
+
+- [x] 31. Checkpoint - Run all tests, fix failures, and document unresolved issues in CHECKPOINT_REPORT.md
+
+- [x] 32. IoT domain and Tuya integration
+  - [x] 32.1 Implement IoT domain entities and repository interface
+    - Create `src/core/domains/iot/entities/` with IoTDevice, DeviceEvent entities matching design
+    - Create `src/core/protocols/IoTGatewayProtocol.ts` interface with: pairDevice, sendCommand, syncDeviceStatus, getDeviceList, unpairDevice, validateWebhookSignature, refreshToken
+    - Create `src/core/protocols/CircuitBreakerProtocol.ts` interface with: execute, getState, reset
+    - Create `src/core/domains/iot/repositories/IoTRepository.ts` interface: registerDevice, findByHousehold, findByTuyaId, updateStatus, removeDevice, createDeviceEvent, findEventsByDevice
+    - Define IoT error codes: `IOT_COMMAND_FAILED`, `IOT_DEVICE_ACCESS_DENIED`, `IOT_WEBHOOK_SIGNATURE_INVALID`, `IOT_CLOUD_UNAVAILABLE`, `IOT_DEVICE_OFFLINE`, `IOT_PAIRING_FAILED`, `IOT_RATE_LIMIT_EXCEEDED`
+    - _Requirements: 38.1, 38.2, 38.4, 38.6, 38.7, 38.8, 38.10, 38.11, 38.13_
+
+  - [x] 32.2 Add Prisma models for IoTDevice and DeviceEvent
+    - Create IoTDevice model with tenant relation, household_id, tuya_device_id, device_type enum, name, online_status, battery_level, last_seen, metadata (JSON), created_at, updated_at (snake_case with @map)
+    - Create DeviceEvent model with device relation, tenant_id, event_type enum, payload (JSON), is_shared_security, processed_at, created_at (snake_case with @map)
+    - Add indexes: `(tenant_id, household_id)` on IoTDevice, `(tuya_device_id)` unique, `(device_id, created_at)` on DeviceEvent, `(tenant_id, event_type, created_at)`, `(tenant_id, is_shared_security, created_at)`
+    - Run migration
+    - _Requirements: 38.8, 37.3_
+
+  - [x] 32.3 Implement Tuya IoT Gateway adapter (infrastructure)
+    - Create `src/infrastructure/iot/TuyaGatewayAdapter.ts` implementing `IoTGatewayProtocol`
+    - Implement OAuth 2.0 client credentials flow with token caching in Redis (TTL = expires_in - 60s)
+    - Implement device pairing token generation and completion callback processing
+    - Implement device command execution with retry (exponential backoff: 1s, 2s, 4s, max 3 attempts)
+    - Implement webhook signature validation using HMAC-SHA256
+    - Implement device status synchronization (configurable interval, default 60s)
+    - Encrypt and store Tuya API credentials using AES-256
+    - _Requirements: 38.1, 38.2, 38.3, 38.4, 38.6, 38.7, 38.12_
+
+  - [x] 32.4 Implement circuit breaker for Tuya Cloud API
+    - Create `src/infrastructure/iot/CircuitBreakerImpl.ts` implementing `CircuitBreakerProtocol`
+    - Implement state machine: Closed to Open (5 consecutive failures), Open to Half-Open (30s elapsed), Half-Open to Closed (3 successes), Half-Open to Open (any failure)
+    - When circuit is open: immediately fail with `IOT_CLOUD_UNAVAILABLE`, queue commands for up to 5 minutes
+    - Register in DI container
+    - _Requirements: 38.13, 44.6_
+
+  - [x] 32.5 Implement IoT use cases
+    - Create `PairDeviceUseCase`: validate Home_Owner role, generate pairing token, associate device with household, enqueue audit via `AuditQueueProtocol`
+    - Create `SendDeviceCommandUseCase`: validate device ownership, check device online status, execute command via circuit breaker, enqueue audit
+    - Create `ProcessWebhookEventUseCase`: validate signature, parse event, resolve tenant + device, classify event (shared/private), publish to Realtime Bus, trigger automation engine
+    - Create `SyncDeviceStatusUseCase`: sync status from Tuya Cloud, detect offline devices (120s threshold), emit `device_offline` event
+    - Create `UnpairDeviceUseCase`: remove device association, revoke access tokens, enqueue audit
+    - Implement rate limiting: max 30 commands per minute per device
+    - _Requirements: 37.1, 37.4, 37.6, 37.10, 37.11, 38.1, 38.2, 38.4, 38.5, 38.6, 38.7, 38.9, 38.10, 38.14, 41.4, 41.5, 41.8_
+
+  - [x] 32.6 Implement IoT repository (infrastructure) and route handlers
+    - Create `IoTRepositoryImpl` using Prisma via TenantScopedRepository
+    - Create route handlers: `app/api/iot/devices/route.ts` (GET list), `app/api/iot/devices/pair/route.ts` (POST), `app/api/iot/devices/[id]/route.ts` (GET, DELETE), `app/api/iot/commands/route.ts` (POST), `app/api/iot/webhook/route.ts` (POST - no auth, signature validation only), `app/api/iot/health/route.ts` (GET)
+    - All endpoints (except webhook and health) validate device ownership
+    - Register all in DI container
+    - _Requirements: 37.1, 37.4, 38.4, 38.6, 41.4, 44.5_
+
+  - [ ]* 32.7 Write property test for device ownership isolation
+    - **Property 16: Device Ownership Isolation**
+    - Generate random users + devices + households, verify only Home_Owner can access private devices
+    - **Validates: Requirements 37.6, 38.10, 41.4, 41.5**
+
+  - [ ]* 32.8 Write property test for webhook signature validation
+    - **Property 23: Webhook Signature Validation**
+    - Generate random payloads + valid/invalid HMAC-SHA256 signatures, verify accept/reject
+    - **Validates: Requirements 38.4, 38.11**
+
+  - [ ]* 32.9 Write property test for IoT command retry correctness
+    - **Property 24: IoT Command Retry Correctness**
+    - Generate random failure sequences, verify retry count (3) + backoff timing (1s, 2s, 4s) + early success exit
+    - **Validates: Requirements 38.7**
+
+  - [ ]* 32.10 Write property test for circuit breaker state machine
+    - **Property 29: Circuit Breaker State Machine**
+    - Generate random success/failure sequences, verify state transitions match defined rules
+    - **Validates: Requirements 38.13**
+
+  - [ ]* 32.11 Write unit tests for IoT use cases and Tuya adapter
+    - Test PairDeviceUseCase: valid pairing, non-owner rejected, pairing failure
+    - Test SendDeviceCommandUseCase: valid command, device offline, ownership denied, rate limit exceeded
+    - Test ProcessWebhookEventUseCase: valid signature, invalid signature, event routing
+    - Test CircuitBreaker: state transitions, command queuing when open
+    - _Requirements: 37.1, 37.4, 37.6, 38.4, 38.7, 38.10, 38.13_
+
+- [x] 33. Checkpoint - Run all tests, fix failures, and document unresolved issues in CHECKPOINT_REPORT.md
+
+
+- [x] 34. Incident management domain
+  - [x] 34.1 Implement incident domain entities and repository interface
+    - Create `src/core/domains/incident/entities/` with Incident, IncidentLog entities matching design
+    - Create `IncidentRepository` interface: createIncident, updateStatus, addLog, findByTenant (paginated, filterable by status/severity/category), findById, attachEvidence
+    - Define valid status transitions map: open->acknowledged/in_progress/escalated, acknowledged->in_progress/escalated, in_progress->escalated/resolved, escalated->in_progress/resolved, resolved->closed
+    - Define error codes: `INCIDENT_INVALID_TRANSITION`, `INCIDENT_ALREADY_RESOLVED`
+    - _Requirements: 32.1, 32.2, 32.3, 32.4, 32.6_
+
+  - [x] 34.2 Add Prisma models for Incident and IncidentLog
+    - Create Incident model with tenant relation, title, description, location, latitude, longitude, severity enum, category enum, status enum, reported_by, assigned_to, escalated_at, resolved_at, created_at, updated_at (snake_case with @map)
+    - Create IncidentLog model with incident relation, status, notes, actor_id, timestamp (snake_case with @map)
+    - Add indexes: `(tenant_id, status)`, `(tenant_id, severity)`, `(tenant_id, created_at)` on Incident, `(incident_id, timestamp)` on IncidentLog
+    - Run migration
+    - _Requirements: 32.1, 32.2, 32.4_
+
+  - [x] 34.3 Implement incident use cases
+    - Create `CreateIncidentUseCase`: create incident with status open, enqueue notification to Security_Guard and Ketua_RT via `NotificationQueueProtocol`, publish to Realtime Bus, enqueue audit via `AuditQueueProtocol`
+    - Create `UpdateIncidentStatusUseCase`: validate status transition against allowed transitions map, record log entry, enqueue notification, publish update to Realtime Bus
+    - Create `AutoCreateIncidentUseCase`: triggered by critical Device_Events (panic_button_pressed, smoke_detected, emergency_alert), auto-create incident with device context
+    - Create `EscalateIncidentUseCase`: auto-escalate critical/high incidents after 5 minutes unresolved, notify Ketua_RT and emergency contacts after 15 minutes
+    - Create `AttachEvidenceUseCase`: validate file limits (max 5 files, 20MB each), store via FileStorageProtocol
+    - _Requirements: 32.1, 32.2, 32.4, 32.5, 32.6, 32.7, 32.8, 32.10_
+
+  - [x] 34.4 Implement incident repository (infrastructure) and route handlers
+    - Create `IncidentRepositoryImpl` using Prisma via TenantScopedRepository
+    - Create route handlers: `app/api/security/incidents/route.ts` (GET list, POST create), `app/api/security/incidents/[id]/route.ts` (GET detail), `app/api/security/incidents/[id]/status/route.ts` (PATCH), `app/api/security/incidents/[id]/evidence/route.ts` (POST)
+    - Implement BullMQ scheduled job for incident escalation timer (check every minute for unresolved critical incidents)
+    - Register all in DI container
+    - _Requirements: 32.1, 32.4, 32.5, 32.8, 32.9, 32.10_
+
+  - [ ]* 34.5 Write property test for incident lifecycle validity
+    - **Property 21: Incident Lifecycle Validity**
+    - Generate random status transition sequences, verify only valid transitions succeed and invalid ones are rejected
+    - **Validates: Requirements 32.2, 32.4**
+
+  - [ ]* 34.6 Write unit tests for incident use cases
+    - Test CreateIncidentUseCase: valid incident, notification dispatch
+    - Test UpdateIncidentStatusUseCase: valid transitions, invalid transitions rejected
+    - Test AutoCreateIncidentUseCase: triggered by critical events
+    - Test EscalateIncidentUseCase: escalation timing logic
+    - _Requirements: 32.1, 32.2, 32.4, 32.7, 32.8_
+
+- [x] 35. Gate monitoring domain
+  - [x] 35.1 Implement gate domain entities and repository interface
+    - Create `src/core/domains/gate/entities/` with Gate, GateEvent entities matching design
+    - Create `GateRepository` interface: registerGate, findByTenant, updateStatus, createEvent, findEventsByGate (paginated), getGateAnalytics
+    - Define error codes: `GATE_SENSOR_OFFLINE`
+    - _Requirements: 33.1, 33.2, 33.6, 33.7, 33.8_
+
+  - [x] 35.2 Add Prisma models for Gate and GateEvent
+    - Create Gate model with tenant relation, name, location, latitude, longitude, device_id, status enum (open/closed/offline), last_state_change, created_at (snake_case with @map)
+    - Create GateEvent model with gate relation, tenant_id, state enum (open/closed), duration (seconds of previous state), timestamp (snake_case with @map)
+    - Add indexes: `(tenant_id, status)` on Gate, `(gate_id, timestamp)` on GateEvent, `(tenant_id, timestamp)` on GateEvent
+    - Run migration
+    - _Requirements: 33.1, 33.2, 33.7_
+
+  - [x] 35.3 Implement gate use cases
+    - Create `RegisterGateUseCase`: register gate with IoT device association, validate Ketua_RT/Pengurus role
+    - Create `ProcessGateEventUseCase`: record state change, calculate duration of previous state, publish to Realtime Bus, check open duration threshold
+    - Create `CheckGateOpenDurationUseCase`: if gate open exceeds configurable threshold (default 2 min), trigger `gate_open_too_long` event, notify Security_Guard
+    - Create `GetGateAnalyticsUseCase`: calculate average open duration, open frequency by time of day
+    - Detect gate sensor offline (no heartbeat for 60s), mark as offline, notify Security_Guard
+    - _Requirements: 33.1, 33.2, 33.3, 33.4, 33.5, 33.6, 33.7, 33.8, 33.9, 33.10_
+
+  - [x] 35.4 Implement gate repository (infrastructure) and route handlers
+    - Create `GateRepositoryImpl` using Prisma via TenantScopedRepository
+    - Create route handlers: `app/api/security/gates/route.ts` (GET list, POST register), `app/api/security/gates/[id]/route.ts` (GET detail), `app/api/security/gates/[id]/events/route.ts` (GET history), `app/api/security/gates/analytics/route.ts` (GET)
+    - Register all in DI container
+    - _Requirements: 33.1, 33.6, 33.7, 33.8_
+
+  - [ ]* 35.5 Write property test for gate duration alert correctness
+    - **Property 20: Gate Duration Alert Correctness**
+    - Generate random gate open durations + thresholds, verify alert triggers exactly when duration exceeds threshold
+    - **Validates: Requirements 33.3, 33.4**
+
+  - [ ]* 35.6 Write unit tests for gate use cases
+    - Test ProcessGateEventUseCase: state change recording, duration calculation
+    - Test CheckGateOpenDurationUseCase: threshold exceeded triggers alert, below threshold no alert
+    - Test gate sensor offline detection
+    - _Requirements: 33.1, 33.2, 33.3, 33.4, 33.9_
+
+
+- [x] 36. CCTV monitoring and enhanced patrol management
+  - [x] 36.1 Implement CCTV domain entities and repository interface
+    - Create `src/core/domains/cctv/entities/` with CctvCamera, CctvSnapshot entities matching design
+    - Create `CctvRepository` interface: registerCamera, findByTenant, updateStatus, captureSnapshot, findSnapshotsByCamera, getStorageUsage
+    - Define error codes: `CCTV_CAMERA_OFFLINE`, `CCTV_STREAM_UNAVAILABLE`
+    - _Requirements: 34.1, 34.3, 34.4, 34.6, 34.8_
+
+  - [x] 36.2 Add Prisma models for CctvCamera and CctvSnapshot
+    - Create CctvCamera model with tenant relation, name, rtsp_url (encrypted), location, latitude, longitude, resolution, status enum (online/offline/motion_detected), last_online, created_at (snake_case with @map)
+    - Create CctvSnapshot model with camera relation, tenant_id, file_url, trigger_type enum (manual/motion/scheduled), timestamp (snake_case with @map)
+    - Add indexes: `(tenant_id, status)` on CctvCamera, `(camera_id, timestamp)` on CctvSnapshot, `(tenant_id, timestamp)` on CctvSnapshot
+    - Run migration
+    - _Requirements: 34.1, 34.3_
+
+  - [x] 36.3 Implement CCTV use cases
+    - Create `RegisterCameraUseCase`: register camera with encrypted RTSP URL (AES-256), validate Ketua_RT/Pengurus/Security_Guard role
+    - Create `CaptureSnapshotUseCase`: capture still image from stream, store via FileStorageProtocol, associate with camera
+    - Create `ProcessMotionEventUseCase`: on `cctv_motion_detected` event, auto-capture snapshot, notify Security_Guard during alert hours
+    - Create `GetCameraStreamUseCase`: decrypt RTSP URL, validate role access (Security_Guard/Pengurus/Ketua_RT only)
+    - Detect camera offline (no stream data for 30s), mark as offline, notify Security_Guard
+    - _Requirements: 34.1, 34.2, 34.3, 34.4, 34.5, 34.6, 34.8, 34.9, 34.10, 34.11_
+
+  - [x] 36.4 Implement enhanced patrol domain entities and repository interface
+    - Create `src/core/domains/patrol/entities/` with PatrolRoute, PatrolSession, PatrolCheckpointVisit entities matching design
+    - Create `PatrolRepository` interface: createRoute, findRoutesByTenant, startSession, recordCheckpointVisit, completeSession, getPatrolAnalytics, findActiveSessions
+    - Define error codes: `PATROL_ROUTE_NOT_FOUND`, `PATROL_ALREADY_ACTIVE`
+    - _Requirements: 35.1, 35.2, 35.3, 35.4, 35.5, 35.7_
+
+  - [x] 36.5 Add Prisma models for PatrolRoute, PatrolSession, PatrolCheckpointVisit
+    - Create PatrolRoute model with tenant relation, name, checkpoints (JSON array of lat/lng/label), estimated_duration, created_by, created_at (snake_case with @map)
+    - Create PatrolSession model with tenant relation, route_id, guard_id, status enum (active/completed/abandoned), started_at, completed_at, checkpoints_visited, distance_traveled, created_at (snake_case with @map)
+    - Create PatrolCheckpointVisit model with session relation, checkpoint_index, latitude, longitude, visited_at (snake_case with @map)
+    - Add indexes: `(tenant_id)` on PatrolRoute, `(tenant_id, status)` on PatrolSession, `(guard_id, started_at)` on PatrolSession, `(session_id)` on PatrolCheckpointVisit
+    - Run migration
+    - _Requirements: 35.1, 35.3, 35.4_
+
+  - [x] 36.6 Implement enhanced patrol use cases
+    - Create `CreatePatrolRouteUseCase`: store route with ordered checkpoints, validate Ketua_RT/Pengurus role
+    - Create `StartPatrolUseCase`: validate no active session for guard (`PATROL_ALREADY_ACTIVE`), create session, publish to Realtime Bus
+    - Create `RecordCheckpointVisitUseCase`: validate GPS proximity (Haversine distance <= 50 meters), record visit, update completion percentage
+    - Create `CompletePatrolUseCase`: generate patrol summary (route covered, checkpoints visited, duration, distance), enqueue audit
+    - Create `DetectPatrolDeviationUseCase`: if guard > 200m from route for > 5 minutes, send deviation alert to Ketua_RT
+    - Create `GetPatrolAnalyticsUseCase`: average duration, checkpoint coverage rate, patrol frequency by time slot
+    - _Requirements: 35.1, 35.2, 35.3, 35.4, 35.5, 35.6, 35.7, 35.8, 35.9, 35.10_
+
+  - [x] 36.7 Implement CCTV and patrol repositories (infrastructure) and route handlers
+    - Create `CctvRepositoryImpl` and `PatrolRepositoryImpl` using Prisma via TenantScopedRepository
+    - Create route handlers for CCTV: `app/api/security/cctv/route.ts` (GET list, POST register), `app/api/security/cctv/[id]/snapshot/route.ts` (POST), `app/api/security/cctv/[id]/stream/route.ts` (GET)
+    - Create route handlers for patrol: `app/api/security/patrols/routes/route.ts` (GET list, POST create), `app/api/security/patrols/sessions/route.ts` (GET active, POST start), `app/api/security/patrols/sessions/[id]/checkpoint/route.ts` (POST), `app/api/security/patrols/sessions/[id]/complete/route.ts` (POST), `app/api/security/patrols/analytics/route.ts` (GET)
+    - Register all in DI container
+    - _Requirements: 34.1, 34.3, 34.9, 35.1, 35.3, 35.4, 35.7, 35.8_
+
+  - [ ]* 36.8 Write property test for patrol checkpoint verification
+    - **Property 26: Patrol Checkpoint Verification**
+    - Generate random GPS coordinates + checkpoints, verify Haversine distance <= 50m triggers visit, > 50m does not
+    - **Validates: Requirements 35.4**
+
+  - [ ]* 36.9 Write property test for CCTV credential encryption
+    - **Property 28: CCTV Credential Encryption**
+    - Generate random RTSP URLs, verify stored value != plaintext and decrypt roundtrip produces original
+    - **Validates: Requirements 34.10, 41.7**
+
+  - [ ]* 36.10 Write unit tests for CCTV and patrol use cases
+    - Test RegisterCameraUseCase: valid registration, RTSP URL encrypted
+    - Test CaptureSnapshotUseCase: camera online, camera offline rejected
+    - Test StartPatrolUseCase: valid start, already active rejected
+    - Test RecordCheckpointVisitUseCase: within 50m accepted, beyond 50m rejected
+    - Test DetectPatrolDeviationUseCase: deviation alert timing
+    - _Requirements: 34.1, 34.3, 34.8, 34.10, 35.1, 35.3, 35.4, 35.6_
+
+
+- [x] 37. Smart alarm system and automation rule engine
+  - [x] 37.1 Implement alarm domain entities and repository interface
+    - Create `src/core/domains/alarm/entities/` with AlarmDevice, AlarmEvent entities matching design
+    - Create `AlarmRepository` interface: registerDevice, findByTenant, findByZone, activateSiren, deactivateSiren, createEvent, getSchedule
+    - Define error codes: `ALARM_DEVICE_UNRESPONSIVE`, `ALARM_ZONE_NOT_FOUND`
+    - _Requirements: 36.1, 36.2, 36.4, 36.5, 36.6, 36.9_
+
+  - [x] 37.2 Add Prisma models for AlarmDevice and AlarmEvent
+    - Create AlarmDevice model with tenant relation, name, location, device_id, zones (String array), schedule_arm, schedule_disarm, status enum (armed/disarmed/triggered/offline), created_at (snake_case with @map)
+    - Create AlarmEvent model with alarm_device relation, tenant_id, trigger_source enum (manual/automation/schedule), trigger_type, duration, activated_at, deactivated_at (snake_case with @map)
+    - Add indexes: `(tenant_id, status)` on AlarmDevice, `(alarm_device_id, activated_at)` on AlarmEvent, `(tenant_id, activated_at)` on AlarmEvent
+    - Run migration
+    - _Requirements: 36.1, 36.4_
+
+  - [x] 37.3 Implement alarm use cases
+    - Create `RegisterAlarmDeviceUseCase`: register siren with zones and schedule, validate Ketua_RT/Pengurus role
+    - Create `ActivateSirenUseCase`: send activation command via IoTGatewayProtocol, record event, notify Security_Guard and Ketua_RT, auto-deactivate after configured duration (default 60s, max 300s)
+    - Create `ActivateZoneSirenUseCase`: activate only sirens in specified zone, validate zone exists
+    - Create `DeactivateSirenUseCase`: send deactivation command, record event
+    - Create `ProcessAlarmScheduleUseCase`: BullMQ cron job to arm/disarm sirens based on schedule
+    - Handle siren unresponsive: if no response within 5s, log `ALARM_DEVICE_UNRESPONSIVE`, notify Security_Guard
+    - _Requirements: 36.1, 36.2, 36.3, 36.4, 36.5, 36.6, 36.7, 36.8, 36.9, 36.10_
+
+  - [x] 37.4 Implement automation rule engine domain and protocol
+    - Create `src/core/domains/automation/entities/` with AutomationRule, AutomationCondition, AutomationAction, AutomationExecution entities matching design
+    - Create `src/core/protocols/AutomationEngineProtocol.ts` interface with: evaluateRule, executeActions, validateRuleDefinition, getActiveRulesForEvent
+    - Create `AutomationRepository` interface: createRule, findByTenant, findActiveByEventType, updateRule, enableRule, disableRule, logExecution
+    - Define error codes: `AUTOMATION_RULE_INVALID`, `AUTOMATION_RULE_LIMIT_EXCEEDED`, `AUTOMATION_CHAIN_DEPTH_EXCEEDED`
+    - _Requirements: 39.1, 39.2, 39.3, 39.4, 39.5, 39.6, 39.11, 39.12_
+
+  - [x] 37.5 Add Prisma models for AutomationRule and AutomationExecution
+    - Create AutomationRule model with tenant relation, name, trigger_event_type, conditions (JSON), actions (JSON), enabled, schedule_start, schedule_end, max_chain_depth, execution_count, last_executed_at, created_by, created_at, updated_at (snake_case with @map)
+    - Create AutomationExecution model with rule relation, tenant_id, trigger_event (JSON), conditions_evaluated, actions_executed (String array), duration_ms, status enum (success/partial_failure/failure), error, executed_at (snake_case with @map)
+    - Add indexes: `(tenant_id, enabled)` on AutomationRule, `(tenant_id, trigger_event_type, enabled)`, `(rule_id, executed_at)` on AutomationExecution, `(tenant_id, executed_at)` on AutomationExecution
+    - Run migration
+    - _Requirements: 39.1, 39.8_
+
+  - [x] 37.6 Implement automation engine use cases
+    - Create `CreateAutomationRuleUseCase`: validate rule definition (valid trigger, conditions, actions), enforce 50 active rules limit per tenant, enqueue audit
+    - Create `EvaluateRuleUseCase`: find active rules for event type, filter by schedule window, evaluate conditions, execute actions if all conditions met
+    - Create `ExecuteAutomationActionsUseCase`: execute all actions sequentially, continue on individual failure (partial failure), log execution with duration_ms
+    - Create `HandleRuleChainingUseCase`: check chain depth counter, halt at depth 5 with `AUTOMATION_CHAIN_DEPTH_EXCEEDED`, pass depth counter through pipeline
+    - Create `EnableDisableRuleUseCase`: toggle rule enabled state without deletion
+    - Implement condition evaluators: equals, not_equals, greater_than, less_than, time_between, duration_exceeds
+    - _Requirements: 39.1, 39.2, 39.3, 39.4, 39.5, 39.6, 39.7, 39.8, 39.9, 39.10, 39.11, 39.12, 39.13_
+
+  - [x] 37.7 Implement alarm and automation repositories (infrastructure) and route handlers
+    - Create `AlarmRepositoryImpl` and `AutomationRepositoryImpl` using Prisma via TenantScopedRepository
+    - Create `AutomationEngineImpl` implementing `AutomationEngineProtocol`
+    - Create route handlers for alarm: `app/api/security/alarms/route.ts` (GET list, POST register), `app/api/security/alarms/[id]/activate/route.ts` (POST), `app/api/security/alarms/[id]/deactivate/route.ts` (POST), `app/api/security/alarms/zones/[zone]/activate/route.ts` (POST)
+    - Create route handlers for automation: `app/api/automation/rules/route.ts` (GET list, POST create), `app/api/automation/rules/[id]/route.ts` (GET, PATCH, DELETE), `app/api/automation/rules/[id]/enable/route.ts` (POST), `app/api/automation/rules/[id]/disable/route.ts` (POST), `app/api/automation/executions/route.ts` (GET history)
+    - Register all in DI container
+    - _Requirements: 36.1, 36.2, 36.6, 39.1, 39.7, 39.8_
+
+  - [ ]* 37.8 Write property test for automation rule validation and chain safety
+    - **Property 18: Automation Rule Validation and Chain Safety**
+    - Generate random rule definitions (valid/invalid), verify acceptance/rejection + chain depth halt at 5
+    - **Validates: Requirements 39.6, 39.12**
+
+  - [ ]* 37.9 Write property test for automation execution completeness
+    - **Property 19: Automation Execution Completeness**
+    - Generate random action lists with injected failures, verify all N actions attempted regardless of individual failures
+    - **Validates: Requirements 39.5, 39.9**
+
+  - [ ]* 37.10 Write property test for alarm zone targeting
+    - **Property 25: Alarm Zone Targeting**
+    - Generate random zone configs + activation requests, verify correct siren set activated (only sirens in target zone)
+    - **Validates: Requirements 36.6**
+
+  - [ ]* 37.11 Write unit tests for alarm and automation use cases
+    - Test ActivateSirenUseCase: valid activation, device unresponsive, auto-deactivation
+    - Test ActivateZoneSirenUseCase: valid zone, zone not found
+    - Test CreateAutomationRuleUseCase: valid rule, invalid rule, limit exceeded
+    - Test EvaluateRuleUseCase: conditions met, conditions not met, schedule window check
+    - Test HandleRuleChainingUseCase: chain depth limit enforcement
+    - _Requirements: 36.2, 36.5, 36.6, 36.9, 39.1, 39.5, 39.6, 39.9, 39.11, 39.12_
+
+- [x] 38. Checkpoint - Run all tests, fix failures, and document unresolved issues in CHECKPOINT_REPORT.md
+
+
+- [x] 39. SocieT-Home module, Security Center dashboard, and enhanced notifications
+  - [x] 39.1 Implement SocieT-Home domain entities and use cases
+    - Create `src/core/domains/societHome/entities/` with Home entity matching design
+    - Create `HomeRepository` interface: createHome, findByHousehold, findByOwner, getDeviceDashboard
+    - Add Prisma model for Home with tenant relation, household_id, owner_id, created_at (snake_case with @map)
+    - Add indexes: `(tenant_id, household_id)` on Home, `(owner_id)` on Home
+    - Create `GetDeviceDashboardUseCase`: return all paired devices for Home_Owner household with status, battery, last activity
+    - Create `ConfigureDeviceAlertsUseCase`: set notification preferences per device (event filters, quiet hours)
+    - Create `TransferDeviceOwnershipUseCase`: revoke previous owner access, transfer to new owner
+    - Run migration
+    - _Requirements: 37.1, 37.2, 37.5, 37.7, 37.8, 37.9, 37.11, 37.12, 41.10_
+
+  - [x] 39.2 Implement Security Center dashboard domain and use cases
+    - Create `src/core/domains/securityCenter/entities/` with SecurityDashboardMetrics, NeighborhoodAlert types
+    - Create `SecurityCenterRepository` interface: getDashboardMetrics, getIncidentTimeline, getSecurityAnalytics, broadcastAlert
+    - Create `GetSecurityDashboardUseCase`: aggregate active incidents, emergency alerts, gate status, CCTV status, patrol status, recent security events (cached 10s in Redis)
+    - Create `GetIncidentTimelineUseCase`: return chronological security events within configurable time range (default 24h)
+    - Create `BroadcastNeighborhoodAlertUseCase`: validate Ketua_RT/Security_Guard role, create alert with severity, dispatch to all Warga via NotificationQueueProtocol within 5 seconds, publish to Realtime Bus
+    - Create `GetSecurityAnalyticsUseCase`: incident count by severity over time, average response time, incidents by category, patrol coverage percentage, device event frequency
+    - Restrict access to Ketua_RT, Pengurus, Security_Guard roles
+    - _Requirements: 31.1, 31.2, 31.3, 31.4, 31.5, 31.6, 31.7, 31.8, 31.9, 31.10_
+
+  - [x] 39.3 Implement enhanced notification system for security
+    - Extend `NotificationQueueProtocol` to support multi-channel dispatch: push, WhatsApp (placeholder), SMS (placeholder), email, dashboard alert, siren activation
+    - Create `DispatchMultiChannelNotificationUseCase`: for critical events, dispatch through ALL configured channels simultaneously
+    - Create `ProcessNotificationEscalationUseCase`: Tier 1 (Security_Guard, immediate), Tier 2 (Ketua_RT, after 5 min if unacknowledged), Tier 3 (emergency contacts, after 15 min if unacknowledged)
+    - Create `AcknowledgeNotificationUseCase`: stop further escalation for the event when any recipient acknowledges
+    - Implement notification rate limiting: max 10 non-critical notifications per user per hour
+    - Implement delivery status tracking: sent, delivered, read, failed with timestamps
+    - Implement channel fallback: if one channel fails, attempt next configured channel
+    - Define error code: `NOTIFICATION_CHANNEL_FAILED`
+    - _Requirements: 43.1, 43.2, 43.3, 43.4, 43.5, 43.6, 43.7, 43.8, 43.9, 43.10_
+
+  - [x] 39.4 Implement repositories and route handlers for Home, Security Center, and notifications
+    - Create `HomeRepositoryImpl`, `SecurityCenterRepositoryImpl` using Prisma via TenantScopedRepository
+    - Create route handlers for SocieT-Home: `app/api/home/devices/route.ts` (GET dashboard), `app/api/home/devices/[id]/alerts/route.ts` (PATCH preferences)
+    - Create route handlers for Security Center: `app/api/security/dashboard/route.ts` (GET), `app/api/security/timeline/route.ts` (GET), `app/api/security/alerts/broadcast/route.ts` (POST), `app/api/security/analytics/route.ts` (GET)
+    - Create route handlers for notifications: `app/api/notifications/[id]/acknowledge/route.ts` (POST)
+    - Implement BullMQ scheduled job for escalation timer processing
+    - Register all in DI container
+    - _Requirements: 31.1, 31.4, 37.2, 37.7, 43.3, 43.4_
+
+  - [ ]* 39.5 Write property test for notification escalation correctness
+    - **Property 27: Notification Escalation Correctness**
+    - Generate random acknowledgment timings, verify escalation stops on ack and proceeds to next tier on timeout
+    - **Validates: Requirements 43.3, 43.4**
+
+  - [ ]* 39.6 Write unit tests for SocieT-Home, Security Center, and notification use cases
+    - Test GetDeviceDashboardUseCase: returns devices for owner household only
+    - Test GetSecurityDashboardUseCase: aggregates all security metrics
+    - Test BroadcastNeighborhoodAlertUseCase: dispatches to all Warga, role validation
+    - Test ProcessNotificationEscalationUseCase: tier progression, stop on acknowledgment
+    - Test DispatchMultiChannelNotificationUseCase: all channels dispatched, fallback on failure
+    - _Requirements: 31.1, 31.4, 31.5, 37.2, 43.2, 43.3, 43.4, 43.7_
+
+- [x] 40. Security maps and GIS
+  - [x] 40.1 Implement security map domain and use cases
+    - Extend existing `src/core/domains/map/` with security map layer types: IncidentMarker, CctvMarker, PanicAlertMarker, GateMarker, PatrolRouteLayer, GuardPositionMarker
+    - Create `GetSecurityMapDataUseCase`: aggregate all security-related map data (incidents, CCTV positions, panic alerts, gates, patrol routes, guard positions) with layer toggle support
+    - Create `GetIncidentHeatmapUseCase`: calculate incident density over configurable time period (7/30/90 days)
+    - Create `GetGeofenceVisualizationUseCase`: return alarm zones and patrol areas as polygon coordinates
+    - Restrict access to Ketua_RT, Pengurus, Security_Guard roles
+    - _Requirements: 42.1, 42.2, 42.3, 42.4, 42.5, 42.6, 42.7, 42.8_
+
+  - [x] 40.2 Implement security map route handlers
+    - Create route handlers: `app/api/security/map/route.ts` (GET all layers), `app/api/security/map/heatmap/route.ts` (GET), `app/api/security/map/geofences/route.ts` (GET)
+    - Integrate with Realtime Bus for live map updates (new incidents, gate status changes, guard positions)
+    - Register in DI container
+    - _Requirements: 42.1, 42.4, 42.6, 42.7_
+
+  - [ ]* 40.3 Write unit tests for security map use cases
+    - Test GetSecurityMapDataUseCase: layer filtering, role access validation
+    - Test GetIncidentHeatmapUseCase: density calculation for different time periods
+    - _Requirements: 42.1, 42.2, 42.7, 42.8_
+
+- [x] 41. IoT device health and observability
+  - [x] 41.1 Implement IoT health monitoring use cases
+    - Create `MonitorDeviceHealthUseCase`: track online/offline status, last heartbeat, battery level, signal strength, error count per device
+    - Create `EmitBatteryLowEventUseCase`: when battery drops below 20%, emit `battery_low` event, notify Home_Owner
+    - Create `GetDeviceHealthDashboardUseCase`: total devices per tenant, online/offline ratio, low battery devices, high error rate devices, last sync timestamp
+    - Create `CheckIoTHealthUseCase`: return Tuya Cloud API connectivity, Redis connectivity, WebSocket server status, device synchronization lag
+    - _Requirements: 44.1, 44.2, 44.3, 44.4, 44.5_
+
+  - [x] 41.2 Implement IoT observability infrastructure
+    - Create OpenTelemetry metrics emitter for: device_online_count, device_offline_count, command_success_rate, command_latency_p95, webhook_processing_latency, token_refresh_count
+    - Create Prometheus-compatible metrics endpoint for: tuya_api_requests_total, tuya_api_errors_total, tuya_api_latency_seconds, device_events_processed_total, websocket_connections_active
+    - Log all Tuya API interactions with: request_id, endpoint, method, response_status, latency_ms, correlation_id
+    - Create route handlers: `app/api/iot/health/route.ts` (GET - no auth required), `app/api/iot/metrics/route.ts` (GET), `app/api/iot/devices/health/route.ts` (GET dashboard)
+    - Register all in DI container
+    - _Requirements: 44.1, 44.2, 44.5, 44.6, 44.7, 44.8_
+
+  - [ ]* 41.3 Write unit tests for IoT health monitoring
+    - Test MonitorDeviceHealthUseCase: online/offline detection, battery threshold
+    - Test EmitBatteryLowEventUseCase: below 20% triggers event, above 20% does not
+    - Test CheckIoTHealthUseCase: all services healthy, partial failure
+    - _Requirements: 44.1, 44.3, 44.5_
+
+- [x] 42. Checkpoint - Run all tests, fix failures, and document unresolved issues in CHECKPOINT_REPORT.md
+
+
+- [ ] 43. Presentation layer for security and IoT features
+  - [x] 43.1 Implement Security Center dashboard UI
+    - Create `src/presentation/features/securityCenter/` with screens, components, viewModel
+    - Create SecurityCenterScreen with realtime dashboard: active incidents, alerts, gate status, CCTV status, patrol status, recent events
+    - Implement WebSocket client hook for realtime updates (subscribe to security_events, incident_updates, gate_events, patrol_events, alarm_events channels)
+    - Implement incident timeline component with chronological event display and time range filter
+    - Implement neighborhood alert broadcast form (severity selector, message input)
+    - Implement security analytics charts (incident trends, response time, category breakdown)
+    - Implement prominent visual and audio alert for critical events (panic, smoke, emergency)
+    - _Requirements: 31.1, 31.2, 31.3, 31.4, 31.6, 31.8_
+
+  - [x] 43.2 Implement incident management UI
+    - Create incident list view with filters (status, severity, category) and map view
+    - Create incident detail view with status timeline, evidence attachments, and action buttons
+    - Create incident creation form with location picker (map click or GPS)
+    - Implement incident status update workflow with notes input
+    - _Requirements: 32.1, 32.4, 32.6, 32.9_
+
+  - [x] 43.3 Implement gate, CCTV, and patrol monitoring UI
+    - Create gate monitoring panel: realtime status indicators, open duration warnings, event history
+    - Create CCTV monitoring panel: camera grid view with status, snapshot capture button, live stream viewer (WebRTC)
+    - Create patrol management panel: route map display, active patrol tracking, checkpoint progress, patrol analytics
+    - Implement map integration for all security features using Leaflet with layer toggles
+    - _Requirements: 33.1, 33.3, 33.5, 34.2, 34.6, 35.2, 35.3, 35.5, 42.1, 42.2_
+
+  - [x] 43.4 Implement SocieT-Home device dashboard UI
+    - Create `src/presentation/features/societHome/` with screens, components, viewModel
+    - Create device dashboard showing all paired devices with status, battery, last activity
+    - Create device pairing flow UI (step-by-step wizard)
+    - Create device control panel (send commands, view events)
+    - Implement WebSocket client for realtime device events (subscribe to device_events channel, filtered by privacy)
+    - Create device alert preferences configuration UI
+    - _Requirements: 37.1, 37.2, 37.4, 37.5, 37.7_
+
+  - [x] 43.5 Implement alarm and automation management UI
+    - Create alarm device list with status indicators and manual activation buttons
+    - Create automation rule builder UI: trigger event selector, condition builder, action selector
+    - Create automation execution history view with success/failure status
+    - Create alarm zone visualization on map
+    - _Requirements: 36.1, 36.2, 36.6, 39.1, 39.7, 39.8_
+
+  - [x] 43.6 Implement security map UI with all layers
+    - Extend existing map page with security layers: incidents (color-coded), CCTV positions, panic alerts, gates, patrol routes, guard positions
+    - Implement layer toggle controls
+    - Implement heatmap view for incident density
+    - Implement geofence polygon visualization for alarm zones and patrol areas
+    - Implement realtime position updates for patrol guards via WebSocket
+    - Implement marker click popups with detailed information
+    - _Requirements: 42.1, 42.2, 42.3, 42.4, 42.5, 42.6, 42.7_
+
+  - [ ]* 43.7 Write unit tests for security and IoT ViewModels
+    - Test SecurityCenterViewModel: dashboard data loading, realtime event handling
+    - Test IncidentViewModel: CRUD operations, status transitions
+    - Test DeviceDashboardViewModel: device list, command execution, event subscription
+    - Test AutomationRuleViewModel: rule creation, validation, enable/disable
+    - _Requirements: 31.1, 32.1, 37.2, 39.1_
+
+- [x] 44. Integration wiring and final validation
+  - [x] 44.1 Wire automation engine to realtime event pipeline
+    - Connect ProcessWebhookEventUseCase output to AutomationEngine evaluation
+    - Connect AutomationEngine actions to: CreateIncidentUseCase, NotificationQueueProtocol, ActivateSirenUseCase, CaptureSnapshotUseCase, BroadcastNeighborhoodAlertUseCase
+    - Ensure chain depth counter is properly passed through all automation triggers
+    - Verify end-to-end flow: Tuya webhook -> event classification -> automation evaluation -> action execution -> realtime delivery
+    - _Requirements: 32.7, 36.3, 39.5, 39.6_
+
+  - [x] 44.2 Wire Security Center realtime updates
+    - Connect all security domain events to Security Center WebSocket channels
+    - Verify incident creation/update publishes to `incident_updates` channel
+    - Verify gate events publish to `gate_events` channel
+    - Verify patrol events publish to `patrol_events` channel
+    - Verify alarm events publish to `alarm_events` channel
+    - Verify CCTV events publish to `cctv_events` channel
+    - Verify critical events trigger prominent dashboard alerts
+    - _Requirements: 31.2, 31.8, 40.3, 40.4, 40.5, 40.6_
+
+  - [x] 44.3 Register all new dependencies in DI container
+    - Update `src/infrastructure/di/registry/repositoryContainer.ts` with all new repository implementations
+    - Update `src/infrastructure/di/registry/useCasesContainer.ts` with all new use cases
+    - Update `src/infrastructure/di/registry/moduleContainer.ts` with WebSocketProtocol, RealtimeBusProtocol, IoTGatewayProtocol, AutomationEngineProtocol, CircuitBreakerProtocol
+    - Verify no circular dependencies in DI graph
+    - _Requirements: 31.1, 32.1, 33.1, 34.1, 35.1, 36.1, 37.1, 38.1, 39.1, 40.1, 41.1, 42.1, 43.1, 44.1_
+
+  - [ ]* 44.4 Write integration tests for end-to-end security flows
+    - Test: Tuya webhook received -> device event created -> automation rule triggered -> incident created -> notification dispatched -> WebSocket event delivered
+    - Test: Gate open too long -> automation triggers siren -> notification escalation -> acknowledgment stops escalation
+    - Test: Panic button pressed -> incident auto-created -> Security Center dashboard updated -> multi-channel notification sent
+    - _Requirements: 32.7, 33.4, 36.3, 39.5, 40.5, 43.2_
+
+- [x] 45. Final checkpoint - Run all tests, fix failures, and document unresolved issues in CHECKPOINT_REPORT.md
+
+
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for faster MVP
@@ -849,3 +1401,9 @@ This implementation plan converts the SocieT-RT design into incremental coding t
 - Backup jobs use `pg_dump`/`pg_restore` with defined storage paths and retention policies
 - PWA service worker uses Cache-First for static assets, Network-First for API calls, with documented offline limitations
 - Push notification subscriptions stored in PushSubscription table
+- WebSocket server runs as separate process for realtime event delivery with Redis pub/sub for horizontal scaling
+- IoT integration uses Tuya Cloud API with OAuth 2.0, circuit breaker pattern, and HMAC-SHA256 webhook validation
+- Automation engine supports rule chaining with max depth of 5 to prevent infinite loops
+- All CCTV credentials and IoT API secrets encrypted at rest using AES-256
+- Notification escalation uses tiered approach: Security_Guard (immediate), Ketua_RT (5 min), emergency contacts (15 min)
+- Device events classified as Shared_Security_Event or Private_Home_Event for privacy enforcement

@@ -50,6 +50,9 @@ import {
 import {
   GetMapMarkersUseCaseImpl,
   UpdateHouseholdCoordinatesUseCaseImpl,
+  GetSecurityMapDataUseCaseImpl,
+  GetIncidentHeatmapUseCaseImpl,
+  GetGeofenceVisualizationUseCaseImpl,
 } from '@core/domains/map/usecases';
 import {
   CreatePatrolScheduleUseCaseImpl,
@@ -84,6 +87,9 @@ import {
 } from '@core/domains/featureFlag/usecases';
 import {
   DispatchNotificationUseCaseImpl,
+  DispatchMultiChannelNotificationUseCaseImpl,
+  ProcessNotificationEscalationUseCaseImpl,
+  AcknowledgeNotificationUseCaseImpl,
 } from '@core/domains/notification/usecases';
 import {
   GetKetuaDashboardUseCaseImpl,
@@ -102,6 +108,68 @@ import {
   EndImpersonationUseCaseImpl,
   GetTenantHealthUseCaseImpl,
 } from '@core/domains/operational/usecases';
+import {
+  PairDeviceUseCaseImpl,
+  SendDeviceCommandUseCaseImpl,
+  ProcessWebhookEventUseCaseImpl,
+  SyncDeviceStatusUseCaseImpl,
+  UnpairDeviceUseCaseImpl,
+  MonitorDeviceHealthUseCaseImpl,
+  EmitBatteryLowEventUseCaseImpl,
+  GetDeviceHealthDashboardUseCaseImpl,
+  CheckIoTHealthUseCaseImpl,
+} from '@core/domains/iot/usecases';
+import {
+  CreateIncidentUseCaseImpl,
+  UpdateIncidentStatusUseCaseImpl,
+  EscalateIncidentUseCaseImpl,
+  AttachEvidenceUseCaseImpl,
+} from '@core/domains/incident/usecases';
+import {
+  RegisterGateUseCaseImpl,
+  ProcessGateEventUseCaseImpl,
+  CheckGateOpenDurationUseCaseImpl,
+  GetGateAnalyticsUseCaseImpl,
+} from '@core/domains/gate/usecases';
+import {
+  RegisterCameraUseCaseImpl,
+  CaptureSnapshotUseCaseImpl,
+  HandleMotionDetectionUseCaseImpl,
+  GetCctvStorageUsageUseCaseImpl,
+} from '@core/domains/cctv/usecases';
+import {
+  CreatePatrolRouteUseCaseImpl,
+  StartPatrolUseCaseImpl,
+  RecordCheckpointVisitUseCaseImpl,
+  CompletePatrolUseCaseImpl,
+  DetectPatrolDeviationUseCaseImpl,
+  GetPatrolAnalyticsUseCaseImpl,
+} from '@core/domains/patrol/usecases';
+import {
+  RegisterAlarmDeviceUseCaseImpl,
+  ActivateSirenUseCaseImpl,
+  ActivateZoneSirenUseCaseImpl,
+  DeactivateSirenUseCaseImpl,
+  ProcessAlarmScheduleUseCaseImpl,
+} from '@core/domains/alarm/usecases';
+import {
+  CreateAutomationRuleUseCaseImpl,
+  EvaluateRuleUseCaseImpl,
+  ExecuteAutomationActionsUseCaseImpl,
+  HandleRuleChainingUseCaseImpl,
+  EnableDisableRuleUseCaseImpl,
+} from '@core/domains/automation/usecases';
+import {
+  GetDeviceDashboardUseCaseImpl,
+  ConfigureDeviceAlertsUseCaseImpl,
+  TransferDeviceOwnershipUseCaseImpl,
+} from '@core/domains/societHome/usecases';
+import {
+  GetSecurityDashboardUseCaseImpl,
+  GetIncidentTimelineUseCaseImpl,
+  BroadcastNeighborhoodAlertUseCaseImpl,
+  GetSecurityAnalyticsUseCaseImpl,
+} from '@core/domains/securityCenter/usecases';
 
 export function registerUseCases(container: AwilixContainer): void {
   container.register({
@@ -142,6 +210,9 @@ export function registerUseCases(container: AwilixContainer): void {
     // Map
     getMapMarkersUseCase: asFunction(GetMapMarkersUseCaseImpl).singleton(),
     updateHouseholdCoordinatesUseCase: asFunction(UpdateHouseholdCoordinatesUseCaseImpl).singleton(),
+    getSecurityMapDataUseCase: asFunction(GetSecurityMapDataUseCaseImpl).singleton(),
+    getIncidentHeatmapUseCase: asFunction(GetIncidentHeatmapUseCaseImpl).singleton(),
+    getGeofenceVisualizationUseCase: asFunction(GetGeofenceVisualizationUseCaseImpl).singleton(),
     // Security
     createPatrolScheduleUseCase: asFunction(CreatePatrolScheduleUseCaseImpl).singleton(),
     recordPatrolAttendanceUseCase: asFunction(RecordPatrolAttendanceUseCaseImpl).singleton(),
@@ -169,6 +240,9 @@ export function registerUseCases(container: AwilixContainer): void {
     overrideFeatureFlagUseCase: asFunction(OverrideFeatureFlagUseCaseImpl).singleton(),
     // Notification
     dispatchNotificationUseCase: asFunction(DispatchNotificationUseCaseImpl).singleton(),
+    dispatchMultiChannelNotificationUseCase: asFunction(DispatchMultiChannelNotificationUseCaseImpl).singleton(),
+    processNotificationEscalationUseCase: asFunction(ProcessNotificationEscalationUseCaseImpl).singleton(),
+    acknowledgeNotificationUseCase: asFunction(AcknowledgeNotificationUseCaseImpl).singleton(),
     // Dashboard
     getKetuaDashboardUseCase: asFunction(GetKetuaDashboardUseCaseImpl).singleton(),
     getPlatformDashboardUseCase: asFunction(GetPlatformDashboardUseCaseImpl).singleton(),
@@ -182,5 +256,58 @@ export function registerUseCases(container: AwilixContainer): void {
     impersonateUseCase: asFunction(ImpersonateUseCaseImpl).singleton(),
     endImpersonationUseCase: asFunction(EndImpersonationUseCaseImpl).singleton(),
     getTenantHealthUseCase: asFunction(GetTenantHealthUseCaseImpl).singleton(),
+    // IoT
+    pairDeviceUseCase: asFunction(PairDeviceUseCaseImpl).singleton(),
+    sendDeviceCommandUseCase: asFunction(SendDeviceCommandUseCaseImpl).singleton(),
+    processWebhookEventUseCase: asFunction(ProcessWebhookEventUseCaseImpl).singleton(),
+    syncDeviceStatusUseCase: asFunction(SyncDeviceStatusUseCaseImpl).singleton(),
+    unpairDeviceUseCase: asFunction(UnpairDeviceUseCaseImpl).singleton(),
+    monitorDeviceHealthUseCase: asFunction(MonitorDeviceHealthUseCaseImpl).singleton(),
+    emitBatteryLowEventUseCase: asFunction(EmitBatteryLowEventUseCaseImpl).singleton(),
+    getDeviceHealthDashboardUseCase: asFunction(GetDeviceHealthDashboardUseCaseImpl).singleton(),
+    checkIoTHealthUseCase: asFunction(CheckIoTHealthUseCaseImpl).singleton(),
+    // Incident
+    createIncidentUseCase: asFunction(CreateIncidentUseCaseImpl).singleton(),
+    updateIncidentStatusUseCase: asFunction(UpdateIncidentStatusUseCaseImpl).singleton(),
+    escalateIncidentUseCase: asFunction(EscalateIncidentUseCaseImpl).singleton(),
+    attachEvidenceUseCase: asFunction(AttachEvidenceUseCaseImpl).singleton(),
+    // Gate
+    registerGateUseCase: asFunction(RegisterGateUseCaseImpl).singleton(),
+    processGateEventUseCase: asFunction(ProcessGateEventUseCaseImpl).singleton(),
+    checkGateOpenDurationUseCase: asFunction(CheckGateOpenDurationUseCaseImpl).singleton(),
+    getGateAnalyticsUseCase: asFunction(GetGateAnalyticsUseCaseImpl).singleton(),
+    // CCTV
+    registerCameraUseCase: asFunction(RegisterCameraUseCaseImpl).singleton(),
+    captureSnapshotUseCase: asFunction(CaptureSnapshotUseCaseImpl).singleton(),
+    handleMotionDetectionUseCase: asFunction(HandleMotionDetectionUseCaseImpl).singleton(),
+    getCctvStorageUsageUseCase: asFunction(GetCctvStorageUsageUseCaseImpl).singleton(),
+    // Patrol (Enhanced)
+    createPatrolRouteUseCase: asFunction(CreatePatrolRouteUseCaseImpl).singleton(),
+    startPatrolUseCase: asFunction(StartPatrolUseCaseImpl).singleton(),
+    recordCheckpointVisitUseCase: asFunction(RecordCheckpointVisitUseCaseImpl).singleton(),
+    completePatrolUseCase: asFunction(CompletePatrolUseCaseImpl).singleton(),
+    detectPatrolDeviationUseCase: asFunction(DetectPatrolDeviationUseCaseImpl).singleton(),
+    getPatrolAnalyticsUseCase: asFunction(GetPatrolAnalyticsUseCaseImpl).singleton(),
+    // Alarm
+    registerAlarmDeviceUseCase: asFunction(RegisterAlarmDeviceUseCaseImpl).singleton(),
+    activateSirenUseCase: asFunction(ActivateSirenUseCaseImpl).singleton(),
+    activateZoneSirenUseCase: asFunction(ActivateZoneSirenUseCaseImpl).singleton(),
+    deactivateSirenUseCase: asFunction(DeactivateSirenUseCaseImpl).singleton(),
+    processAlarmScheduleUseCase: asFunction(ProcessAlarmScheduleUseCaseImpl).singleton(),
+    // Automation
+    createAutomationRuleUseCase: asFunction(CreateAutomationRuleUseCaseImpl).singleton(),
+    evaluateRuleUseCase: asFunction(EvaluateRuleUseCaseImpl).singleton(),
+    executeAutomationActionsUseCase: asFunction(ExecuteAutomationActionsUseCaseImpl).singleton(),
+    handleRuleChainingUseCase: asFunction(HandleRuleChainingUseCaseImpl).singleton(),
+    enableDisableRuleUseCase: asFunction(EnableDisableRuleUseCaseImpl).singleton(),
+    // SocieT-Home
+    getDeviceDashboardUseCase: asFunction(GetDeviceDashboardUseCaseImpl).singleton(),
+    configureDeviceAlertsUseCase: asFunction(ConfigureDeviceAlertsUseCaseImpl).singleton(),
+    transferDeviceOwnershipUseCase: asFunction(TransferDeviceOwnershipUseCaseImpl).singleton(),
+    // Security Center
+    getSecurityDashboardUseCase: asFunction(GetSecurityDashboardUseCaseImpl).singleton(),
+    getIncidentTimelineUseCase: asFunction(GetIncidentTimelineUseCaseImpl).singleton(),
+    broadcastNeighborhoodAlertUseCase: asFunction(BroadcastNeighborhoodAlertUseCaseImpl).singleton(),
+    getSecurityAnalyticsUseCase: asFunction(GetSecurityAnalyticsUseCaseImpl).singleton(),
   });
 }
