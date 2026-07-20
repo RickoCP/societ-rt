@@ -161,6 +161,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch { /* ignore if table doesn't exist */ }
   }
 
+  // Resolve author names
+  const creatorIds = [...new Set(result.data.map(e => e.createdBy))];
+  const users = await prisma.user.findMany({
+    where: { id: { in: creatorIds } },
+    select: { id: true, name: true },
+  });
+  const userNameMap = new Map(users.map(u => [u.id, u.name]));
+
   return NextResponse.json(
     {
       data: result.data.map((e) => ({
@@ -171,6 +179,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         time: e.time,
         location: e.location,
         createdBy: e.createdBy,
+        authorName: userNameMap.get(e.createdBy) ?? 'Unknown',
         rsvpCount: rsvpMap.get(e.id) ?? 0,
         createdAt: e.createdAt.toISOString(),
       })),

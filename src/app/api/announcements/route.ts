@@ -16,6 +16,7 @@ import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import type { CreateAnnouncementUseCase } from '@core/domains/announcement/usecases';
 import type { AnnouncementRepository } from '@core/domains/announcement/repositories/AnnouncementRepository';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas
@@ -152,6 +153,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const paginated = result.data;
 
+  // Resolve author names from user IDs
+  const prisma = container.resolve<PrismaClient>('prismaClient');
+  const creatorIds = [...new Set(paginated.data.map((a) => a.createdBy))];
+  const users = await prisma.user.findMany({
+    where: { id: { in: creatorIds } },
+    select: { id: true, name: true },
+  });
+  const userNameMap = new Map(users.map((u) => [u.id, u.name]));
+
   return NextResponse.json(
     {
       data: paginated.data.map((a) => ({
@@ -160,6 +170,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         content: a.content,
         category: a.category,
         createdBy: a.createdBy,
+        authorName: userNameMap.get(a.createdBy) ?? 'Unknown',
         publishedAt: a.publishedAt?.toISOString() ?? null,
         createdAt: a.createdAt.toISOString(),
       })),

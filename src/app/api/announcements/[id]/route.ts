@@ -2,7 +2,7 @@
  * PATCH /api/announcements/:id — Update an announcement.
  * DELETE /api/announcements/:id — Delete an announcement.
  *
- * Only admin roles (Super_Admin, Ketua_RT, Pengurus) can edit/delete.
+ * Only Super_Admin, Ketua_RT, or the creator can edit/delete.
  *
  * @see Requirements 9.1, 9.2
  */
@@ -15,7 +15,7 @@ import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import { UserRole } from '@core/protocols';
 import type { PrismaClient } from '@prisma/client';
 
-const ADMIN_ROLES = [UserRole.Super_Admin, UserRole.Ketua_RT, UserRole.Pengurus];
+const EDIT_DELETE_ROLES: UserRole[] = [UserRole.Super_Admin, UserRole.Ketua_RT];
 
 const updateSchema = z.object({
   title: z.string().min(1).optional(),
@@ -39,13 +39,6 @@ export async function PATCH(
     return NextResponse.json(
       { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
       { status: 401 },
-    );
-  }
-
-  if (!ADMIN_ROLES.includes(authContext.role as UserRole)) {
-    return NextResponse.json(
-      { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission.', correlationId },
-      { status: 403 },
     );
   }
 
@@ -80,6 +73,17 @@ export async function PATCH(
       return NextResponse.json(
         { code: 'COMMON_NOT_FOUND', message: 'Announcement not found', correlationId },
         { status: 404 },
+      );
+    }
+
+    // Authorization: only Super_Admin, Ketua_RT, or the creator can edit
+    const isAdminRole = EDIT_DELETE_ROLES.includes(authContext.role as UserRole);
+    const isCreator = announcement.createdBy === authContext.userId;
+
+    if (!isAdminRole && !isCreator) {
+      return NextResponse.json(
+        { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission.', correlationId },
+        { status: 403 },
       );
     }
 
@@ -123,13 +127,6 @@ export async function DELETE(
     );
   }
 
-  if (!ADMIN_ROLES.includes(authContext.role as UserRole)) {
-    return NextResponse.json(
-      { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission.', correlationId },
-      { status: 403 },
-    );
-  }
-
   const { id } = await params;
 
   try {
@@ -143,6 +140,17 @@ export async function DELETE(
       return NextResponse.json(
         { code: 'COMMON_NOT_FOUND', message: 'Announcement not found', correlationId },
         { status: 404 },
+      );
+    }
+
+    // Authorization: only Super_Admin, Ketua_RT, or the creator can delete
+    const isAdminRole = EDIT_DELETE_ROLES.includes(authContext.role as UserRole);
+    const isCreator = announcement.createdBy === authContext.userId;
+
+    if (!isAdminRole && !isCreator) {
+      return NextResponse.json(
+        { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission.', correlationId },
+        { status: 403 },
       );
     }
 

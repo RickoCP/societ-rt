@@ -134,13 +134,53 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     Math.max(1, Number(searchParams.get('pageSize') ?? '20')),
   );
 
-  // 3. Query repository for letter requests
+  // 3. Query repository — admins see all, regular users see only their own
   const administrationRepository =
     container.resolve<AdministrationRepository>('administrationRepository');
-  const result = await administrationRepository.findByTenant(
+
+  const ADMIN_ROLES = ['Super_Admin', 'Ketua_RT'];
+  const isAdmin = ADMIN_ROLES.includes(authContext.role);
+
+  if (isAdmin) {
+    // Admin sees all letters in the tenant
+    const result = await administrationRepository.findByTenant(
+      authContext.tenantId,
+      page,
+      pageSize,
+    );
+
+    if (!result.success) {
+      return mapAppErrorToHttpResponse(result.error, correlationId);
+    }
+
+    return NextResponse.json(
+      {
+        data: result.data.data.map((lr) => ({
+          id: lr.id,
+          userId: lr.userId,
+          letterType: lr.letterType,
+          purpose: lr.purpose,
+          status: lr.status,
+          rejectionReason: lr.rejectionReason,
+          documentUrl: lr.documentUrl,
+          decidedBy: lr.decidedBy,
+          decidedAt: lr.decidedAt?.toISOString() ?? null,
+          createdAt: lr.createdAt.toISOString(),
+        })),
+        pagination: {
+          total: result.data.total,
+          page: result.data.page,
+          pageSize: result.data.pageSize,
+        },
+      },
+      { status: 200 },
+    );
+  }
+
+  // Regular users only see their own letters
+  const result = await administrationRepository.findByUser(
     authContext.tenantId,
-    page,
-    pageSize,
+    authContext.userId,
   );
 
   if (!result.success) {
@@ -149,7 +189,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   return NextResponse.json(
     {
-      data: result.data.data.map((lr) => ({
+      data: result.data.map((lr) => ({
         id: lr.id,
         userId: lr.userId,
         letterType: lr.letterType,
@@ -162,9 +202,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         createdAt: lr.createdAt.toISOString(),
       })),
       pagination: {
-        total: result.data.total,
-        page: result.data.page,
-        pageSize: result.data.pageSize,
+        total: result.data.length,
+        page: 1,
+        pageSize: result.data.length,
       },
     },
     { status: 200 },

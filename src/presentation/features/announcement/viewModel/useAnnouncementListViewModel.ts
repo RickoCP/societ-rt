@@ -8,6 +8,7 @@ interface Announcement {
   content: string;
   category: string;
   createdBy: string;
+  authorName: string;
   publishedAt: string;
   createdAt: string;
 }
@@ -17,6 +18,14 @@ interface AnnouncementListResponse {
   total: number;
   page: number;
   totalPages: number;
+}
+
+interface CurrentUser {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  tenantId: string;
 }
 
 async function fetchAnnouncements(
@@ -35,11 +44,35 @@ async function fetchAnnouncements(
   return (await res.json()) as AnnouncementListResponse;
 }
 
+async function fetchCurrentUser(): Promise<CurrentUser> {
+  const res = await fetch('/api/auth/me');
+  if (!res.ok) {
+    throw new Error('Failed to fetch current user');
+  }
+  const json = (await res.json()) as { data: CurrentUser };
+  return json.data;
+}
+
+const EDIT_DELETE_ALLOWED_ROLES = ['Super_Admin', 'Ketua_RT'];
+
 export function useAnnouncementListViewModel(page = 1, category?: string) {
   const query = useQuery({
     queryKey: ['announcements', page, category],
     queryFn: () => fetchAnnouncements(page, category),
   });
+
+  const userQuery = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: fetchCurrentUser,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const canEditDelete = (createdBy: string): boolean => {
+    if (!userQuery.data) return false;
+    const { role, userId } = userQuery.data;
+    if (EDIT_DELETE_ALLOWED_ROLES.includes(role)) return true;
+    return createdBy === userId;
+  };
 
   return {
     announcements: query.data?.data ?? [],
@@ -49,5 +82,6 @@ export function useAnnouncementListViewModel(page = 1, category?: string) {
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
+    canEditDelete,
   };
 }

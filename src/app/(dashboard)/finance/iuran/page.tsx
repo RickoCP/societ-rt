@@ -6,7 +6,7 @@ import { Badge } from '@components/atoms/Badge';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
 import Link from 'next/link';
 
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
 
 interface HouseholdIuran {
   householdId: string;
@@ -19,7 +19,7 @@ interface HouseholdIuran {
 
 export default function IuranStatusPage() {
   const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth(); // 0-indexed
+  const currentMonth = new Date().getMonth();
 
   const [year, setYear] = useState(currentYear);
   const [data, setData] = useState<HouseholdIuran[]>([]);
@@ -28,12 +28,8 @@ export default function IuranStatusPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'paid' | 'unpaid'>('all');
   const [updating, setUpdating] = useState<string | null>(null);
-
-  // Nominal iuran
   const [iuranAmount, setIuranAmount] = useState('100000');
-
-  // Dynamic months — start with Jan to current month, can add more
-  const [visibleMonths, setVisibleMonths] = useState(currentMonth + 1); // 1-12
+  const [visibleMonths, setVisibleMonths] = useState(currentMonth + 1);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -58,10 +54,8 @@ export default function IuranStatusPage() {
   const handleToggle = async (householdId: string, householdNumber: string, month: string, currentlyPaid: boolean) => {
     const key = `${householdId}-${month}`;
     setUpdating(key);
-
     const amount = parseFloat(iuranAmount);
 
-    // Optimistic update
     setData(prev => prev.map(h => {
       if (h.householdId !== householdId) return h;
       return { ...h, months: { ...h.months, [month]: currentlyPaid ? 'unpaid' : 'paid' } };
@@ -80,14 +74,12 @@ export default function IuranStatusPage() {
         }),
       });
       if (!res.ok) {
-        // Revert
         setData(prev => prev.map(h => {
           if (h.householdId !== householdId) return h;
           return { ...h, months: { ...h.months, [month]: currentlyPaid ? 'paid' : 'unpaid' } };
         }));
       }
     } catch {
-      // Revert
       setData(prev => prev.map(h => {
         if (h.householdId !== householdId) return h;
         return { ...h, months: { ...h.months, [month]: currentlyPaid ? 'paid' : 'unpaid' } };
@@ -97,16 +89,8 @@ export default function IuranStatusPage() {
     }
   };
 
-  const handleAddMonth = () => {
-    if (visibleMonths < 12) {
-      setVisibleMonths(prev => prev + 1);
-    }
-  };
-
-  // Generate month keys based on visible months
   const monthKeys = Array.from({ length: visibleMonths }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`);
 
-  // Filter data
   const filteredData = data.filter(h => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -114,138 +98,179 @@ export default function IuranStatusPage() {
         return false;
       }
     }
-    if (filterStatus === 'paid') {
-      return monthKeys.every(m => h.months[m] === 'paid');
-    }
-    if (filterStatus === 'unpaid') {
-      return monthKeys.some(m => h.months[m] !== 'paid');
-    }
+    if (filterStatus === 'paid') return monthKeys.every(m => h.months[m] === 'paid');
+    if (filterStatus === 'unpaid') return monthKeys.some(m => h.months[m] !== 'paid');
     return true;
   });
 
   const getPaidCount = (h: HouseholdIuran) => monthKeys.filter(m => h.months[m] === 'paid').length;
+  const totalPaid = filteredData.reduce((sum, h) => sum + getPaidCount(h), 0);
+  const totalLunas = filteredData.filter(h => getPaidCount(h) === visibleMonths).length;
+  const totalBelum = filteredData.filter(h => getPaidCount(h) < visibleMonths).length;
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Iuran Bulanan {year}</h1>
-        <Link href="/finance" className="text-sm text-blue-600 hover:underline dark:text-blue-400">← Back to Finance</Link>
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Iuran Bulanan
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Checklist pembayaran iuran warga tahun {year}
+          </p>
+        </div>
+        <Link href="/finance" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline dark:text-blue-400">
+          ← Kembali ke Keuangan
+        </Link>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Total KK</p>
+          <p className="mt-1 text-xl font-bold text-gray-900 dark:text-gray-100">{filteredData.length}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Lunas Semua</p>
+          <p className="mt-1 text-xl font-bold text-green-600 dark:text-green-400">{totalLunas}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Belum Lunas</p>
+          <p className="mt-1 text-xl font-bold text-red-600 dark:text-red-400">{totalBelum}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <p className="text-xs text-gray-500 dark:text-gray-400">Total Pemasukan</p>
+          <p className="mt-1 text-lg font-bold text-gray-900 dark:text-gray-100">
+            Rp {(totalPaid * Number(iuranAmount || 0)).toLocaleString('id-ID')}
+          </p>
+        </div>
       </div>
 
       {/* Controls */}
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <div>
           <label htmlFor="iuran-year" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Tahun</label>
-          <select id="iuran-year" value={year} onChange={e => setYear(Number(e.target.value))} className="rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+          <select id="iuran-year" value={year} onChange={e => setYear(Number(e.target.value))} className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
             {[currentYear - 1, currentYear, currentYear + 1].map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
         </div>
         <div>
-          <label htmlFor="iuran-nominal" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Nominal Iuran (Rp)</label>
-          <input
-            id="iuran-nominal"
-            type="number"
-            min="0"
-            value={iuranAmount}
-            onChange={e => setIuranAmount(e.target.value)}
-            className="w-32 rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-          />
+          <label htmlFor="iuran-nominal" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Nominal (Rp)</label>
+          <input id="iuran-nominal" type="number" min="0" value={iuranAmount} onChange={e => setIuranAmount(e.target.value)} className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-[180px]">
           <label htmlFor="iuran-search" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Cari</label>
-          <input
-            id="iuran-search"
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Cari nama, alamat, atau No. KK..."
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-          />
+          <div className="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input id="iuran-search" type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Nama, alamat, No. KK..." className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
+          </div>
         </div>
         <div>
           <label htmlFor="iuran-filter" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Filter</label>
-          <select id="iuran-filter" value={filterStatus} onChange={e => setFilterStatus(e.target.value as 'all' | 'paid' | 'unpaid')} className="rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+          <select id="iuran-filter" value={filterStatus} onChange={e => setFilterStatus(e.target.value as 'all' | 'paid' | 'unpaid')} className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
             <option value="all">Semua</option>
             <option value="paid">Lunas</option>
             <option value="unpaid">Belum Lunas</option>
           </select>
         </div>
-        <Button onClick={fetchData} variant="secondary" size="sm">Refresh</Button>
+        <Button onClick={fetchData} variant="secondary" size="sm">🔄 Refresh</Button>
       </div>
 
-      {/* Info */}
-      <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
-        Centang checkbox = warga sudah bayar iuran (otomatis tercatat sebagai pemasukan Rp {Number(iuranAmount || 0).toLocaleString('id-ID')})
+      {/* Info Banner */}
+      <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/20">
+        <span className="text-sm">💡</span>
+        <p className="text-xs text-blue-700 dark:text-blue-300">
+          Centang checkbox = warga sudah bayar iuran (otomatis tercatat sebagai pemasukan Rp {Number(iuranAmount || 0).toLocaleString('id-ID')})
+        </p>
       </div>
 
       {error && <ErrorMessage message={error} />}
 
+      {/* Table */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+        <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white py-16 dark:border-gray-700 dark:bg-gray-800">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Memuat data iuran...</p>
         </div>
       ) : filteredData.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Tidak ada data household.</p>
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 py-16 dark:border-gray-600">
+          <span className="text-4xl">💳</span>
+          <p className="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">Tidak ada data</p>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            {searchQuery ? 'Coba kata kunci lain' : 'Tambahkan data rumah tangga terlebih dahulu'}
+          </p>
+        </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
               <tr>
-                <th className="sticky left-0 z-10 bg-gray-50 px-3 py-2 dark:bg-gray-900">Nama / No. KK</th>
-                <th className="px-3 py-2">Alamat</th>
-                <th className="px-3 py-2 text-center">Total</th>
+                <th className="sticky left-0 z-10 bg-gray-50 px-4 py-3 text-xs font-semibold uppercase text-gray-500 dark:bg-gray-900 dark:text-gray-400">Warga</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Progress</th>
                 {monthKeys.map((mk, i) => (
-                  <th key={mk} className="px-2 py-2 text-center text-xs whitespace-nowrap">
-                    {MONTH_LABELS[i]} {year}
+                  <th key={mk} className="px-2 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    {MONTH_LABELS[i]}
                   </th>
                 ))}
                 {visibleMonths < 12 && (
-                  <th className="px-2 py-2 text-center">
+                  <th className="px-2 py-3 text-center">
                     <button
                       type="button"
-                      onClick={handleAddMonth}
-                      className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300"
-                      aria-label="Tambah kolom bulan berikutnya"
+                      onClick={() => setVisibleMonths(prev => Math.min(12, prev + 1))}
+                      className="rounded-lg bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300"
+                      aria-label="Tambah bulan"
                     >
-                      + Bulan
+                      +
                     </button>
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {filteredData.map(h => {
                 const paidCount = getPaidCount(h);
+                const progress = Math.round((paidCount / visibleMonths) * 100);
                 return (
-                  <tr key={h.householdId} className="border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50">
-                    <td className="sticky left-0 z-10 bg-white px-3 py-2 dark:bg-gray-800">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">{h.headName}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{h.householdNumber}</div>
+                  <tr key={h.householdId} className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="sticky left-0 z-10 bg-white px-4 py-3 dark:bg-gray-800">
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{h.headName}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{h.householdNumber} {h.block ? `• Blok ${h.block}` : ''}</p>
                     </td>
-                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
-                      <div>{h.address}</div>
-                      {h.block && <div className="text-xs text-gray-400">Blok {h.block}</div>}
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      <Badge variant={paidCount === visibleMonths ? 'success' : paidCount > 0 ? 'warning' : 'danger'}>
-                        {paidCount}/{visibleMonths}
-                      </Badge>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <Badge variant={paidCount === visibleMonths ? 'success' : paidCount > 0 ? 'warning' : 'danger'}>
+                          {paidCount}/{visibleMonths}
+                        </Badge>
+                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              progress === 100 ? 'bg-green-500' : progress > 0 ? 'bg-amber-500' : 'bg-gray-300'
+                            }`}
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
                     </td>
                     {monthKeys.map(monthKey => {
                       const isPaid = h.months[monthKey] === 'paid';
                       const isUpdating = updating === `${h.householdId}-${monthKey}`;
                       return (
-                        <td key={monthKey} className="px-2 py-2 text-center">
-                          <input
-                            type="checkbox"
-                            checked={isPaid}
-                            disabled={isUpdating}
-                            onChange={() => handleToggle(h.householdId, h.householdNumber, monthKey, isPaid)}
-                            className="h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-wait disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700"
-                            aria-label={`${h.headName} - ${monthKey} - ${isPaid ? 'lunas' : 'belum'}`}
-                          />
+                        <td key={monthKey} className="px-2 py-3 text-center">
+                          <label className="inline-flex cursor-pointer items-center">
+                            <input
+                              type="checkbox"
+                              checked={isPaid}
+                              disabled={isUpdating}
+                              onChange={() => handleToggle(h.householdId, h.householdNumber, monthKey, isPaid)}
+                              className="h-4 w-4 cursor-pointer rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:cursor-wait disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700"
+                              aria-label={`${h.headName} - ${MONTH_LABELS[monthKeys.indexOf(monthKey)]} - ${isPaid ? 'lunas' : 'belum'}`}
+                            />
+                          </label>
                         </td>
                       );
                     })}
@@ -255,16 +280,6 @@ export default function IuranStatusPage() {
               })}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* Summary */}
-      {!loading && filteredData.length > 0 && (
-        <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-          <span>Total KK: <strong>{filteredData.length}</strong></span>
-          <span>Lunas Semua: <strong>{filteredData.filter(h => getPaidCount(h) === visibleMonths).length}</strong></span>
-          <span>Belum Lunas: <strong>{filteredData.filter(h => getPaidCount(h) < visibleMonths).length}</strong></span>
-          <span>Total Pemasukan Iuran: <strong>Rp {(filteredData.reduce((sum, h) => sum + getPaidCount(h), 0) * Number(iuranAmount || 0)).toLocaleString('id-ID')}</strong></span>
         </div>
       )}
     </div>

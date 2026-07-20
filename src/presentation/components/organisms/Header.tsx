@@ -11,6 +11,7 @@ export interface HeaderProps {
   unreadCount?: number;
   onNotificationClick?: () => void;
   onLogout?: () => void;
+  onMenuToggle?: () => void;
   className?: string;
 }
 
@@ -22,11 +23,26 @@ export function Header({
   unreadCount = 0,
   onNotificationClick,
   onLogout,
+  onMenuToggle,
   className = '',
 }: HeaderProps) {
   return (
     <header
       className={`flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-gray-700 dark:bg-gray-900 ${className}`}>
+      {/* Mobile menu button */}
+      {onMenuToggle && (
+        <button
+          type="button"
+          onClick={onMenuToggle}
+          className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 md:hidden dark:text-gray-400 dark:hover:bg-gray-800"
+          aria-label="Toggle menu"
+        >
+          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      )}
+
       {isImpersonating && (
         <div
           role="alert"

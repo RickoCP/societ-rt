@@ -3,7 +3,7 @@
  * PATCH /api/events/:id — Update event.
  * DELETE /api/events/:id — Delete event.
  *
- * Only admin roles (Super_Admin, Ketua_RT, Pengurus) can edit/delete.
+ * Only Super_Admin, Ketua_RT, or the creator can delete.
  *
  * @see Requirements 14.1, 14.2
  */
@@ -17,6 +17,7 @@ import { UserRole } from '@core/protocols';
 import type { PrismaClient } from '@prisma/client';
 
 const ADMIN_ROLES = [UserRole.Super_Admin, UserRole.Ketua_RT, UserRole.Pengurus];
+const DELETE_ROLES: UserRole[] = [UserRole.Super_Admin, UserRole.Ketua_RT];
 
 // ---------------------------------------------------------------------------
 // GET — Event detail
@@ -220,13 +221,6 @@ export async function DELETE(
     );
   }
 
-  if (!ADMIN_ROLES.includes(authContext.role as UserRole)) {
-    return NextResponse.json(
-      { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission.', correlationId },
-      { status: 403 },
-    );
-  }
-
   const { id } = await params;
 
   try {
@@ -240,6 +234,17 @@ export async function DELETE(
       return NextResponse.json(
         { code: 'COMMON_NOT_FOUND', message: 'Event not found', correlationId },
         { status: 404 },
+      );
+    }
+
+    // Authorization: only Super_Admin, Ketua_RT, or the event creator can delete
+    const isAdminRole = DELETE_ROLES.includes(authContext.role as UserRole);
+    const isCreator = event.createdBy === authContext.userId;
+
+    if (!isAdminRole && !isCreator) {
+      return NextResponse.json(
+        { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission.', correlationId },
+        { status: 403 },
       );
     }
 

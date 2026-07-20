@@ -10,6 +10,8 @@ interface Vote {
   deadline: string;
   optionCount: number;
   totalVotes: number;
+  createdBy: string;
+  authorName: string;
   createdAt: string;
 }
 
@@ -18,6 +20,14 @@ interface VoteListResponse {
   total: number;
   page: number;
   totalPages: number;
+}
+
+interface CurrentUser {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  tenantId: string;
 }
 
 async function fetchVotes(page: number): Promise<VoteListResponse> {
@@ -31,6 +41,15 @@ async function fetchVotes(page: number): Promise<VoteListResponse> {
   return (await res.json()) as VoteListResponse;
 }
 
+async function fetchCurrentUser(): Promise<CurrentUser> {
+  const res = await fetch('/api/auth/me');
+  if (!res.ok) {
+    throw new Error('Failed to fetch current user');
+  }
+  const json = (await res.json()) as { data: CurrentUser };
+  return json.data;
+}
+
 async function deleteVoteRequest(id: string): Promise<void> {
   const res = await fetch(`/api/voting/${id}`, { method: 'DELETE' });
   if (!res.ok) {
@@ -38,6 +57,8 @@ async function deleteVoteRequest(id: string): Promise<void> {
     throw new Error(body.message ?? 'Failed to delete vote');
   }
 }
+
+const DELETE_ALLOWED_ROLES = ['Super_Admin', 'Ketua_RT'];
 
 export function useVoteListViewModel(page = 1) {
   const queryClient = useQueryClient();
@@ -47,12 +68,25 @@ export function useVoteListViewModel(page = 1) {
     queryFn: () => fetchVotes(page),
   });
 
+  const userQuery = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: fetchCurrentUser,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: deleteVoteRequest,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['votes'] });
     },
   });
+
+  const canDeleteVote = (createdBy: string): boolean => {
+    if (!userQuery.data) return false;
+    const { role, userId } = userQuery.data;
+    if (DELETE_ALLOWED_ROLES.includes(role)) return true;
+    return createdBy === userId;
+  };
 
   return {
     votes: query.data?.data ?? [],
@@ -64,5 +98,6 @@ export function useVoteListViewModel(page = 1) {
     refetch: query.refetch,
     deleteVote: deleteMutation.mutate,
     isDeleting: deleteMutation.isPending,
+    canDeleteVote,
   };
 }

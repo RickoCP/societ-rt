@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { DataTable, type DataTableColumn } from '@components/organisms/DataTable';
 import { Badge } from '@components/atoms/Badge';
 import { Button } from '@components/atoms/Button';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
@@ -25,29 +24,23 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-const columns: DataTableColumn<TransactionRow>[] = [
-  { key: 'date', header: 'Date' },
-  { key: 'description', header: 'Description' },
-  { key: 'category', header: 'Category' },
-  {
-    key: 'type',
-    header: 'Type',
-    render: row => (
-      <Badge variant={row.type === 'income' ? 'success' : 'danger'}>
-        {row.type}
-      </Badge>
-    ),
-  },
-  {
-    key: 'amount',
-    header: 'Amount',
-    render: row => (
-      <span className={row.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-        {row.type === 'income' ? '+' : '-'}{formatCurrency(row.amount)}
-      </span>
-    ),
-  },
-];
+function formatDate(dateStr: string): string {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+const categoryIcons: Record<string, string> = {
+  iuran: '💳',
+  donasi: '🎁',
+  keamanan: '🔒',
+  kebersihan: '🧹',
+  operasional: '⚙️',
+  lainnya: '📦',
+};
 
 export function FinanceScreen() {
   const [page, setPage] = useState(1);
@@ -79,32 +72,18 @@ export function FinanceScreen() {
   const [iuranError, setIuranError] = useState<string | null>(null);
   const [iuranSuccess, setIuranSuccess] = useState<string | null>(null);
 
-  // Iuran status check
-  const [iuranCheckHhId, setIuranCheckHhId] = useState('');
-  const [iuranCheckMonth, setIuranCheckMonth] = useState('');
-  const [iuranStatus, setIuranStatus] = useState<string | null>(null);
-  const [iuranCheckError, setIuranCheckError] = useState<string | null>(null);
-
-  // Report
-  const [showReport, setShowReport] = useState(false);
-  const [reportStart, setReportStart] = useState('');
-  const [reportEnd, setReportEnd] = useState('');
-  const [reportData, setReportData] = useState<string | null>(null);
-  const [reportError, setReportError] = useState<string | null>(null);
-  const [reportLoading, setReportLoading] = useState(false);
-
   const handleAddTransaction = async () => {
     const amount = parseFloat(txAmount);
     if (!txAmount || isNaN(amount)) {
-      setTxError('Valid amount is required');
+      setTxError('Jumlah harus diisi dengan angka valid');
       return;
     }
     setTxLoading(true);
     setTxError(null);
     setTxSuccess(null);
     try {
-      const result = await createTransaction({ type: txType, amount, description: txDesc, category: txCategory, date: txDate });
-      setTxSuccess(`Transaction recorded: ${result.id}`);
+      await createTransaction({ type: txType, amount, description: txDesc, category: txCategory, date: txDate });
+      setTxSuccess('Transaksi berhasil dicatat');
       setTxAmount('');
       setTxDesc('');
       refetch();
@@ -117,7 +96,7 @@ export function FinanceScreen() {
 
   const handleRecordIuran = async () => {
     if (!iuranHouseholdId || !iuranMonth || !iuranTxId) {
-      setIuranError('All fields are required');
+      setIuranError('Semua field wajib diisi');
       return;
     }
     setIuranLoading(true);
@@ -125,7 +104,7 @@ export function FinanceScreen() {
     setIuranSuccess(null);
     try {
       await recordIuran({ householdId: iuranHouseholdId, month: iuranMonth, transactionId: iuranTxId });
-      setIuranSuccess('Iuran payment recorded!');
+      setIuranSuccess('Pembayaran iuran berhasil dicatat!');
     } catch (err) {
       setIuranError(err instanceof Error ? err.message : 'Network error');
     } finally {
@@ -133,91 +112,87 @@ export function FinanceScreen() {
     }
   };
 
-  const handleCheckIuran = async () => {
-    if (!iuranCheckHhId || !iuranCheckMonth) {
-      setIuranCheckError('Household ID and month are required');
-      return;
-    }
-    setIuranCheckError(null);
-    setIuranStatus(null);
-    try {
-      const data = await checkIuran({ householdId: iuranCheckHhId, month: iuranCheckMonth });
-      setIuranStatus(JSON.stringify(data, null, 2));
-    } catch (err) {
-      setIuranCheckError(err instanceof Error ? err.message : 'Network error');
-    }
-  };
-
-  const handleGetReport = async () => {
-    if (!reportStart || !reportEnd) {
-      setReportError('Start and end dates are required');
-      return;
-    }
-    setReportLoading(true);
-    setReportError(null);
-    setReportData(null);
-    try {
-      const data = await fetchReport({ startDate: reportStart, endDate: reportEnd });
-      setReportData(JSON.stringify(data, null, 2));
-    } catch (err) {
-      setReportError(err instanceof Error ? err.message : 'Network error');
-    } finally {
-      setReportLoading(false);
-    }
-  };
+  // Calculate totals
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Finance Management</h1>
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Keuangan
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Kelola kas dan transaksi RT
+          </p>
+        </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="primary" size="sm" onClick={() => setShowAddTx(!showAddTx)}>
-            {showAddTx ? 'Close' : '+ Transaction'}
+          <Button variant="primary" size="sm" onClick={() => { setShowAddTx(!showAddTx); setShowIuran(false); }}>
+            {showAddTx ? 'Tutup' : '+ Transaksi'}
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => setShowIuran(!showIuran)}>
-            {showIuran ? 'Close' : 'Iuran'}
+          <Button variant="secondary" size="sm" onClick={() => { setShowIuran(!showIuran); setShowAddTx(false); }}>
+            {showIuran ? 'Tutup' : '💳 Iuran'}
           </Button>
-          <a href="/finance/iuran">
-            <Button variant="secondary" size="sm">Iuran Checklist</Button>
-          </a>
-          <Button variant="secondary" size="sm" onClick={() => setShowReport(!showReport)}>
-            {showReport ? 'Close' : 'Report'}
-          </Button>
-          <a href="/finance/report">
-            <Button variant="secondary" size="sm">Ringkasan</Button>
-          </a>
+          <a href="/finance/iuran"><Button variant="secondary" size="sm">📋 Checklist</Button></a>
+          <a href="/finance/report"><Button variant="secondary" size="sm">📊 Laporan</Button></a>
         </div>
       </div>
 
-      {/* Balance Card */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Current Balance</p>
-        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(balance)}</p>
+      {/* Balance Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5 shadow-sm dark:border-gray-700 dark:from-gray-800 dark:to-gray-800">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Saldo Kas</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(balance)}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/40">
+              <span className="text-sm">📈</span>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Pemasukan</p>
+              <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/40">
+              <span className="text-sm">📉</span>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Pengeluaran</p>
+              <p className="text-lg font-bold text-red-600 dark:text-red-400">{formatCurrency(totalExpense)}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Add Transaction Form */}
       {showAddTx && (
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Record Transaction</h2>
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm dark:border-blue-800 dark:bg-blue-900/20">
+          <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-100">Catat Transaksi</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label htmlFor="tx-type" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
-              <select id="tx-type" value={txType} onChange={e => setTxType(e.target.value as 'income' | 'expense')} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
+              <label htmlFor="tx-type" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tipe</label>
+              <select id="tx-type" value={txType} onChange={e => setTxType(e.target.value as 'income' | 'expense')} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+                <option value="income">Pemasukan</option>
+                <option value="expense">Pengeluaran</option>
               </select>
             </div>
             <div>
-              <label htmlFor="tx-amount" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (Rp)</label>
-              <input id="tx-amount" type="number" min="0" value={txAmount} onChange={e => setTxAmount(e.target.value)} placeholder="100000" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
+              <label htmlFor="tx-amount" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Jumlah (Rp)</label>
+              <input id="tx-amount" type="number" min="0" value={txAmount} onChange={e => setTxAmount(e.target.value)} placeholder="100000" className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
             </div>
             <div>
-              <label htmlFor="tx-desc" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-              <input id="tx-desc" type="text" value={txDesc} onChange={e => setTxDesc(e.target.value)} placeholder="Iuran bulanan" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
+              <label htmlFor="tx-desc" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Keterangan</label>
+              <input id="tx-desc" type="text" value={txDesc} onChange={e => setTxDesc(e.target.value)} placeholder="Iuran bulanan" className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
             </div>
             <div>
-              <label htmlFor="tx-category" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-              <select id="tx-category" value={txCategory} onChange={e => setTxCategory(e.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+              <label htmlFor="tx-category" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Kategori</label>
+              <select id="tx-category" value={txCategory} onChange={e => setTxCategory(e.target.value)} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
                 <option value="iuran">Iuran</option>
                 <option value="donasi">Donasi</option>
                 <option value="keamanan">Keamanan</option>
@@ -227,99 +202,148 @@ export function FinanceScreen() {
               </select>
             </div>
             <div>
-              <label htmlFor="tx-date" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
-              <input id="tx-date" type="date" value={txDate} onChange={e => setTxDate(e.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
+              <label htmlFor="tx-date" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal</label>
+              <input id="tx-date" type="date" value={txDate} onChange={e => setTxDate(e.target.value)} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
             </div>
           </div>
           <div className="mt-4">
             <Button onClick={handleAddTransaction} disabled={txLoading} variant="primary">
-              {txLoading ? 'Recording...' : 'Record Transaction'}
+              {txLoading ? 'Menyimpan...' : 'Simpan Transaksi'}
             </Button>
           </div>
           {txError && <div className="mt-3"><ErrorMessage message={txError} /></div>}
-          {txSuccess && <p className="mt-3 text-sm font-medium text-green-700 dark:text-green-400">{txSuccess}</p>}
+          {txSuccess && <p className="mt-3 text-sm font-medium text-green-700 dark:text-green-400">✓ {txSuccess}</p>}
         </div>
       )}
 
       {/* Iuran Section */}
       {showIuran && (
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Iuran Management</h2>
-          <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Record Payment</h3>
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="flex-1">
-              <label htmlFor="iuran-hh" className="mb-1 block text-xs text-gray-600 dark:text-gray-400">Household ID</label>
-              <input id="iuran-hh" type="text" value={iuranHouseholdId} onChange={e => setIuranHouseholdId(e.target.value)} placeholder="UUID" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
-            </div>
-            <div className="w-full sm:w-36">
-              <label htmlFor="iuran-month" className="mb-1 block text-xs text-gray-600 dark:text-gray-400">Month</label>
-              <input id="iuran-month" type="month" value={iuranMonth} onChange={e => setIuranMonth(e.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
-            </div>
-            <div className="flex-1">
-              <label htmlFor="iuran-tx" className="mb-1 block text-xs text-gray-600 dark:text-gray-400">Transaction ID</label>
-              <input id="iuran-tx" type="text" value={iuranTxId} onChange={e => setIuranTxId(e.target.value)} placeholder="UUID from transaction" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
-            </div>
-            <Button onClick={handleRecordIuran} disabled={iuranLoading} variant="primary" size="sm">
-              {iuranLoading ? 'Recording...' : 'Record'}
-            </Button>
-          </div>
-          {iuranError && <div className="mb-4"><ErrorMessage message={iuranError} /></div>}
-          {iuranSuccess && <p className="mb-4 text-sm font-medium text-green-700 dark:text-green-400">{iuranSuccess}</p>}
-
-          <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Check Status</h3>
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm dark:border-amber-800 dark:bg-amber-900/20">
+          <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-100">Catat Pembayaran Iuran</h2>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1">
-              <input type="text" value={iuranCheckHhId} onChange={e => setIuranCheckHhId(e.target.value)} placeholder="Household ID" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" aria-label="Household ID for status check" />
+              <label htmlFor="iuran-hh" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Household ID</label>
+              <input id="iuran-hh" type="text" value={iuranHouseholdId} onChange={e => setIuranHouseholdId(e.target.value)} placeholder="UUID" className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
             </div>
             <div className="w-full sm:w-36">
-              <input type="month" value={iuranCheckMonth} onChange={e => setIuranCheckMonth(e.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" aria-label="Month for status check" />
+              <label htmlFor="iuran-month" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Bulan</label>
+              <input id="iuran-month" type="month" value={iuranMonth} onChange={e => setIuranMonth(e.target.value)} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
             </div>
-            <Button onClick={handleCheckIuran} variant="secondary" size="sm">Check</Button>
-          </div>
-          {iuranCheckError && <div className="mt-3"><ErrorMessage message={iuranCheckError} /></div>}
-          {iuranStatus && (
-            <pre className="mt-3 overflow-auto rounded bg-gray-50 p-3 text-xs text-gray-800 dark:bg-gray-900 dark:text-gray-200">{iuranStatus}</pre>
-          )}
-        </div>
-      )}
-
-      {/* Report Section */}
-      {showReport && (
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Financial Report</h2>
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div>
-              <label htmlFor="report-start" className="mb-1 block text-xs text-gray-600 dark:text-gray-400">Start Date</label>
-              <input id="report-start" type="date" value={reportStart} onChange={e => setReportStart(e.target.value)} className="rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
+            <div className="flex-1">
+              <label htmlFor="iuran-tx" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Transaction ID</label>
+              <input id="iuran-tx" type="text" value={iuranTxId} onChange={e => setIuranTxId(e.target.value)} placeholder="UUID" className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
             </div>
-            <div>
-              <label htmlFor="report-end" className="mb-1 block text-xs text-gray-600 dark:text-gray-400">End Date</label>
-              <input id="report-end" type="date" value={reportEnd} onChange={e => setReportEnd(e.target.value)} className="rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" />
-            </div>
-            <Button onClick={handleGetReport} disabled={reportLoading} variant="primary" size="sm">
-              {reportLoading ? 'Loading...' : 'Get Report'}
+            <Button onClick={handleRecordIuran} disabled={iuranLoading} variant="primary" size="sm">
+              {iuranLoading ? '...' : 'Catat'}
             </Button>
           </div>
-          {reportError && <ErrorMessage message={reportError} />}
-          {reportData && (
-            <pre className="max-h-80 overflow-auto rounded bg-gray-50 p-3 text-xs text-gray-800 dark:bg-gray-900 dark:text-gray-200">{reportData}</pre>
-          )}
+          {iuranError && <div className="mt-3"><ErrorMessage message={iuranError} /></div>}
+          {iuranSuccess && <p className="mt-3 text-sm font-medium text-green-700 dark:text-green-400">✓ {iuranSuccess}</p>}
         </div>
       )}
 
-      {/* Transactions Table */}
       {isError && <ErrorMessage message={error?.message ?? 'Failed to load transactions'} />}
 
-      <DataTable<TransactionRow>
-        columns={columns}
-        data={transactions}
-        loading={isLoading}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        rowKey={row => row.id}
-        emptyMessage="No transactions found"
-      />
+      {/* Transactions List */}
+      {isLoading && (
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="animate-pulse rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                <div className="flex-1">
+                  <div className="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700" />
+                  <div className="mt-1 h-3 w-24 rounded bg-gray-100 dark:bg-gray-700" />
+                </div>
+                <div className="h-5 w-24 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!isLoading && transactions.length === 0 && !isError && (
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 py-16 dark:border-gray-600">
+          <span className="text-4xl">💰</span>
+          <p className="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">Belum ada transaksi</p>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Klik &quot;+ Transaksi&quot; untuk mencatat transaksi pertama</p>
+        </div>
+      )}
+
+      {!isLoading && transactions.length > 0 && (
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              Riwayat Transaksi
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {transactions.map((tx: TransactionRow) => (
+              <div key={tx.id} className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                {/* Icon */}
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                  tx.type === 'income'
+                    ? 'bg-green-100 dark:bg-green-900/40'
+                    : 'bg-red-100 dark:bg-red-900/40'
+                }`}>
+                  <span className="text-sm">{categoryIcons[tx.category] ?? '📦'}</span>
+                </div>
+
+                {/* Info */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {tx.description || tx.category}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span>{formatDate(tx.date)}</span>
+                    <span>•</span>
+                    <span className="capitalize">{tx.category}</span>
+                  </div>
+                </div>
+
+                {/* Type Badge */}
+                <Badge variant={tx.type === 'income' ? 'success' : 'danger'}>
+                  {tx.type === 'income' ? 'Masuk' : 'Keluar'}
+                </Badge>
+
+                {/* Amount */}
+                <p className={`shrink-0 text-sm font-semibold ${
+                  tx.type === 'income'
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 border-t border-gray-200 px-5 py-3 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {page} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

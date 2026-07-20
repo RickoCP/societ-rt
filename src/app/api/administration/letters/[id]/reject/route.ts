@@ -49,6 +49,19 @@ export async function POST(
     );
   }
 
+  // Only Super_Admin and Ketua_RT can reject
+  const REJECT_ROLES = ['Super_Admin', 'Ketua_RT'];
+  if (!REJECT_ROLES.includes(authContext.role)) {
+    return NextResponse.json(
+      {
+        code: 'AUTH_INSUFFICIENT_ROLE',
+        message: 'You do not have permission.',
+        correlationId,
+      },
+      { status: 403 },
+    );
+  }
+
   // 2. Parse and validate input
   let body: unknown;
   try {

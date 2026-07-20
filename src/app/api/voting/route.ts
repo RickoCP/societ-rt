@@ -16,6 +16,7 @@ import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import type { CreateVoteUseCase } from '@core/domains/voting/usecases';
 import type { VotingRepository } from '@core/domains/voting/repositories/VotingRepository';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas
@@ -145,6 +146,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
+  // Resolve author names from user IDs
+  const prisma = container.resolve<PrismaClient>('prismaClient');
+  const creatorIds = [...new Set(result.data.map((v) => v.createdBy))];
+  const users = await prisma.user.findMany({
+    where: { id: { in: creatorIds } },
+    select: { id: true, name: true },
+  });
+  const userNameMap = new Map(users.map((u) => [u.id, u.name]));
+
   return NextResponse.json(
     {
       data: result.data.map((vote) => ({
@@ -154,6 +164,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         mode: vote.mode,
         deadline: vote.deadline.toISOString(),
         createdBy: vote.createdBy,
+        authorName: userNameMap.get(vote.createdBy) ?? 'Unknown',
         createdAt: vote.createdAt.toISOString(),
       })),
     },

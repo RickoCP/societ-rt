@@ -10,6 +10,15 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',
+    apple: '/icons/icon-192x192.svg',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'SocieT-RT',
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
 
@@ -26,11 +35,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className="h-full antialiased">
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
+      </head>
       <body className="min-h-full flex flex-col font-sans">
         <QueryProvider>
           {children}
           <OfflineIndicator />
         </QueryProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').catch(function() {});
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

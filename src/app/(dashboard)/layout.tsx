@@ -40,6 +40,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -70,10 +71,36 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar items={navItems} userRole={userRole} />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar items={navItems} userRole={userRole} />
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {mobileMenuOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-y-0 left-0 z-50 md:hidden">
+            <Sidebar
+              items={navItems}
+              userRole={userRole}
+              onNavigate={() => setMobileMenuOpen(false)}
+            />
+          </div>
+        </>
+      )}
+
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header userName={userName} onLogout={handleLogout} />
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-6 dark:bg-gray-950">
+        <Header
+          userName={userName}
+          onLogout={handleLogout}
+          onMenuToggle={() => setMobileMenuOpen(prev => !prev)}
+        />
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 dark:bg-gray-950">
           {children}
         </main>
       </div>

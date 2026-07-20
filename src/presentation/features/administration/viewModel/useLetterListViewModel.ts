@@ -20,6 +20,14 @@ interface LetterListResponse {
   pagination: { total: number; page: number; pageSize: number };
 }
 
+interface CurrentUser {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  tenantId: string;
+}
+
 async function fetchLetters(page: number): Promise<{ data: LetterRequest[]; totalPages: number }> {
   const res = await fetch(`/api/administration/letters?page=${page}`);
 
@@ -33,11 +41,38 @@ async function fetchLetters(page: number): Promise<{ data: LetterRequest[]; tota
   return { data: json.data, totalPages };
 }
 
+async function fetchCurrentUser(): Promise<CurrentUser> {
+  const res = await fetch('/api/auth/me');
+  if (!res.ok) {
+    throw new Error('Failed to fetch current user');
+  }
+  const json = (await res.json()) as { data: CurrentUser };
+  return json.data;
+}
+
+const ADMIN_ROLES = ['Super_Admin', 'Ketua_RT'];
+
 export function useLetterListViewModel(page = 1) {
   const query = useQuery({
     queryKey: ['administration-letters', page],
     queryFn: () => fetchLetters(page),
   });
+
+  const userQuery = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: fetchCurrentUser,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const canApproveReject = (): boolean => {
+    if (!userQuery.data) return false;
+    return ADMIN_ROLES.includes(userQuery.data.role);
+  };
+
+  const canEditLetter = (userId: string, status: string): boolean => {
+    if (!userQuery.data) return false;
+    return userQuery.data.userId === userId && status === 'pending';
+  };
 
   return {
     letters: query.data?.data ?? [],
@@ -47,5 +82,8 @@ export function useLetterListViewModel(page = 1) {
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
+    canApproveReject,
+    canEditLetter,
+    currentUser: userQuery.data ?? null,
   };
 }

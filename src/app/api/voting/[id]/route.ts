@@ -191,13 +191,6 @@ export async function DELETE(
     );
   }
 
-  if (!ADMIN_ROLES.includes(authContext.role as UserRole)) {
-    return NextResponse.json(
-      { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission.', correlationId },
-      { status: 403 },
-    );
-  }
-
   const { id: voteId } = await params;
 
   try {
@@ -211,6 +204,18 @@ export async function DELETE(
       return NextResponse.json(
         { code: 'COMMON_NOT_FOUND', message: 'Vote not found', correlationId },
         { status: 404 },
+      );
+    }
+
+    // Authorization: only Super_Admin, Ketua_RT, or the vote creator can delete
+    const DELETE_ROLES: UserRole[] = [UserRole.Super_Admin, UserRole.Ketua_RT];
+    const isAdminRole = DELETE_ROLES.includes(authContext.role as UserRole);
+    const isCreator = vote.createdBy === authContext.userId;
+
+    if (!isAdminRole && !isCreator) {
+      return NextResponse.json(
+        { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission.', correlationId },
+        { status: 403 },
       );
     }
 
