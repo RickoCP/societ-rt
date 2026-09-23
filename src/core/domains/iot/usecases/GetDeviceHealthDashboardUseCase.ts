@@ -138,13 +138,11 @@ export const GetDeviceHealthDashboardUseCaseImpl = ({
     }
 
     // Last sync timestamp is the most recent lastSeen across all devices
-    const lastSyncTimestamp =
-      devices.length > 0
-        ? devices.reduce(
-            (latest, d) => (d.lastSeen > latest ? d.lastSeen : latest),
-            devices[0].lastSeen,
-          )
-        : null;
+    const lastSyncTimestamp = devices.reduce<Date | null>(
+      (latest, d) =>
+        latest === null || d.lastSeen > latest ? d.lastSeen : latest,
+      null,
+    );
 
     return ok({
       tenantId: authContext.tenantId,

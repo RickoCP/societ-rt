@@ -1,20 +1,23 @@
 /**
  * PWA Icon Generator Script
- * 
+ *
  * Generates PNG icons from an SVG source for PWA manifest.
- * 
+ *
  * Prerequisites: npm install sharp --save-dev
- * Usage: node scripts/generate-pwa-icons.js
- * 
+ * Usage: node scripts/generate-pwa-icons.mjs
+ *
  * If you don't have `sharp` installed, you can manually create icons using:
  * - https://realfavicongenerator.net
  * - https://www.pwabuilder.com/imageGenerator
- * 
+ *
  * Place the generated icons in public/icons/ directory.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ICON_SIZES = [72, 96, 128, 144, 152, 192, 384, 512];
 const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'icons');
@@ -34,19 +37,19 @@ async function main() {
 
   let sharp;
   try {
-    sharp = require('sharp');
+    ({ default: sharp } = await import('sharp'));
   } catch {
     // Fallback: generate SVG files as PNG-compatible placeholders
     console.log('sharp not found. Generating SVG placeholders as .png references...');
     console.log('Install sharp for proper PNG generation: npm install sharp --save-dev\n');
-    
+
     for (const size of ICON_SIZES) {
       const svg = generateSvg(size);
       const svgFilename = `icon-${size}x${size}.svg`;
       fs.writeFileSync(path.join(OUTPUT_DIR, svgFilename), svg);
       console.log(`  Created: ${svgFilename}`);
     }
-    
+
     console.log('\nTip: Use https://www.pwabuilder.com/imageGenerator to generate proper PNGs.');
     return;
   }

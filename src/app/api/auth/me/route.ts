@@ -11,7 +11,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { container } from '@infrastructure/di/container';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@/generated/prisma/client';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const correlationId =

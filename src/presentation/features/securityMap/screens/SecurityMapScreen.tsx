@@ -25,7 +25,7 @@ const SEVERITY_COLORS: Record<string, string> = {
 function SecurityMapView({ vm }: { vm: ReturnType<typeof useSecurityMapViewModel> }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<unknown>(null);
-  const [popupContent, setPopupContent] = useState<string | null>(null);
+  const [popupContent] = useState<string | null>(null);
 
   useEffect(() => {
     if (!mapRef.current || leafletMapRef.current) return;
@@ -35,7 +35,7 @@ function SecurityMapView({ vm }: { vm: ReturnType<typeof useSecurityMapViewModel
       if (!mapRef.current) return;
 
       // Fix default icon paths
-      delete (L.Icon.Default.prototype as Record<string, unknown>)['_getIconUrl'];
+      delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)['_getIconUrl'];
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',

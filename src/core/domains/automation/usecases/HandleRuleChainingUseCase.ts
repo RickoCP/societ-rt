@@ -51,7 +51,7 @@ export const HandleRuleChainingUseCaseImpl = ({
 }: {
   automationRepository: AutomationRepository;
 }): HandleRuleChainingUseCase => ({
-  execute: async ({ tenantId, eventType, event, chainDepth }) => {
+  execute: async ({ tenantId, eventType, chainDepth }) => {
     // 1. Check chain depth limit
     if (chainDepth >= AUTOMATION_MAX_CHAIN_DEPTH) {
       return fail(

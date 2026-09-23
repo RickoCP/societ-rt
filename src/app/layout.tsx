@@ -45,17 +45,9 @@ export default function RootLayout({
           {children}
           <OfflineIndicator />
         </QueryProvider>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function() {});
-                });
-              }
-            `,
-          }}
-        />
+        {/* External static script (not inline) so CSP script-src can stay
+            'self' without needing 'unsafe-inline'. */}
+        <script src="/sw-register.js" defer />
       </body>
     </html>
   );

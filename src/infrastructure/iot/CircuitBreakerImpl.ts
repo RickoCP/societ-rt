@@ -138,7 +138,8 @@ export const CircuitBreakerImpl = (): CircuitBreakerProtocol => {
     const now = Date.now();
     let i = 0;
     while (i < commandQueue.length) {
-      if (now - commandQueue[i].enqueuedAt > QUEUE_MAX_AGE_MS) {
+      const command = commandQueue[i];
+      if (command && now - command.enqueuedAt > QUEUE_MAX_AGE_MS) {
         commandQueue.splice(i, 1);
       } else {
         i++;

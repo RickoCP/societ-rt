@@ -11,7 +11,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@/generated/prisma/client';
 
 const letterTemplates: Record<string, { title: string; header: string }> = {
   surat_pengantar: {

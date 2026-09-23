@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Badge } from '@components/atoms/Badge';
 import { Button } from '@components/atoms/Button';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
@@ -65,7 +66,7 @@ export function EventListScreen() {
           </p>
         </div>
         <Button size="sm">
-          <a href="/events/create">Create Event</a>
+          <Link href="/events/create">Create Event</Link>
         </Button>
       </div>
 

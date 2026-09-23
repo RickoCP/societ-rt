@@ -9,6 +9,7 @@
 
 import jwt from 'jsonwebtoken';
 import type { UserRole } from '@core/protocols';
+import { requireJwtSecret } from './secrets';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -33,13 +34,9 @@ const DEFAULT_EXPIRY_SECONDS = 24 * 60 * 60; // 24 hours
 // ---------------------------------------------------------------------------
 
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error(
-      'JWT_SECRET environment variable is not set. Authentication cannot proceed.',
-    );
-  }
-  return secret;
+  // Centralized resolution: enforces presence always, and rejects weak
+  // secrets in production (fail-fast). Never logs the secret value.
+  return requireJwtSecret();
 }
 
 // ---------------------------------------------------------------------------

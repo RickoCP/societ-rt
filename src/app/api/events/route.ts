@@ -16,7 +16,7 @@ import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import type { CreateEventUseCase } from '@core/domains/event/usecases';
 import type { EventRepository } from '@core/domains/event/repositories/EventRepository';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@/generated/prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas

@@ -16,7 +16,7 @@ import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import type { CreateAnnouncementUseCase } from '@core/domains/announcement/usecases';
 import type { AnnouncementRepository } from '@core/domains/announcement/repositories/AnnouncementRepository';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@/generated/prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas

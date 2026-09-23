@@ -76,7 +76,6 @@ export function useLetterListViewModel(page = 1) {
 
   return {
     letters: query.data?.data ?? [],
-    total: query.data?.total ?? 0,
     totalPages: query.data?.totalPages ?? 1,
     isLoading: query.isLoading,
     isError: query.isError,

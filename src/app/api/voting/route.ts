@@ -16,7 +16,7 @@ import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import type { CreateVoteUseCase } from '@core/domains/voting/usecases';
 import type { VotingRepository } from '@core/domains/voting/repositories/VotingRepository';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@/generated/prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas

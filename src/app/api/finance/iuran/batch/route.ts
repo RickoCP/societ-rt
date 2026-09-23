@@ -11,7 +11,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import { UserRole } from '@core/protocols';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@/generated/prisma/client';
 
 // ---------------------------------------------------------------------------
 // GET — Get all iuran statuses for a year with household info
@@ -68,8 +68,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Build a map: householdId -> { month -> status }
     const statusMap: Record<string, Record<string, string>> = {};
     for (const s of iuranStatuses) {
-      if (!statusMap[s.householdId]) statusMap[s.householdId] = {};
-      statusMap[s.householdId][s.month] = s.status;
+      const householdStatuses = (statusMap[s.householdId] ??= {});
+      householdStatuses[s.month] = s.status;
     }
 
     // Build response

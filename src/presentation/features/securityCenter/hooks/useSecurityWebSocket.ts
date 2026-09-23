@@ -66,9 +66,13 @@ export function useSecurityWebSocket({
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onMessageRef = useRef(onMessage);
+  const connectRef = useRef<() => void>(() => {});
 
-  // Keep callback ref up to date
-  onMessageRef.current = onMessage;
+  // Keep the latest onMessage callback in a ref (updated after commit, not
+  // during render) so the WebSocket handler always calls the current one.
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
 
   const cleanup = useCallback(() => {
     if (reconnectTimerRef.current) {
@@ -116,11 +120,13 @@ export function useSecurityWebSocket({
     ws.onclose = () => {
       setIsConnected(false);
 
-      // Auto-reconnect with backoff
+      // Auto-reconnect with backoff. Call through connectRef to avoid
+      // referencing `connect` before its declaration (the reconnect semantics
+      // are unchanged: same backoff, same attempt cap).
       if (enabled && reconnectAttemptsRef.current < WS_MAX_RECONNECT_ATTEMPTS) {
         reconnectAttemptsRef.current += 1;
         reconnectTimerRef.current = setTimeout(() => {
-          connect();
+          connectRef.current();
         }, WS_RECONNECT_DELAY_MS * reconnectAttemptsRef.current);
       }
     };
@@ -129,6 +135,12 @@ export function useSecurityWebSocket({
       // onclose will fire after onerror, triggering reconnect
     };
   }, [enabled, channels, cleanup]);
+
+  // Keep connectRef pointing at the latest connect (updated after commit) so
+  // the auto-reconnect timer inside onclose always calls the current one.
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   const reconnect = useCallback(() => {
     reconnectAttemptsRef.current = 0;

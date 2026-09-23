@@ -208,7 +208,7 @@ export const AutomationEngineImpl = ({
   // -------------------------------------------------------------------------
   async executeActions(
     rule: AutomationRule,
-    context: RuleEvaluationContext,
+    _context: RuleEvaluationContext,
   ): Promise<DomainResult<RuleExecutionResult>> {
     const startTime = Date.now();
     const actionsExecuted: string[] = [];

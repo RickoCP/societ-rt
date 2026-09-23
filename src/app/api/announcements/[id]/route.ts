@@ -13,7 +13,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import { UserRole } from '@core/protocols';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@/generated/prisma/client';
 
 const EDIT_DELETE_ROLES: UserRole[] = [UserRole.Super_Admin, UserRole.Ketua_RT];
 

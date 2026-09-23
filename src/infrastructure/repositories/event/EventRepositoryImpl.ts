@@ -17,7 +17,6 @@ import type {
   EventRsvp,
   RsvpResponse,
 } from '@core/domains/event/entities';
-import { eventDuplicateRsvp } from '@core/domains/event/errors/eventErrors';
 import {
   createTenantScopedRepository,
   type TenantScopedRepository,
@@ -71,19 +70,6 @@ function mapPrismaRsvpToDomain(p: PrismaEventRsvp): EventRsvp {
     response: p.response as RsvpResponse,
     createdAt: p.createdAt,
   };
-}
-
-// ---------------------------------------------------------------------------
-// Prisma unique constraint error detection
-// ---------------------------------------------------------------------------
-
-function isPrismaUniqueConstraintError(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code: string }).code === 'P2002'
-  );
 }
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 import { DataTable, type DataTableColumn } from '@components/organisms/DataTable';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
 import { Button } from '@components/atoms/Button';
@@ -358,7 +359,7 @@ export function ResidentListScreen() {
               📥 Export
             </Button>
             <Button variant="secondary" size="md" className="flex-1 sm:flex-none">
-              <a href="/residents/import">📤 Import</a>
+              <Link href="/residents/import">📤 Import</Link>
             </Button>
           </div>
         </div>
@@ -740,7 +741,7 @@ export function ResidentListScreen() {
                 Belum ada data warga
               </p>
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                Tambahkan warga melalui tombol "Warga" di atas
+                Tambahkan warga melalui tombol &quot;Warga&quot; di atas
               </p>
             </div>
           ) : (

@@ -15,6 +15,7 @@ import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import type { TriggerEmergencyAlertUseCase } from '@core/domains/emergency/usecases';
+import type { PrismaClient } from '@/generated/prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas
@@ -135,7 +136,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // 2. Query emergency alerts directly via raw SQL for reliability
   try {
-    const { prismaClient } = container.cradle;
+    const prismaClient = container.resolve<PrismaClient>('prismaClient');
     const alerts = await prismaClient.$queryRawUnsafe<
       Array<{
         id: string;

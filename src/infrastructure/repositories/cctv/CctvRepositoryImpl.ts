@@ -128,8 +128,37 @@ function mapPrismaSnapshotToDomain(p: PrismaCctvSnapshot): CctvSnapshot {
 // Encryption key resolution
 // ---------------------------------------------------------------------------
 
+/**
+ * Resolve the CCTV RTSP-URL encryption key (feature-conditional secret).
+ *
+ * - Production: the key MUST be provided (CCTV_ENCRYPTION_KEY, or the shared
+ *   TUYA_ENCRYPTION_KEY as a fallback source). No silent default — if the CCTV
+ *   feature is used without a key configured, we fail fast rather than
+ *   encrypting/decrypting with a guessable key that could reach production.
+ * - Non-production: allow an explicit, clearly-labelled dev-only key so local
+ *   development is not blocked. This value is never used when NODE_ENV is
+ *   'production'. The key value itself is never logged.
+ */
+const DEV_ONLY_CCTV_KEY = 'dev-only-insecure-cctv-key-change-me';
+
 function getEncryptionKey(): string {
-  return process.env.CCTV_ENCRYPTION_KEY ?? process.env.TUYA_ENCRYPTION_KEY ?? 'default-dev-key';
+  const configured =
+    process.env.CCTV_ENCRYPTION_KEY ?? process.env.TUYA_ENCRYPTION_KEY ?? '';
+
+  if (configured.trim() !== '') {
+    return configured;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'CCTV feature requires an encryption key in production. Set ' +
+        'CCTV_ENCRYPTION_KEY (or TUYA_ENCRYPTION_KEY). No insecure default is ' +
+        'used in production.',
+    );
+  }
+
+  // Non-production only — explicit, obviously-insecure dev key.
+  return DEV_ONLY_CCTV_KEY;
 }
 
 // ---------------------------------------------------------------------------

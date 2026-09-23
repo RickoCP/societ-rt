@@ -16,10 +16,7 @@ import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, notFoundError } from '@core/utils';
 import type { VotingRepository } from '../repositories/VotingRepository';
-import {
-  votingDeadlinePassed,
-  votingAlreadyVoted,
-} from '../errors/votingErrors';
+import { votingDeadlinePassed } from '../errors/votingErrors';
 
 // ---------------------------------------------------------------------------
 // Interface

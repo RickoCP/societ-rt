@@ -18,6 +18,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { checkRateLimit } from '@infrastructure/utils/rateLimiter';
+import { requireJwtSecret } from '@infrastructure/utils/secrets';
+import { getSecurityHeaders } from '@infrastructure/utils/securityHeaders';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -50,11 +52,9 @@ const LOGIN_RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 // ---------------------------------------------------------------------------
 
 function getJwtSecretKey(): Uint8Array {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set.');
-  }
-  return new TextEncoder().encode(secret);
+  // Centralized resolution: enforces presence always, and rejects weak
+  // secrets in production (fail-fast). Never logs the secret value.
+  return new TextEncoder().encode(requireJwtSecret());
 }
 
 function isPublicPath(pathname: string): boolean {
@@ -83,12 +83,10 @@ function setSecurityHeaders(
   response: NextResponse,
   correlationId: string,
 ): void {
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set(
-    'Referrer-Policy',
-    'strict-origin-when-cross-origin',
-  );
+  const isProduction = process.env.NODE_ENV === 'production';
+  for (const { name, value } of getSecurityHeaders(isProduction)) {
+    response.headers.set(name, value);
+  }
   response.headers.set('X-Correlation-Id', correlationId);
 }
 

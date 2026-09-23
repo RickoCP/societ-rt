@@ -113,7 +113,6 @@ export function useEventListViewModel(page = 1) {
 
   return {
     events: query.data?.data ?? [],
-    total: query.data?.total ?? 0,
     totalPages: query.data?.totalPages ?? 1,
     isLoading: query.isLoading,
     isError: query.isError,

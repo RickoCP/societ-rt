@@ -5,7 +5,7 @@
  * block native .node binaries (e.g., corporate Windows machines).
  *
  * Run after `npm install`:
- *   node scripts/patch-native-wasm.js
+ *   node scripts/patch-native-wasm.mjs
  *
  * What it does:
  * 1. Replaces rollup's native.js with @rollup/wasm-node's native.js
@@ -16,8 +16,11 @@
  *   - esbuild-wasm
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const root = path.resolve(__dirname, '..');
 const nm = path.join(root, 'node_modules');
