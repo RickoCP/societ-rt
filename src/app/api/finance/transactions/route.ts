@@ -14,8 +14,16 @@ import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { UserRole } from '@core/protocols/AuthContext';
 import type { RecordTransactionUseCase } from '@core/domains/finance/usecases';
 import type { FinanceRepository } from '@core/domains/finance/repositories/FinanceRepository';
+
+// Roles allowed to manage kas (record transactions). Warga is view-only.
+const KAS_MANAGER_ROLES: string[] = [
+  UserRole.Ketua_RT,
+  UserRole.Pengurus,
+  UserRole.Super_Admin,
+];
 
 // ---------------------------------------------------------------------------
 // Input schemas
@@ -50,6 +58,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 401 },
+    );
+  }
+
+  // 1b. Role check — only kas managers can record transactions.
+  if (!KAS_MANAGER_ROLES.includes(authContext.role)) {
+    return NextResponse.json(
+      {
+        code: 'AUTH_INSUFFICIENT_ROLE',
+        message: 'You do not have permission to manage kas.',
+        correlationId,
+      },
+      { status: 403 },
     );
   }
 
@@ -181,6 +201,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const skip = (page - 1) * pageSize;
   const paginatedTransactions = allTransactions.slice(skip, skip + pageSize);
 
+  // Agregat keseluruhan (bukan per-halaman) untuk kartu ringkasan di UI.
+  let totalIncome = 0;
+  let totalExpense = 0;
+  for (const tx of allTransactions) {
+    if (tx.type === 'income') totalIncome += tx.amount;
+    else totalExpense += tx.amount;
+  }
+  const balance = totalIncome - totalExpense;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
   return NextResponse.json(
     {
       data: paginatedTransactions.map((tx) => ({
@@ -193,9 +223,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         createdBy: tx.createdBy,
         createdAt: tx.createdAt.toISOString(),
       })),
+      balance,
+      totalIncome,
+      totalExpense,
       total,
       page,
       pageSize,
+      totalPages,
     },
     { status: 200 },
   );

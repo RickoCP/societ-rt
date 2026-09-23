@@ -31,6 +31,7 @@ interface PrismaTenant {
   logoUrl: string | null;
   primaryColor: string | null;
   secondaryColor: string | null;
+  sirenDeviceId: string | null;
   status: string;
   subscriptionPlanId: string;
   createdAt: Date;
@@ -49,6 +50,7 @@ function mapPrismaTenantToDomain(prisma: PrismaTenant): Tenant {
     logoUrl: prisma.logoUrl,
     primaryColor: prisma.primaryColor,
     secondaryColor: prisma.secondaryColor,
+    sirenDeviceId: prisma.sirenDeviceId,
     status: prisma.status as Tenant['status'],
     subscriptionPlanId: prisma.subscriptionPlanId,
     createdAt: prisma.createdAt,
@@ -149,6 +151,29 @@ export const TenantRepositoryImpl = ({
   },
 
   // -------------------------------------------------------------------------
+  // listAll
+  // -------------------------------------------------------------------------
+  async listAll(): Promise<DomainResult<Tenant[]>> {
+    try {
+      const tenants = await prismaClient.tenant.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return ok(
+        tenants.map(t =>
+          mapPrismaTenantToDomain(t as unknown as PrismaTenant),
+        ),
+      );
+    } catch (error) {
+      return fail(
+        technicalError('TENANT_LIST_ALL_FAILED', 'Failed to list tenants', {
+          cause: error,
+        }),
+      );
+    }
+  },
+
+  // -------------------------------------------------------------------------
   // findBySubdomain
   // -------------------------------------------------------------------------
   async findBySubdomain(
@@ -194,6 +219,8 @@ export const TenantRepositoryImpl = ({
         updateData.primaryColor = data.primaryColor;
       if (data.secondaryColor !== undefined)
         updateData.secondaryColor = data.secondaryColor;
+      if (data.sirenDeviceId !== undefined)
+        updateData.sirenDeviceId = data.sirenDeviceId;
 
       const tenant = await prismaClient.tenant.update({
         where: { id: tenantId },

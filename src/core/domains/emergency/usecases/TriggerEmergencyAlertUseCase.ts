@@ -4,10 +4,17 @@
  * Logic:
  * 1. Create alert via emergencyRepository.createAlert
  *    - If GPS coordinates are missing, set locationUnavailable = true
- * 2. Enqueue real-time notification to Ketua_RT, Pengurus, and
+ * 2. Trigger the physical alarm/siren via AlarmProtocol (fire-and-forget —
+ *    provider-agnostic, so Tuya today / Home Assistant later without changes)
+ * 3. Enqueue real-time notification to Ketua_RT, Pengurus, and
  *    Security_Guard via NotificationQueueProtocol (fire-and-forget)
- * 3. Enqueue audit (action: 'emergency_alert_created', fire-and-forget)
- * 4. Return ok(alert)
+ * 4. Enqueue audit (action: 'emergency_alert_created', fire-and-forget)
+ * 5. Return ok(alert)
+ *
+ * The physical alarm is best-effort: a failure to sound it must never fail the
+ * emergency alert itself (the alert is the source of truth and is already
+ * persisted). Alarm failures are swallowed here and surfaced via the adapter's
+ * own observability.
  *
  * @see Requirements 10.1, 10.2, 10.4, 10.5
  */
@@ -16,6 +23,7 @@ import type {
   AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
+  AlarmProtocol,
 } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
@@ -41,10 +49,12 @@ export const TriggerEmergencyAlertUseCaseImpl = ({
   emergencyRepository,
   notificationQueueProtocol,
   auditQueueProtocol,
+  alarmProtocol,
 }: {
   emergencyRepository: EmergencyRepository;
   notificationQueueProtocol: NotificationQueueProtocol;
   auditQueueProtocol: AuditQueueProtocol;
+  alarmProtocol: AlarmProtocol;
 }): TriggerEmergencyAlertUseCase => ({
   execute: async ({ authContext, data }) => {
     // 1. Create alert via repository
@@ -60,7 +70,19 @@ export const TriggerEmergencyAlertUseCaseImpl = ({
 
     const alert = result.data;
 
-    // 2. Enqueue real-time notification to Ketua_RT, Pengurus, Security_Guard
+    // 2. Trigger the physical alarm/siren (fire-and-forget — best effort).
+    //    A failure here must not fail the already-persisted alert.
+    alarmProtocol
+      .triggerAlarm({
+        tenantId: authContext.tenantId,
+        reason: 'emergency_alert',
+        correlationId: alert.id,
+      })
+      .catch(() => {
+        /* physical alarm is best-effort; never block the emergency alert */
+      });
+
+    // 3. Enqueue real-time notification to Ketua_RT, Pengurus, Security_Guard
     //    (fire-and-forget — notification must not block the response)
     notificationQueueProtocol
       .enqueueNotification({
@@ -77,7 +99,7 @@ export const TriggerEmergencyAlertUseCaseImpl = ({
         /* notification must not block the response */
       });
 
-    // 3. Enqueue audit log (fire-and-forget)
+    // 4. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
         tenantId: authContext.tenantId,
@@ -96,7 +118,7 @@ export const TriggerEmergencyAlertUseCaseImpl = ({
         /* audit must not block the response */
       });
 
-    // 4. Return success
+    // 5. Return success
     return ok(alert);
   },
 });

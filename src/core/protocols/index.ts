@@ -20,6 +20,12 @@ export type { WebSocketProtocol } from './WebSocketProtocol';
 export type { RealtimeBusProtocol } from './RealtimeBusProtocol';
 export type { IoTGatewayProtocol } from './IoTGatewayProtocol';
 export type {
+  AlarmProtocol,
+  TriggerAlarmCommand,
+  StopAlarmCommand,
+  AlarmActionResult,
+} from './AlarmProtocol';
+export type {
   CircuitBreakerProtocol,
   CircuitBreakerState,
 } from './CircuitBreakerProtocol';

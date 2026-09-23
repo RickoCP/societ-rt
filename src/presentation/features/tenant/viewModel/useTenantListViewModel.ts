@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface Tenant {
   id: string;
@@ -9,6 +9,7 @@ interface Tenant {
   status: string;
   rtRwNumber: string;
   region: string;
+  sirenDeviceId: string | null;
   createdAt: string;
 }
 
@@ -30,10 +31,74 @@ async function fetchTenants(page: number): Promise<TenantListResponse> {
   return (await res.json()) as TenantListResponse;
 }
 
+interface UpdateSirenParams {
+  tenantId: string;
+  sirenDeviceId: string | null;
+}
+
+async function updateSirenRequest({
+  tenantId,
+  sirenDeviceId,
+}: UpdateSirenParams): Promise<void> {
+  const res = await fetch(`/api/tenants/${tenantId}/siren`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sirenDeviceId }),
+  });
+
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(body.message ?? 'Gagal menyimpan device id sirine');
+  }
+}
+
+export interface SirenImportSummary {
+  updatedCount: number;
+  clearedCount: number;
+  skippedRows: Array<{ row: number; reason: string }>;
+}
+
+async function importSirenCsvRequest(file: File): Promise<SirenImportSummary> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch('/api/tenants/siren/import', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const json = (await res.json().catch(() => ({}))) as {
+    data?: SirenImportSummary;
+    message?: string;
+  };
+
+  if (!res.ok || !json.data) {
+    throw new Error(json.message ?? 'Gagal mengimpor CSV device id sirine');
+  }
+
+  return json.data;
+}
+
 export function useTenantListViewModel(page = 1) {
+  const queryClient = useQueryClient();
+
   const query = useQuery({
     queryKey: ['tenants', page],
     queryFn: () => fetchTenants(page),
+  });
+
+  const sirenMutation = useMutation({
+    mutationFn: updateSirenRequest,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['tenants'] });
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: importSirenCsvRequest,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['tenants'] });
+    },
   });
 
   return {
@@ -45,5 +110,13 @@ export function useTenantListViewModel(page = 1) {
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
+    // Per-tenant siren device management
+    updateSirenDevice: sirenMutation.mutateAsync,
+    isSavingSiren: sirenMutation.isPending,
+    // Bulk CSV import (Excel) of siren device ids
+    importSirenCsv: importMutation.mutateAsync,
+    isImportingSiren: importMutation.isPending,
+    // URL to download the CSV export / template
+    sirenExportUrl: '/api/tenants/siren/export',
   };
 }

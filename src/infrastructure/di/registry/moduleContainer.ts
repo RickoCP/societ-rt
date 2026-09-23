@@ -32,6 +32,25 @@ import { TuyaGatewayAdapter } from '@infrastructure/iot/TuyaGatewayAdapter';
 import { CircuitBreakerImpl } from '@infrastructure/iot/CircuitBreakerImpl';
 import { IoTMetricsEmitterImpl } from '@infrastructure/iot/IoTMetricsEmitter';
 import { AutomationEngineImpl } from '@infrastructure/automation/AutomationEngineImpl';
+import { TuyaAlarmAdapter } from '@infrastructure/alarm/TuyaAlarmAdapter';
+
+/**
+ * Select the physical-alarm provider implementation.
+ *
+ * Today only Tuya (SmartLife Cloud) is implemented. When the RT migrates to
+ * Home Assistant, add a HomeAssistantAlarmAdapter implementing AlarmProtocol
+ * and add a `case 'homeassistant'` here — no caller/use-case/UI changes needed.
+ */
+function selectAlarmAdapter() {
+  const provider = (process.env.ALARM_PROVIDER ?? 'tuya').toLowerCase();
+  switch (provider) {
+    // case 'homeassistant':
+    //   return HomeAssistantAlarmAdapter;
+    case 'tuya':
+    default:
+      return TuyaAlarmAdapter;
+  }
+}
 
 export function registerModules(container: AwilixContainer): void {
   container.register({
@@ -50,6 +69,7 @@ export function registerModules(container: AwilixContainer): void {
     realtimeBusProtocol: asFunction(RedisPubSubAdapter).singleton(),
     webSocketProtocol: asFunction(WebSocketServerImpl).singleton(),
     iotGatewayProtocol: asFunction(TuyaGatewayAdapter).singleton(),
+    alarmProtocol: asFunction(selectAlarmAdapter()).singleton(),
     circuitBreakerProtocol: asFunction(CircuitBreakerImpl).singleton(),
     iotMetricsEmitter: asFunction(IoTMetricsEmitterImpl).singleton(),
     automationEngineProtocol: asFunction(AutomationEngineImpl).singleton(),

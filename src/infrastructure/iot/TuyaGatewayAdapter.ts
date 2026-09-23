@@ -96,8 +96,35 @@ function getTuyaConfig() {
   const clientId = process.env.TUYA_CLIENT_ID ?? '';
   const clientSecret = process.env.TUYA_CLIENT_SECRET ?? '';
   const encryptionKey = process.env.TUYA_ENCRYPTION_KEY ?? '';
+  // Boolean DP code that turns the physical siren on/off (device-specific).
+  const sirenDpCode = process.env.ALARM_SIREN_DP_CODE ?? '';
 
-  return { apiHost, clientId, clientSecret, encryptionKey };
+  return { apiHost, clientId, clientSecret, encryptionKey, sirenDpCode };
+}
+
+/**
+ * Translate a domain DeviceCommand into the concrete Tuya command payload
+ * ({ code, value }) that the Tuya /commands endpoint expects.
+ *
+ * The domain uses provider-agnostic command types such as 'siren_activate'.
+ * Tuya needs the device's real boolean DP code (e.g. 'AlarmSwitch') set to
+ * true/false. Unknown command types are passed through unchanged so other
+ * device commands keep working.
+ */
+function toTuyaCommand(
+  commandType: string,
+  params: Record<string, unknown>,
+  sirenDpCode: string,
+): { code: string; value: unknown } {
+  if (commandType === 'siren_activate' || commandType === 'siren_deactivate') {
+    if (!sirenDpCode) {
+      // No DP configured — fall back to sending the raw command so the failure
+      // is visible in logs rather than silently doing nothing.
+      return { code: commandType, value: params };
+    }
+    return { code: sirenDpCode, value: commandType === 'siren_activate' };
+  }
+  return { code: commandType, value: params };
 }
 
 /**
@@ -151,6 +178,32 @@ function generateTuyaSignature(
   return crypto
     .createHmac('sha256', clientSecret)
     .update(stringToSign)
+    .digest('hex')
+    .toUpperCase();
+}
+
+/**
+ * Full Tuya signature scheme including method, body hash and path.
+ * Required by newer Thing-Model endpoints (v2.0 /cloud/thing/...), where the
+ * simplified signature is rejected.
+ *
+ * sign = HMAC-SHA256( clientId + accessToken + t + (METHOD\nSHA256(body)\n\nPATH) )
+ */
+function generateTuyaSignatureFull(
+  clientId: string,
+  accessToken: string,
+  timestamp: string,
+  clientSecret: string,
+  method: string,
+  path: string,
+  body: string,
+): string {
+  const bodyHash = crypto.createHash('sha256').update(body).digest('hex');
+  const stringToSign = `${method}\n${bodyHash}\n\n${path}`;
+  const str = clientId + accessToken + timestamp + stringToSign;
+  return crypto
+    .createHmac('sha256', clientSecret)
+    .update(str)
     .digest('hex')
     .toUpperCase();
 }
@@ -415,16 +468,72 @@ export const TuyaGatewayAdapter = ({
     ): Promise<DomainResult<CommandResult>> {
       const startTime = Date.now();
 
+      const tuyaCommand = toTuyaCommand(
+        command.commandType,
+        command.params,
+        config.sirenDpCode,
+      );
+
+      // Thing-Model devices (e.g. this siren, category wsdcg) reject the legacy
+      // /v1.0/.../commands endpoint (code 2008). Route them through the v2.0
+      // property-issue endpoint, which uses the full signature scheme.
+      const isSiren =
+        command.commandType === 'siren_activate' ||
+        command.commandType === 'siren_deactivate';
+
+      if (isSiren) {
+        const tokenResult = await getAccessToken();
+        if (!tokenResult.success) {
+          return fail(tokenResult.error);
+        }
+        const accessToken = tokenResult.data;
+        const path = `/v2.0/cloud/thing/${deviceId}/shadow/properties/issue`;
+        const bodyStr = JSON.stringify({
+          properties: JSON.stringify({ [tuyaCommand.code]: tuyaCommand.value }),
+        });
+        const timestamp = Date.now().toString();
+        const sign = generateTuyaSignatureFull(
+          config.clientId,
+          accessToken,
+          timestamp,
+          config.clientSecret,
+          'POST',
+          path,
+          bodyStr,
+        );
+        try {
+          const response = await fetch(`${config.apiHost}${path}`, {
+            method: 'POST',
+            headers: {
+              client_id: config.clientId,
+              access_token: accessToken,
+              sign,
+              t: timestamp,
+              sign_method: 'HMAC-SHA256',
+              'Content-Type': 'application/json',
+            },
+            body: bodyStr,
+          });
+          const data = (await response.json()) as TuyaApiResponse<unknown>;
+          if (!data.success) {
+            return fail(iotCommandFailed(new Error(data.msg ?? 'Tuya command failed')));
+          }
+          return ok({
+            success: true,
+            deviceId,
+            commandType: command.commandType,
+            responseTime: Date.now() - startTime,
+          });
+        } catch (error) {
+          return fail(iotCommandFailed(error));
+        }
+      }
+
       const result = await tuyaRequestWithRetry<boolean>(
         'POST',
         `/v1.0/iot-03/devices/${deviceId}/commands`,
         {
-          commands: [
-            {
-              code: command.commandType,
-              value: command.params,
-            },
-          ],
+          commands: [tuyaCommand],
         },
       );
 

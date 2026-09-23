@@ -17,6 +17,9 @@ export interface TenantRepository {
   /** Find a tenant by its unique id. */
   findById(tenantId: string): Promise<DomainResult<Tenant | null>>;
 
+  /** List all tenants (for platform-admin bulk operations like siren export/import). */
+  listAll(): Promise<DomainResult<Tenant[]>>;
+
   /** Find a tenant by its subdomain slug. */
   findBySubdomain(subdomain: string): Promise<DomainResult<Tenant | null>>;
 

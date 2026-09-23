@@ -3,11 +3,21 @@
 import dynamic from 'next/dynamic';
 import { Spinner } from '../atoms/Spinner';
 
+/** Marker pin color. Maps to a colored Leaflet icon in LeafletMapInner. */
+export type MapMarkerColor =
+  | 'blue'
+  | 'red'
+  | 'orange'
+  | 'green'
+  | 'grey';
+
 export interface MapMarker {
   id: string;
   lat: number;
   lng: number;
   label?: string;
+  /** Pin color; defaults to blue when omitted. */
+  color?: MapMarkerColor;
   popupContent?: React.ReactNode;
 }
 

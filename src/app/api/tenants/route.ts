@@ -60,6 +60,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           status: true,
           rtRwNumber: true,
           region: true,
+          sirenDeviceId: true,
           createdAt: true,
         },
       }),

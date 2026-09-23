@@ -14,8 +14,16 @@ import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { UserRole } from '@core/protocols/AuthContext';
 import type { RecordIuranPaymentUseCase } from '@core/domains/finance/usecases';
 import type { FinanceRepository } from '@core/domains/finance/repositories/FinanceRepository';
+
+// Roles allowed to manage iuran. Warga is view-only.
+const KAS_MANAGER_ROLES: string[] = [
+  UserRole.Ketua_RT,
+  UserRole.Pengurus,
+  UserRole.Super_Admin,
+];
 
 // ---------------------------------------------------------------------------
 // Input schemas
@@ -47,6 +55,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 401 },
+    );
+  }
+
+  // 1b. Role check — only kas managers can record iuran payments.
+  if (!KAS_MANAGER_ROLES.includes(authContext.role)) {
+    return NextResponse.json(
+      {
+        code: 'AUTH_INSUFFICIENT_ROLE',
+        message: 'You do not have permission to manage iuran.',
+        correlationId,
+      },
+      { status: 403 },
     );
   }
 

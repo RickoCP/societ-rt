@@ -3,13 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { type NavItem, visibleNavItems } from './navItems';
 
-export interface NavItem {
-  label: string;
-  href: string;
-  icon?: React.ReactNode;
-  roles?: string[];
-}
+export type { NavItem };
 
 export interface SidebarProps {
   items: NavItem[];
@@ -18,37 +14,15 @@ export interface SidebarProps {
   onNavigate?: () => void;
 }
 
-const navIcons: Record<string, string> = {
-  Dashboard: '🏠',
-  Residents: '👥',
-  Users: '👤',
-  Tenants: '🏢',
-  Finance: '💰',
-  Voting: '🗳️',
-  Announcements: '📢',
-  Events: '📅',
-  Map: '🗺️',
-  Security: '🛡️',
-  Incidents: '⚠️',
-  Visitors: '🚶',
-  Packages: '📦',
-  Administration: '📋',
-  Emergency: '🚨',
-  Notifications: '🔔',
-  'Audit Log': '📜',
-};
-
 export function Sidebar({ items, userRole, className = '', onNavigate }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
 
-  const visibleItems = items.filter(
-    item => !item.roles || item.roles.includes(userRole),
-  );
+  const visibleItems = visibleNavItems(items, userRole);
 
   return (
     <aside
-      className={`flex flex-col border-r border-gray-200 bg-white transition-all duration-200 dark:border-gray-700 dark:bg-gray-900 ${collapsed ? 'w-[68px]' : 'w-60'} ${className}`}
+      className={`relative z-30 flex h-full flex-col border-r border-gray-200 bg-white transition-all duration-200 dark:border-gray-700 dark:bg-gray-900 ${collapsed ? 'w-[68px]' : 'w-60'} ${className}`}
       aria-label="Sidebar navigation">
       {/* Header */}
       <div className="flex h-14 items-center justify-between px-4">
@@ -87,7 +61,7 @@ export function Sidebar({ items, userRole, className = '', onNavigate }: Sidebar
         <ul className="space-y-0.5">
           {visibleItems.map(item => {
             const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-            const icon = navIcons[item.label] ?? '•';
+            const icon = item.icon ?? '•';
 
             return (
               <li key={item.href}>

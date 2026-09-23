@@ -13,6 +13,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { normalizeTuyaEventType } from '@infrastructure/iot/tuyaEventMapper';
 import type { ProcessWebhookEventUseCase } from '@core/domains/iot/usecases';
 
 // ---------------------------------------------------------------------------
@@ -63,20 +64,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 2. Execute use case via DI (signature validation happens inside)
+  // 2. Normalize raw Tuya payloads (e.g. doorcontact_state) into the canonical
+  //    domain event type. Non-door events pass through unchanged.
+  const normalizedEventType = normalizeTuyaEventType({
+    eventType: validation.data.eventType,
+    eventData: validation.data.eventData,
+  });
+
+  // 3. Execute use case via DI (signature validation happens inside)
   const useCase = container.resolve<ProcessWebhookEventUseCase>(
     'processWebhookEventUseCase',
   );
   const result = await useCase.execute({
     data: {
       ...validation.data,
-      eventType: validation.data.eventType as Parameters<
+      eventType: normalizedEventType as Parameters<
         ProcessWebhookEventUseCase['execute']
       >[0]['data']['eventType'],
     },
   });
 
-  // 3. Map result to safe response
+  // 4. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }

@@ -93,6 +93,7 @@ export async function GET(
         logoUrl: tenant.logoUrl,
         primaryColor: tenant.primaryColor,
         secondaryColor: tenant.secondaryColor,
+        sirenDeviceId: tenant.sirenDeviceId,
         status: tenant.status,
         subscriptionPlanId: tenant.subscriptionPlanId,
         createdAt: tenant.createdAt.toISOString(),

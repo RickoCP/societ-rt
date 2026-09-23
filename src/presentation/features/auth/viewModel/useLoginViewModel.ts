@@ -34,21 +34,33 @@ async function loginRequest(data: LoginFormData & { tenantId: string }): Promise
   return (await res.json()) as LoginResponse;
 }
 
+export type LoginInput = LoginFormData & { subdomain?: string };
+
 export function useLoginViewModel() {
   const router = useRouter();
-  const subdomain = getTenantSubdomain();
+  const hostSubdomain = getTenantSubdomain();
 
   const tenantQuery = useQuery({
-    queryKey: ['tenant-resolve', subdomain],
-    queryFn: () => resolveTenant(subdomain),
+    queryKey: ['tenant-resolve', hostSubdomain],
+    queryFn: () => resolveTenant(hostSubdomain),
     retry: false,
   });
 
   const mutation = useMutation({
-    mutationFn: (data: LoginFormData) => {
-      const tenantId = tenantQuery.data?.data.id;
+    mutationFn: async ({ subdomain, ...credentials }: LoginInput) => {
+      // Subdomain efektif: override dari pemanggil (mis. pilihan akun demo)
+      // atau fallback ke subdomain yang di-resolve dari host.
+      const effectiveSubdomain = subdomain ?? hostSubdomain;
+
+      // Jika subdomain sama dengan host dan sudah ter-resolve, gunakan cache.
+      // Jika berbeda (override), resolve ulang secara on-demand.
+      const tenantId =
+        effectiveSubdomain === hostSubdomain
+          ? tenantQuery.data?.data.id
+          : (await resolveTenant(effectiveSubdomain)).data.id;
+
       if (!tenantId) throw new Error('Tenant not resolved');
-      return loginRequest({ ...data, tenantId });
+      return loginRequest({ ...credentials, tenantId });
     },
     onSuccess: (response) => {
       const role = response.data.role;

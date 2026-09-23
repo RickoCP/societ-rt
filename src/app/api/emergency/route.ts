@@ -12,7 +12,9 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
+import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import type { TriggerEmergencyAlertUseCase } from '@core/domains/emergency/usecases';
 
 // ---------------------------------------------------------------------------
 // Input schemas
@@ -71,51 +73,43 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Create emergency alert directly via raw SQL for reliability
-  try {
-    const { prismaClient } = container.cradle;
-    const lat = validation.data.latitude ?? null;
-    const lng = validation.data.longitude ?? null;
-    const locationUnavailable = lat == null || lng == null;
-    const id = crypto.randomUUID();
-    const now = new Date();
+  // 3. Execute use case via DI. The use case persists the alert, then triggers
+  //    the physical alarm/siren (fire-and-forget) and fans out notifications
+  //    and audit. Keeping this in the use case (not raw SQL here) is what lets
+  //    the SOS button sound the alarm and stays consistent with the BFF pattern.
+  const useCase = container.resolve<TriggerEmergencyAlertUseCase>(
+    'triggerEmergencyAlertUseCase',
+  );
 
-    await prismaClient.$executeRawUnsafe(
-      `INSERT INTO emergency_alerts (id, tenant_id, user_id, latitude, longitude, location_unavailable, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'active', $7, $7)`,
-      id,
-      authContext.tenantId,
-      authContext.userId,
-      lat,
-      lng,
-      locationUnavailable,
-      now,
-    );
+  const result = await useCase.execute({
+    authContext,
+    data: {
+      latitude: validation.data.latitude ?? null,
+      longitude: validation.data.longitude ?? null,
+    },
+  });
 
-    return NextResponse.json(
-      {
-        data: {
-          id,
-          userId: authContext.userId,
-          latitude: lat,
-          longitude: lng,
-          locationUnavailable,
-          status: 'active',
-          createdAt: now.toISOString(),
-        },
-      },
-      { status: 201 },
-    );
-  } catch (error) {
-    return NextResponse.json(
-      {
-        code: 'COMMON_UNEXPECTED_ERROR',
-        message: 'Internal server error',
-        correlationId,
-      },
-      { status: 500 },
-    );
+  // 4. Map result to a safe UI contract
+  if (!result.success) {
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
+
+  const alert = result.data;
+
+  return NextResponse.json(
+    {
+      data: {
+        id: alert.id,
+        userId: alert.userId,
+        latitude: alert.latitude,
+        longitude: alert.longitude,
+        locationUnavailable: alert.locationUnavailable,
+        status: alert.status,
+        createdAt: alert.createdAt.toISOString(),
+      },
+    },
+    { status: 201 },
+  );
 }
 
 // ---------------------------------------------------------------------------

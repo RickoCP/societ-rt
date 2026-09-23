@@ -110,6 +110,7 @@ model Tenant {
   logoUrl            String?      @map("logo_url")
   primaryColor       String?      @map("primary_color")
   secondaryColor     String?      @map("secondary_color")
+  sirenDeviceId      String?      @map("siren_device_id")
   status             TenantStatus @default(active) @map("status")
   subscriptionPlanId String       @map("subscription_plan_id")
   createdAt          DateTime     @default(now()) @map("created_at")
@@ -145,6 +146,9 @@ model Tenant {
   alarmDevices          AlarmDevice[]
   automationRules       AutomationRule[]
   homes                 Home[]
+  doorSensorConfigs        DoorSensorConfig[]
+  doorInstallationRequests DoorInstallationRequest[]
+  emergencyContacts        EmergencyContact[]
 
   @@unique([rtRwNumber, region], map: "tenants_rt_rw_number_region_unique")
   @@map("tenants")
@@ -212,6 +216,8 @@ model Household {
   residents     Resident[]
   iuranStatuses IuranStatus[]
   iotDevices    IoTDevice[]
+  doorSensorConfig         DoorSensorConfig?
+  doorInstallationRequests DoorInstallationRequest[]
 
   @@unique([tenantId, householdNumber], map: "households_tenant_id_household_number_unique")
   @@index([tenantId, id], map: "households_tenant_id_id_idx")
@@ -785,6 +791,9 @@ enum DeviceEventType {
   lighting_changed
   gate_open_too_long
   motion_detection_alert
+  door_opened
+  door_closed
+  door_opened_during_window
 }
 
 /// IoTDevice represents a smart home device paired with a Household via Tuya IoT Cloud.
@@ -803,9 +812,10 @@ model IoTDevice {
   createdAt    DateTime              @default(now()) @map("created_at")
   updatedAt    DateTime              @updatedAt @map("updated_at")
 
-  tenant    Tenant        @relation(fields: [tenantId], references: [id])
-  household Household     @relation(fields: [householdId], references: [id])
-  events    DeviceEvent[]
+  tenant           Tenant            @relation(fields: [tenantId], references: [id])
+  household        Household         @relation(fields: [householdId], references: [id])
+  events           DeviceEvent[]
+  doorSensorConfig DoorSensorConfig?
 
   @@unique([tuyaDeviceId], map: "iot_devices_tuya_device_id_unique")
   @@index([tenantId, householdId], map: "iot_devices_tenant_id_household_id_idx")
@@ -1232,4 +1242,120 @@ model Home {
   @@index([tenantId, householdId], map: "homes_tenant_id_household_id_idx")
   @@index([ownerId], map: "homes_owner_id_idx")
   @@map("homes")
+}
+
+// =============================================================================
+// Door Monitoring Enums & Models
+// =============================================================================
+
+/// Physical open/closed state most recently reported by a household door sensor.
+enum DoorState {
+  open
+  closed
+  unknown
+}
+
+/// Lifecycle of an RT-submitted request to have a door sensor installed for a
+/// household. Only a platform admin (Super_Admin) may approve + register the
+/// physical device id; the RT can only request installation.
+enum DoorInstallationStatus {
+  pending
+  approved
+  rejected
+}
+
+/// DoorSensorConfig holds the per-household door-sensor configuration:
+/// which physical Tuya sensor is bound to the household, which siren zone to
+/// trigger when the door opens during the monitoring window, and the
+/// resident-configured monitoring window (usually night hours).
+///
+/// One household has at most one door-sensor config (1:1). The device id is set
+/// only by a platform admin; the monitoring window is set by the resident.
+model DoorSensorConfig {
+  id             String    @id @default(uuid()) @map("id")
+  tenantId       String    @map("tenant_id")
+  householdId    String    @unique @map("household_id")
+  /// FK to the registered IoTDevice (door_sensor). Null until an admin registers one.
+  iotDeviceId    String?   @unique @map("iot_device_id")
+  /// Siren zone to activate when the door opens during the monitoring window.
+  sirenZone      String?   @map("siren_zone")
+  /// Monitoring window start in HH:mm (24h), interpreted in the app timezone.
+  monitorStart   String    @default("22:00") @map("monitor_start")
+  /// Monitoring window end in HH:mm (24h). May wrap past midnight (e.g. 22:00->05:00).
+  monitorEnd     String    @default("05:00") @map("monitor_end")
+  /// Whether the resident has monitoring enabled.
+  enabled        Boolean   @default(false) @map("enabled")
+  /// Last known physical door state (updated by webhook events).
+  currentState   DoorState @default(unknown) @map("current_state")
+  lastStateChange DateTime? @map("last_state_change")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  household Household  @relation(fields: [householdId], references: [id])
+  device    IoTDevice? @relation(fields: [iotDeviceId], references: [id])
+
+  @@index([tenantId, enabled], map: "door_sensor_configs_tenant_id_enabled_idx")
+  @@index([tenantId, currentState], map: "door_sensor_configs_tenant_id_current_state_idx")
+  @@map("door_sensor_configs")
+}
+
+/// DoorInstallationRequest is raised by an RT (Ketua_RT/Pengurus) to request that
+/// a platform admin install & register a door sensor for a household. It is an
+/// approval workflow: the RT requests, the admin approves and registers the device.
+model DoorInstallationRequest {
+  id          String                 @id @default(uuid()) @map("id")
+  tenantId    String                 @map("tenant_id")
+  householdId String                 @map("household_id")
+  requestedBy String                 @map("requested_by")
+  status      DoorInstallationStatus @default(pending) @map("status")
+  note        String?                @map("note")
+  /// Admin resolution metadata.
+  resolvedBy  String?                @map("resolved_by")
+  resolvedAt  DateTime?              @map("resolved_at")
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  household Household @relation(fields: [householdId], references: [id])
+
+  @@index([tenantId, status, createdAt], map: "door_installation_requests_tenant_id_status_created_at_idx")
+  @@index([householdId], map: "door_installation_requests_household_id_idx")
+  @@map("door_installation_requests")
+}
+
+// =============================================================================
+// Emergency Contacts Enums & Models
+// =============================================================================
+
+/// Category of an emergency contact, used for grouping/iconography in the UI.
+enum EmergencyContactCategory {
+  police
+  ambulance
+  fire
+  hospital
+  security
+  rt_officer
+  other
+}
+
+/// EmergencyContact is a callable emergency phone number configured PER RT
+/// (tenant). Admins (Ketua_RT / Pengurus / Super_Admin) manage the list;
+/// residents view it and tap to call.
+model EmergencyContact {
+  id          String                   @id @default(uuid()) @map("id")
+  tenantId    String                   @map("tenant_id")
+  label       String                   @map("label")
+  phone       String                   @map("phone")
+  category    EmergencyContactCategory @default(other) @map("category")
+  description String?                  @map("description")
+  /// Lower sorts first in the resident list.
+  sortOrder   Int                      @default(0) @map("sort_order")
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  updatedAt   DateTime                 @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, sortOrder], map: "emergency_contacts_tenant_id_sort_order_idx")
+  @@map("emergency_contacts")
 }

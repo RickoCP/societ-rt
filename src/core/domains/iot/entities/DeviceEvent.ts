@@ -27,7 +27,10 @@ export type DeviceEventType =
   | 'smart_switch_toggled'
   | 'lighting_changed'
   | 'gate_open_too_long'
-  | 'motion_detection_alert';
+  | 'motion_detection_alert'
+  | 'door_opened'
+  | 'door_closed'
+  | 'door_opened_during_window';
 
 // ---------------------------------------------------------------------------
 // Entity

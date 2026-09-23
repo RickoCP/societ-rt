@@ -18,6 +18,8 @@ export interface Tenant {
   readonly logoUrl: string | null;
   readonly primaryColor: string | null;
   readonly secondaryColor: string | null;
+  /** Physical siren/alarm device id for this RT (provider-specific, e.g. Tuya). */
+  readonly sirenDeviceId: string | null;
   readonly status: 'active' | 'suspended';
   readonly subscriptionPlanId: string;
   readonly createdAt: Date;
@@ -42,4 +44,12 @@ export interface UpdateTenantBrandingInput {
   readonly logoUrl?: string;
   readonly primaryColor?: string;
   readonly secondaryColor?: string;
+}
+
+/**
+ * Update to a tenant's physical siren device id. An empty string clears it
+ * (the alarm falls back to the environment default).
+ */
+export interface UpdateTenantSirenInput {
+  readonly sirenDeviceId: string | null;
 }

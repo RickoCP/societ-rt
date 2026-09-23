@@ -45,6 +45,7 @@ export const SHARED_SECURITY_EVENTS = [
   'alarm_triggered',
   'emergency_alert',
   'motion_detection_alert',
+  'door_opened_during_window',
 ] as const;
 
 export type SharedSecurityEventType = (typeof SHARED_SECURITY_EVENTS)[number];

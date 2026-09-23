@@ -1,29 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Sidebar, type NavItem } from '@components/organisms/Sidebar';
+import { usePathname, useRouter } from 'next/navigation';
+import { Sidebar } from '@components/organisms/Sidebar';
 import { Header } from '@components/organisms/Header';
+import { BottomNav } from '@components/organisms/BottomNav';
+import { NAV_ITEMS } from '@components/organisms/navItems';
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/' },
-  { label: 'Residents', href: '/residents', roles: ['Ketua_RT', 'Pengurus', 'Super_Admin'] },
-  { label: 'Users', href: '/users', roles: ['Ketua_RT', 'Super_Admin'] },
-  { label: 'Tenants', href: '/admin/tenants', roles: ['Super_Admin'] },
-  { label: 'Finance', href: '/finance', roles: ['Ketua_RT', 'Pengurus', 'Super_Admin'] },
-  { label: 'Voting', href: '/voting' },
-  { label: 'Announcements', href: '/announcements' },
-  { label: 'Events', href: '/events' },
-  { label: 'Map', href: '/map' },
-  { label: 'Security', href: '/security/patrols', roles: ['Ketua_RT', 'Pengurus', 'Security_Guard', 'Super_Admin'] },
-  { label: 'Incidents', href: '/security/incidents', roles: ['Ketua_RT', 'Pengurus', 'Security_Guard', 'Super_Admin'] },
-  { label: 'Visitors', href: '/visitors', roles: ['Ketua_RT', 'Pengurus', 'Security_Guard', 'Super_Admin'] },
-  { label: 'Packages', href: '/packages', roles: ['Ketua_RT', 'Pengurus', 'Security_Guard', 'Super_Admin'] },
-  { label: 'Administration', href: '/administration/letters' },
-  { label: 'Emergency', href: '/emergency' },
-  { label: 'Notifications', href: '/notifications' },
-  { label: 'Audit Log', href: '/audit', roles: ['Ketua_RT', 'Super_Admin'] },
-];
+const navItems = NAV_ITEMS;
 
 interface CurrentUser {
   userId: string;
@@ -39,8 +23,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // On mobile, the home screen renders its own app-style header, so the shared
+  // top Header is hidden there. Other pages keep it for the hamburger menu.
+  const isHome = pathname === '/';
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -72,7 +61,7 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Desktop Sidebar */}
-      <div className="hidden md:block">
+      <div className="relative z-30 hidden md:block">
         <Sidebar items={navItems} userRole={userRole} />
       </div>
 
@@ -80,11 +69,11 @@ export default function DashboardLayout({
       {mobileMenuOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            className="fixed inset-0 z-[9998] bg-black/50 md:hidden"
             onClick={() => setMobileMenuOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed inset-y-0 left-0 z-50 md:hidden">
+          <div className="fixed inset-y-0 left-0 z-[9999] md:hidden">
             <Sidebar
               items={navItems}
               userRole={userRole}
@@ -95,15 +84,21 @@ export default function DashboardLayout({
       )}
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header
-          userName={userName}
-          onLogout={handleLogout}
-          onMenuToggle={() => setMobileMenuOpen(prev => !prev)}
-        />
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 dark:bg-gray-950">
+        {/* Desktop header (always) + mobile header (hidden on the app home) */}
+        <div className={isHome ? 'hidden md:block' : 'block'}>
+          <Header
+            userName={userName}
+            onLogout={handleLogout}
+            onMenuToggle={() => setMobileMenuOpen(prev => !prev)}
+          />
+        </div>
+        <main className="flex-1 overflow-y-auto bg-gray-50 px-4 pb-28 sm:p-6 md:pb-6 dark:bg-gray-950">
           {children}
         </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      <BottomNav userRole={userRole} />
     </div>
   );
 }

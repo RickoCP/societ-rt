@@ -26,6 +26,7 @@ import {
   classifyEventRouting,
   type RealtimeEvent,
 } from '@core/domains/realtimeBus/entities/RealtimeEvent';
+import type { ProcessDoorEventUseCase } from '@core/domains/doorMonitoring/usecases';
 
 // ---------------------------------------------------------------------------
 // Input
@@ -58,10 +59,17 @@ export const ProcessWebhookEventUseCaseImpl = ({
   iotGatewayProtocol,
   iotRepository,
   realtimeBusProtocol,
+  processDoorEventUseCase,
 }: {
   iotGatewayProtocol: IoTGatewayProtocol;
   iotRepository: IoTRepository;
   realtimeBusProtocol: RealtimeBusProtocol;
+  /**
+   * Door-monitoring trigger. Injected so door_sensor open/close events can
+   * branch into the monitoring-window logic (siren + security alert). Optional
+   * so this use case remains testable in isolation.
+   */
+  processDoorEventUseCase?: ProcessDoorEventUseCase;
 }): ProcessWebhookEventUseCase => ({
   execute: async ({ data }) => {
     // 1. Validate webhook signature
@@ -140,7 +148,23 @@ export const ProcessWebhookEventUseCaseImpl = ({
         });
     }
 
-    // 6. Return success
+    // 6. Door sensor branch — delegate open/close to the door-monitoring
+    //    trigger so an in-window open can raise the security-post siren.
+    if (
+      processDoorEventUseCase &&
+      device.deviceType === 'door_sensor' &&
+      (data.eventType === 'door_opened' || data.eventType === 'door_closed')
+    ) {
+      await processDoorEventUseCase.execute({
+        data: {
+          iotDeviceId: device.id,
+          state: data.eventType === 'door_opened' ? 'open' : 'closed',
+          occurredAt: deviceEvent.createdAt,
+        },
+      });
+    }
+
+    // 7. Return success
     return ok(deviceEvent);
   },
 });

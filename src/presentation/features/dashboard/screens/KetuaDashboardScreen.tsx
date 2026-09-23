@@ -1,7 +1,27 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
 import { useKetuaDashboardViewModel } from '../viewModel/useKetuaDashboardViewModel';
+import { MobileDashboard } from './MobileDashboard';
+
+interface CurrentUser {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  tenantId: string;
+}
+
+async function fetchCurrentUser(): Promise<CurrentUser> {
+  const res = await fetch('/api/auth/me');
+  if (!res.ok) {
+    throw new Error('Failed to fetch current user');
+  }
+  const json = (await res.json()) as { data: CurrentUser };
+  return json.data;
+}
 
 interface MetricCardProps {
   label: string;
@@ -55,8 +75,62 @@ function QuickAction({ label, icon, href, color }: QuickActionProps) {
 }
 
 export function KetuaDashboardScreen() {
+  const router = useRouter();
   const { metrics, isLoading, isError, error } = useKetuaDashboardViewModel();
 
+  const userQuery = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: fetchCurrentUser,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+  };
+
+  return (
+    <>
+      {/* Mobile: app-style home screen (sidebar rendered as in-screen menu) */}
+      <div className="md:hidden">
+        <MobileDashboard
+          userName={userQuery.data?.name ?? 'Warga'}
+          userRole={userQuery.data?.role ?? 'Warga'}
+          metrics={metrics}
+          isLoading={isLoading}
+          onLogout={handleLogout}
+        />
+      </div>
+
+      {/* Desktop: existing dashboard */}
+      <div className="hidden md:block">
+        <DesktopDashboard
+          metrics={metrics}
+          isLoading={isLoading}
+          isError={isError}
+          error={error}
+        />
+      </div>
+    </>
+  );
+}
+
+interface DesktopDashboardProps {
+  metrics: {
+    totalResidents: number;
+    totalHouseholds: number;
+    pendingLetters: number;
+    activeEmergencies: number;
+    upcomingEvents: number;
+    unpaidIuran: number;
+    currentBalance: number;
+  } | null;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+}
+
+function DesktopDashboard({ metrics, isLoading, isError, error }: DesktopDashboardProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6">
@@ -132,7 +206,6 @@ export function KetuaDashboardScreen() {
           icon="🚨"
           bgColor={metrics.activeEmergencies > 0 ? 'bg-red-50 dark:bg-red-900/10' : 'bg-white dark:bg-gray-800'}
           iconBg={metrics.activeEmergencies > 0 ? 'bg-red-100 dark:bg-red-900/40' : 'bg-gray-100 dark:bg-gray-700'}
-          href="/emergency"
         />
       </div>
 

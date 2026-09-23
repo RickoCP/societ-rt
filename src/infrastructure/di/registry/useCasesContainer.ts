@@ -18,6 +18,9 @@ import {
 import {
   RegisterTenantUseCaseImpl,
   UpdateTenantBrandingUseCaseImpl,
+  UpdateTenantSirenDeviceUseCaseImpl,
+  ExportTenantSirenCsvUseCaseImpl,
+  ImportTenantSirenCsvUseCaseImpl,
   SuspendTenantUseCaseImpl,
   ReactivateTenantUseCaseImpl,
 } from '@core/domains/tenant/usecases';
@@ -170,6 +173,20 @@ import {
   BroadcastNeighborhoodAlertUseCaseImpl,
   GetSecurityAnalyticsUseCaseImpl,
 } from '@core/domains/securityCenter/usecases';
+import {
+  ProcessDoorEventUseCaseImpl,
+  RegisterDoorSensorUseCaseImpl,
+  SetMonitoringWindowUseCaseImpl,
+  RequestDoorSensorInstallationUseCaseImpl,
+  ResolveDoorInstallationRequestUseCaseImpl,
+  GetDoorStateDashboardUseCaseImpl,
+} from '@core/domains/doorMonitoring/usecases';
+import {
+  ListEmergencyContactsUseCaseImpl,
+  CreateEmergencyContactUseCaseImpl,
+  UpdateEmergencyContactUseCaseImpl,
+  DeleteEmergencyContactUseCaseImpl,
+} from '@core/domains/emergencyContact/usecases';
 
 export function registerUseCases(container: AwilixContainer): void {
   container.register({
@@ -184,6 +201,9 @@ export function registerUseCases(container: AwilixContainer): void {
     // Tenant
     registerTenantUseCase: asFunction(RegisterTenantUseCaseImpl).singleton(),
     updateTenantBrandingUseCase: asFunction(UpdateTenantBrandingUseCaseImpl).singleton(),
+    updateTenantSirenDeviceUseCase: asFunction(UpdateTenantSirenDeviceUseCaseImpl).singleton(),
+    exportTenantSirenCsvUseCase: asFunction(ExportTenantSirenCsvUseCaseImpl).singleton(),
+    importTenantSirenCsvUseCase: asFunction(ImportTenantSirenCsvUseCaseImpl).singleton(),
     suspendTenantUseCase: asFunction(SuspendTenantUseCaseImpl).singleton(),
     reactivateTenantUseCase: asFunction(ReactivateTenantUseCaseImpl).singleton(),
     // Resident
@@ -309,5 +329,17 @@ export function registerUseCases(container: AwilixContainer): void {
     getIncidentTimelineUseCase: asFunction(GetIncidentTimelineUseCaseImpl).singleton(),
     broadcastNeighborhoodAlertUseCase: asFunction(BroadcastNeighborhoodAlertUseCaseImpl).singleton(),
     getSecurityAnalyticsUseCase: asFunction(GetSecurityAnalyticsUseCaseImpl).singleton(),
+    // Door Monitoring
+    processDoorEventUseCase: asFunction(ProcessDoorEventUseCaseImpl).singleton(),
+    registerDoorSensorUseCase: asFunction(RegisterDoorSensorUseCaseImpl).singleton(),
+    setMonitoringWindowUseCase: asFunction(SetMonitoringWindowUseCaseImpl).singleton(),
+    requestDoorSensorInstallationUseCase: asFunction(RequestDoorSensorInstallationUseCaseImpl).singleton(),
+    resolveDoorInstallationRequestUseCase: asFunction(ResolveDoorInstallationRequestUseCaseImpl).singleton(),
+    getDoorStateDashboardUseCase: asFunction(GetDoorStateDashboardUseCaseImpl).singleton(),
+    // Emergency Contacts
+    listEmergencyContactsUseCase: asFunction(ListEmergencyContactsUseCaseImpl).singleton(),
+    createEmergencyContactUseCase: asFunction(CreateEmergencyContactUseCaseImpl).singleton(),
+    updateEmergencyContactUseCase: asFunction(UpdateEmergencyContactUseCaseImpl).singleton(),
+    deleteEmergencyContactUseCase: asFunction(DeleteEmergencyContactUseCaseImpl).singleton(),
   });
 }

@@ -149,13 +149,42 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const prisma = container.resolve<PrismaClient>('prismaClient');
 
     if (paid && amount && amount > 0) {
+      // Ambil data household + kepala keluarga untuk label transaksi yang jelas.
+      // Prioritaskan resident berkategori 'kepala_keluarga'; jika tidak ada,
+      // pakai resident pertama sebagai fallback.
+      const household = await prisma.household.findFirst({
+        where: { id: householdId, tenantId },
+        select: {
+          householdNumber: true,
+          address: true,
+          residents: {
+            orderBy: { createdAt: 'asc' },
+            select: { name: true, categories: true },
+          },
+        },
+      });
+
+      const residents: Array<{ name: string; categories: string[] }> =
+        household?.residents ?? [];
+      const head =
+        residents.find(r => r.categories.includes('kepala_keluarga')) ??
+        residents[0];
+      const headName = head?.name ?? null;
+      const houseNumber =
+        household?.householdNumber ?? householdNumber ?? householdId.slice(0, 8);
+
+      // Contoh: "Iuran 2026-01 - Budi Santoso (No. 3276010001010001)"
+      const description = headName
+        ? `Iuran ${month} - ${headName} (No. ${houseNumber})`
+        : `Iuran ${month} - No. ${houseNumber}`;
+
       // Record income transaction for iuran payment
       const tx = await prisma.financialTransaction.create({
         data: {
           tenantId,
           type: 'income',
           amount,
-          description: `Iuran ${month} - KK ${householdNumber ?? householdId.slice(0, 8)}`,
+          description,
           category: 'iuran',
           date: new Date(),
           createdBy: authContext.userId,

@@ -41,3 +41,32 @@ export function alarmZoneNotFound(zone: string): AppError {
     },
   );
 }
+
+/**
+ * A provider-agnostic failure while raising or stopping the physical alarm.
+ * Wraps the underlying cause (Tuya/Home Assistant/etc.) so callers never see
+ * vendor-specific detail. Technical + retryable.
+ */
+export function alarmTriggerFailed(cause?: unknown): AppError {
+  return technicalError(
+    'ALARM_TRIGGER_FAILED',
+    'Failed to trigger the physical alarm via the alarm provider',
+    {
+      userMessage:
+        'Gagal membunyikan alarm fisik. Peringatan darurat tetap tercatat.',
+      retryable: true,
+      cause,
+    },
+  );
+}
+
+/**
+ * The alarm provider is not configured (e.g. missing device id or credentials).
+ * Business-level: the operation cannot proceed until configuration is fixed.
+ */
+export function alarmNotConfigured(detail: string): AppError {
+  return technicalError('ALARM_NOT_CONFIGURED', `Alarm provider not configured: ${detail}`, {
+    userMessage: 'Alarm belum dikonfigurasi. Hubungi pengurus.',
+    retryable: false,
+  });
+}

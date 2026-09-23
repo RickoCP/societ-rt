@@ -15,6 +15,8 @@ interface Transaction {
 interface TransactionListResponse {
   data: Transaction[];
   balance: number;
+  totalIncome: number;
+  totalExpense: number;
   total: number;
   page: number;
   totalPages: number;
@@ -33,6 +35,26 @@ interface RecordIuranParams {
   month: string;
   transactionId: string;
 }
+
+interface CurrentUser {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  tenantId: string;
+}
+
+async function fetchCurrentUser(): Promise<CurrentUser> {
+  const res = await fetch('/api/auth/me');
+  if (!res.ok) {
+    throw new Error('Failed to fetch current user');
+  }
+  const json = (await res.json()) as { data: CurrentUser };
+  return json.data;
+}
+
+// Roles allowed to manage kas (mirror server-side check in the finance routes).
+const KAS_MANAGER_ROLES = ['Super_Admin', 'Ketua_RT', 'Pengurus'];
 
 async function fetchTransactions(
   page: number,
@@ -73,6 +95,21 @@ async function recordIuranRequest(params: RecordIuranParams): Promise<void> {
   }
 }
 
+async function setOpeningBalanceRequest(params: {
+  year: number;
+  amount: number;
+}): Promise<void> {
+  const res = await fetch('/api/finance/opening-balance', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const body = (await res.json()) as { message?: string; code?: string };
+    throw new Error(body.message ?? body.code ?? 'Failed to set opening balance');
+  }
+}
+
 async function checkIuranRequest(params: { householdId: string; month: string }): Promise<unknown> {
   const res = await fetch(`/api/finance/iuran?householdId=${params.householdId}&month=${params.month}`);
   if (!res.ok) {
@@ -101,6 +138,17 @@ export function useTransactionListViewModel(page = 1) {
     queryFn: () => fetchTransactions(page),
   });
 
+  const userQuery = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: fetchCurrentUser,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Warga (dan role lain di luar pengurus) hanya boleh melihat, tidak mengelola kas.
+  const canManageKas = userQuery.data
+    ? KAS_MANAGER_ROLES.includes(userQuery.data.role)
+    : false;
+
   const createTxMutation = useMutation({
     mutationFn: createTransactionRequest,
     onSuccess: async () => {
@@ -110,6 +158,13 @@ export function useTransactionListViewModel(page = 1) {
 
   const recordIuranMutation = useMutation({
     mutationFn: recordIuranRequest,
+  });
+
+  const setOpeningBalanceMutation = useMutation({
+    mutationFn: setOpeningBalanceRequest,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
   });
 
   const checkIuranMutation = useMutation({
@@ -123,18 +178,24 @@ export function useTransactionListViewModel(page = 1) {
   return {
     transactions: query.data?.data ?? [],
     balance: query.data?.balance ?? 0,
+    totalIncome: query.data?.totalIncome ?? 0,
+    totalExpense: query.data?.totalExpense ?? 0,
     total: query.data?.total ?? 0,
     totalPages: query.data?.totalPages ?? 1,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
+    canManageKas,
+    currentUser: userQuery.data ?? null,
     createTransaction: createTxMutation.mutateAsync,
     isCreatingTx: createTxMutation.isPending,
     createTxError: createTxMutation.error,
     recordIuran: recordIuranMutation.mutateAsync,
     isRecordingIuran: recordIuranMutation.isPending,
     recordIuranError: recordIuranMutation.error,
+    setOpeningBalance: setOpeningBalanceMutation.mutateAsync,
+    isSettingOpeningBalance: setOpeningBalanceMutation.isPending,
     checkIuran: checkIuranMutation.mutateAsync,
     checkIuranError: checkIuranMutation.error,
     fetchReport: reportMutation.mutateAsync,

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@components/atoms/Button';
 import { Badge } from '@components/atoms/Badge';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
+import { ConfirmDialog } from '@components/molecules/ConfirmDialog';
 import Link from 'next/link';
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -31,6 +32,15 @@ export default function IuranStatusPage() {
   const [iuranAmount, setIuranAmount] = useState('100000');
   const [visibleMonths, setVisibleMonths] = useState(currentMonth + 1);
 
+  // Pending "uncheck" (membatalkan status lunas) awaiting confirmation.
+  const [pendingUncheck, setPendingUncheck] = useState<{
+    householdId: string;
+    householdNumber: string;
+    headName: string;
+    month: string;
+    monthLabel: string;
+  } | null>(null);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -49,6 +59,10 @@ export default function IuranStatusPage() {
     }
   }, [year]);
 
+  // Data-fetching effect: reload the iuran grid when the year filter changes.
+  // The setState calls live inside fetchData (loading/data), which is the
+  // intended data-sync pattern here, not a cascading render.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleToggle = async (householdId: string, householdNumber: string, month: string, currentlyPaid: boolean) => {
@@ -266,7 +280,21 @@ export default function IuranStatusPage() {
                               type="checkbox"
                               checked={isPaid}
                               disabled={isUpdating}
-                              onChange={() => handleToggle(h.householdId, h.householdNumber, monthKey, isPaid)}
+                              onChange={() => {
+                                if (isPaid) {
+                                  // Uncheck = membatalkan status lunas → konfirmasi dulu.
+                                  setPendingUncheck({
+                                    householdId: h.householdId,
+                                    householdNumber: h.householdNumber,
+                                    headName: h.headName,
+                                    month: monthKey,
+                                    monthLabel: MONTH_LABELS[monthKeys.indexOf(monthKey)] ?? monthKey,
+                                  });
+                                } else {
+                                  // Check = tandai lunas, langsung simpan.
+                                  handleToggle(h.householdId, h.householdNumber, monthKey, isPaid);
+                                }
+                              }}
                               className="h-4 w-4 cursor-pointer rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:cursor-wait disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700"
                               aria-label={`${h.headName} - ${MONTH_LABELS[monthKeys.indexOf(monthKey)]} - ${isPaid ? 'lunas' : 'belum'}`}
                             />
@@ -282,6 +310,33 @@ export default function IuranStatusPage() {
           </table>
         </div>
       )}
+
+      {/* Konfirmasi pembatalan status lunas */}
+      <ConfirmDialog
+        open={pendingUncheck !== null}
+        title="Batalkan status lunas?"
+        description={
+          pendingUncheck
+            ? `Tandai iuran ${pendingUncheck.monthLabel} ${year} untuk ${pendingUncheck.headName} sebagai BELUM lunas? Pemasukan yang tercatat untuk pembayaran ini akan dibatalkan.`
+            : undefined
+        }
+        confirmLabel="Ya, batalkan"
+        cancelLabel="Batal"
+        variant="danger"
+        loading={
+          pendingUncheck
+            ? updating === `${pendingUncheck.householdId}-${pendingUncheck.month}`
+            : false
+        }
+        onConfirm={() => {
+          if (!pendingUncheck) return;
+          const p = pendingUncheck;
+          setPendingUncheck(null);
+          // currentlyPaid = true karena ini aksi uncheck.
+          handleToggle(p.householdId, p.householdNumber, p.month, true);
+        }}
+        onCancel={() => setPendingUncheck(null)}
+      />
     </div>
   );
 }

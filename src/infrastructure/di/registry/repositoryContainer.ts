@@ -36,6 +36,8 @@ import { AlarmRepositoryImpl } from '@infrastructure/repositories/alarm/AlarmRep
 import { AutomationRepositoryImpl } from '@infrastructure/repositories/automation/AutomationRepositoryImpl';
 import { HomeRepositoryImpl } from '@infrastructure/repositories/societHome/HomeRepositoryImpl';
 import { SecurityCenterRepositoryImpl } from '@infrastructure/repositories/securityCenter/SecurityCenterRepositoryImpl';
+import { DoorMonitoringRepositoryImpl } from '@infrastructure/repositories/doorMonitoring/DoorMonitoringRepositoryImpl';
+import { EmergencyContactRepositoryImpl } from '@infrastructure/repositories/emergencyContact/EmergencyContactRepositoryImpl';
 
 export function registerRepositories(container: AwilixContainer): void {
   container.register({
@@ -69,5 +71,7 @@ export function registerRepositories(container: AwilixContainer): void {
     automationRepository: asFunction(AutomationRepositoryImpl).singleton(),
     homeRepository: asFunction(HomeRepositoryImpl).singleton(),
     securityCenterRepository: asFunction(SecurityCenterRepositoryImpl).singleton(),
+    doorMonitoringRepository: asFunction(DoorMonitoringRepositoryImpl).singleton(),
+    emergencyContactRepository: asFunction(EmergencyContactRepositoryImpl).singleton(),
   });
 }
