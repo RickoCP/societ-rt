@@ -150,6 +150,10 @@ model Tenant {
   doorInstallationRequests DoorInstallationRequest[]
   emergencyContacts        EmergencyContact[]
 
+  // M1 (FASE 1.2b) additive back-relations. Does not change the tenants table columns.
+  orgUnits    OrgUnit[]
+  memberships Membership[]
+
   @@unique([rtRwNumber, region], map: "tenants_rt_rw_number_region_unique")
   @@map("tenants")
 }
@@ -173,6 +177,9 @@ model User {
   deletedAt           DateTime?  @map("deleted_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  // M1 (FASE 1.2b) additive back-relation. Does not change the users table columns.
+  memberships Membership[]
 
   @@unique([tenantId, email], map: "users_tenant_id_email_unique")
   @@index([tenantId, id], map: "users_tenant_id_id_idx")
@@ -1358,4 +1365,110 @@ model EmergencyContact {
 
   @@index([tenantId, sortOrder], map: "emergency_contacts_tenant_id_sort_order_idx")
   @@map("emergency_contacts")
+}
+
+// =============================================================================
+// M1 — OrgUnit + Membership foundation (FASE 1.2b)
+// =============================================================================
+// ADDITIVE ONLY. Mirrors prisma/migration-add-orgunit-membership.sql, which is
+// the authoritative DDL applied to the database (via scripts/run-migration.mjs).
+//
+// NOTE ON COMPOSITE SAME-TENANT FKs:
+//   The SQL migration enforces same-tenant integrity with declarative composite
+//   foreign keys:
+//     org_units.(parent_id, tenant_id)   -> org_units.(id, tenant_id)
+//     memberships.(org_unit_id, tenant_id) -> org_units.(id, tenant_id)
+//   These are represented below using Prisma composite relations that reference
+//   the @@unique([id, tenantId]) candidate key on OrgUnit. The tenant_id column
+//   is a real FK column shared between the tenant relation and the composite
+//   parent/org-unit relation, matching the SQL exactly. No extra columns are
+//   introduced beyond what the SQL migration creates.
+// =============================================================================
+
+/// Type of an organizational unit in the tenant hierarchy.
+enum OrgUnitType {
+  ORGANIZATION
+  CLUSTER
+  RW
+  RT
+}
+
+/// Role a user holds within a tenant, optionally scoped to a specific org unit.
+enum MembershipRole {
+  PLATFORM_ADMIN
+  TENANT_OWNER
+  ORG_ADMIN
+  RT_ADMIN
+  SECURITY
+  RESIDENT
+}
+
+/// Lifecycle status of a membership.
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+/// OrgUnit represents a node in a tenant's organizational hierarchy
+/// (ORGANIZATION > CLUSTER > RW > RT). Every org unit belongs to exactly one
+/// tenant; a unit's parent (if any) must belong to the same tenant, enforced at
+/// the database level by a composite (parent_id, tenant_id) foreign key.
+///
+/// Hierarchy invariants NOT enforced here (deferred to a hierarchy service):
+/// path/depth correctness, cycle prevention, and subtree moves.
+model OrgUnit {
+  id        String      @id @default(uuid()) @map("id")
+  tenantId  String      @map("tenant_id")
+  parentId  String?     @map("parent_id")
+  type      OrgUnitType @map("type")
+  name      String      @map("name")
+  path      String[]    @default([]) @map("path")
+  depth     Int         @default(0) @map("depth")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  // Same-tenant parent/child self-relation via composite key (id, tenant_id).
+  parent   OrgUnit?  @relation("OrgUnitHierarchy", fields: [parentId, tenantId], references: [id, tenantId])
+  children OrgUnit[] @relation("OrgUnitHierarchy")
+
+  memberships Membership[]
+
+  @@unique([id, tenantId], map: "org_units_id_tenant_id_key")
+  @@index([tenantId], map: "org_units_tenant_id_idx")
+  @@index([parentId], map: "org_units_parent_id_idx")
+  @@map("org_units")
+}
+
+/// Membership links a User to a Tenant with a role, optionally scoped to a
+/// specific OrgUnit. A membership with orgUnitId = null is a tenant-level
+/// membership (e.g. PLATFORM_ADMIN / TENANT_OWNER); a membership with orgUnitId
+/// set is scoped to that org unit, which must belong to the same tenant
+/// (enforced by a composite (org_unit_id, tenant_id) foreign key).
+///
+/// Uniqueness (enforced via partial unique indexes in the SQL migration):
+///   - at most one org-scoped membership per (user, tenant, org_unit)
+///   - at most one tenant-level membership per (user, tenant)
+model Membership {
+  id        String           @id @default(uuid()) @map("id")
+  userId    String           @map("user_id")
+  tenantId  String           @map("tenant_id")
+  orgUnitId String?          @map("org_unit_id")
+  role      MembershipRole   @map("role")
+  status    MembershipStatus @default(ACTIVE) @map("status")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  revokedAt DateTime?        @map("revoked_at")
+
+  user    User     @relation(fields: [userId], references: [id])
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  // Same-tenant org unit scope via composite key (id, tenant_id).
+  orgUnit OrgUnit? @relation(fields: [orgUnitId, tenantId], references: [id, tenantId])
+
+  @@index([userId], map: "memberships_user_id_idx")
+  @@index([tenantId], map: "memberships_tenant_id_idx")
+  @@index([orgUnitId], map: "memberships_org_unit_id_idx")
+  @@map("memberships")
 }

@@ -41,3 +41,10 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# clone-validation artifacts (may embed DB output; never commit — see FASE 1.2b)
+_m1_clone_out*.json
+# scratch/temporary files used by validation & regression runs
+_*.txt
+_*.json
+_*.mjs
