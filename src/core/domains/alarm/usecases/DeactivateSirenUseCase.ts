@@ -12,14 +12,15 @@
  * 6. Return ok(event)
  *
  * @see Requirements 36.3, 36.5, 36.9, 36.10
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
   IoTGatewayProtocol,
 } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { AlarmRepository } from '../repositories/AlarmRepository';
@@ -42,7 +43,7 @@ export interface DeactivateSirenInput {
 
 export interface DeactivateSirenUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: DeactivateSirenInput;
   }): Promise<DomainResult<AlarmEvent>>;
 }

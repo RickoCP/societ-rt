@@ -4,13 +4,18 @@
  * Only the creator can edit, and only while the letter is still pending.
  *
  * @see Requirements 13.1
+ * @see Requirements 2.1, 2.2, 2.3 (Route Handler withPermission Migration)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { PrismaClient } from '@/generated/prisma/client';
 
 // ---------------------------------------------------------------------------
@@ -23,25 +28,56 @@ const updateLetterSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+/**
+ * Response type for letter update endpoint.
+ */
+interface LetterUpdateResponse {
+  data?: {
+    id: string;
+    userId: string;
+    letterType: string;
+    purpose: string;
+    status: string;
+    createdAt: string;
+  };
+  code?: string;
+  message?: string;
+  correlationId?: string;
+}
+
+/**
+ * Route params for the letter endpoint.
+ */
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+// ---------------------------------------------------------------------------
 // PATCH handler — Edit pending letter request
 // ---------------------------------------------------------------------------
 
-export async function PATCH(
+/**
+ * Handler for editing a pending letter request.
+ *
+ * AuthorizationContext is guaranteed to have resident:write permission
+ * after withPermission validation.
+ *
+ * Business rules:
+ * - Only the creator (userId match) can edit their letter
+ * - Only letters with status 'pending' can be edited
+ */
+const handlePatchLetter: AuthorizedRouteHandler<LetterUpdateResponse> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: RouteParams,
+): Promise<NextResponse<LetterUpdateResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  const { id } = await params;
+  const { id } = await routeContext!.params;
 
   let body: unknown;
   try {
@@ -116,4 +152,17 @@ export async function PATCH(
       { status: 500 },
     );
   }
-}
+};
+
+/**
+ * PATCH handler wrapped with resident:write permission requirement.
+ *
+ * Users with resident:write permission can edit their own pending letters.
+ * Additional ownership check is performed inside the handler.
+ *
+ * @see Permission Mapping: /api/administration/letters/[id] PATCH → resident:write
+ */
+export const PATCH = withPermission(
+  { permissions: ['resident:write'] },
+  handlePatchLetter,
+);

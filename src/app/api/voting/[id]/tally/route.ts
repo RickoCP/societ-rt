@@ -1,37 +1,52 @@
 /**
  * GET /api/voting/[id]/tally — Get the aggregated tally for a vote.
  *
- * For verified mode + admin role: includes voter details per option.
+ * For verified mode + vote:manage permission: includes voter details per option.
  *
  * BFF pattern: resolve auth context → query → return safe response.
  *
+ * Authorization:
+ * - GET: vote:cast (view tally results)
+ *
+ * Note: Extended details (voter names in verified mode) are available
+ * only to users with vote:manage permission.
+ *
  * @see Requirements 8.6, 8.7
+ * @see Requirements 2.1, 2.2, 2.3 — Route authorization migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
-import { UserRole } from '@core/protocols';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { PrismaClient } from '@/generated/prisma/client';
 
-const ADMIN_ROLES = [UserRole.Super_Admin, UserRole.Ketua_RT, UserRole.Pengurus];
+// ---------------------------------------------------------------------------
+// GET handler — Get vote tally
+// ---------------------------------------------------------------------------
 
-export async function GET(
+const handleGetTally: AuthorizedRouteHandler<void> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<void>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id: voteId } = await params;
+  const params = await routeContext?.params;
+  const voteId = params?.id;
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  if (!voteId) {
     return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Vote ID is required',
+        correlationId,
+      },
+      { status: 400 },
+    ) as NextResponse<void>;
   }
 
   try {
@@ -46,7 +61,7 @@ export async function GET(
       return NextResponse.json(
         { code: 'COMMON_NOT_FOUND', message: 'Vote not found', correlationId },
         { status: 404 },
-      );
+      ) as NextResponse<void>;
     }
 
     // Get options with vote counts
@@ -58,12 +73,12 @@ export async function GET(
 
     const totalVotes = options.reduce((sum, o) => sum + o.voteCount, 0);
 
-    // For verified mode + admin role: include voter details
-    const isAdmin = ADMIN_ROLES.includes(authContext.role as UserRole);
+    // For verified mode + vote:manage permission: include voter details
+    const hasVoteManage = authContext.permissions.has('vote:manage');
     const isVerified = vote.mode === 'verified';
     let voters: Array<{ optionId: string; userName: string; votedAt: string }> | undefined;
 
-    if (isVerified && isAdmin) {
+    if (isVerified && hasVoteManage) {
       const ballots = await prisma.ballot.findMany({
         where: { voteId },
         select: {
@@ -100,11 +115,25 @@ export async function GET(
         })),
         ...(voters ? { voters } : {}),
       },
-    });
+    }) as NextResponse<void>;
   } catch {
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
-    );
+    ) as NextResponse<void>;
   }
-}
+};
+
+// ---------------------------------------------------------------------------
+// Export route handler with permission wrapper
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/voting/[id]/tally — Get vote tally (requires vote:cast)
+ *
+ * Extended voter details in verified mode available only with vote:manage permission.
+ */
+export const GET = withPermission(
+  { permissions: ['vote:cast'] },
+  handleGetTally,
+);

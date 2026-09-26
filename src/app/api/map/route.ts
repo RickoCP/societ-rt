@@ -1,7 +1,9 @@
 /**
  * GET /api/map — Get household map markers with optional filters.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
  *
  * Query params: block, status, categories (comma-separated)
  *
@@ -12,31 +14,54 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GetMapMarkersUseCase } from '@core/domains/map/usecases';
+
+// ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface MapMarkerResponse {
+  householdId: string;
+  householdNumber: string;
+  address: string;
+  block: string;
+  latitude: number | null;
+  longitude: number | null;
+  residentCount: number;
+  headOfHousehold: string | null;
+}
+
+interface MapMarkersListResponse {
+  data: MapMarkerResponse[];
+}
 
 // ---------------------------------------------------------------------------
 // GET handler — Get map markers
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handle GET /api/map — Get household map markers for the tenant.
+ *
+ * AuthorizationContext is guaranteed to have household:read permission
+ * after withPermission validation.
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @returns NextResponse with map markers list or error
+ */
+const handleGetMapMarkers: AuthorizedRouteHandler<MapMarkersListResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<MapMarkersListResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Extract query params
+  // 1. Extract query params
   const { searchParams } = new URL(request.url);
   const block = searchParams.get('block') ?? undefined;
   const status = searchParams.get('status') ?? undefined;
@@ -45,7 +70,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     ? categoriesParam.split(',').filter(Boolean)
     : undefined;
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase =
     container.resolve<GetMapMarkersUseCase>('getMapMarkersUseCase');
   const result = await useCase.execute({
@@ -53,9 +78,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     filters: { block, status, categories },
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<MapMarkersListResponse>;
   }
 
   return NextResponse.json(
@@ -73,4 +98,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Exported Route Handlers with Permission Checks
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/map — Get household map markers for the tenant.
+ *
+ * Permission: household:read (read access to household location data)
+ *
+ * @see Permission Mapping: /api/map GET → household:read
+ */
+export const GET = withPermission(
+  { permissions: ['household:read'] },
+  handleGetMapMarkers,
+);

@@ -1,10 +1,11 @@
 /**
  * POST /api/security/incidents/:id/evidence — Attach evidence URLs to an incident.
  *
+ * Permission: security:manage
  * Validates evidence URLs and delegates to AttachEvidenceUseCase which
  * enforces the maximum evidence file limit (5 total).
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: withPermission wrapper → validate input → execute use case → return safe response.
  *
  * @see Requirements 32.6, 32.8
  */
@@ -15,7 +16,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { AttachEvidenceUseCase } from '@core/domains/incident/usecases';
 
 // ---------------------------------------------------------------------------
@@ -33,25 +35,17 @@ const attachEvidenceSchema = z.object({
 // POST handler — Attach evidence
 // ---------------------------------------------------------------------------
 
-export async function POST(
+async function handleAttachEvidence(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  authContext: AuthorizationContext,
+  context?: { params?: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+  const { id } = await context!.params!;
 
-  const { id } = await params;
-
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -78,7 +72,7 @@ export async function POST(
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<AttachEvidenceUseCase>('attachEvidenceUseCase');
   const result = await useCase.execute({
     authContext,
@@ -86,7 +80,7 @@ export async function POST(
     evidenceUrls: validation.data.evidenceUrls,
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -105,3 +99,8 @@ export async function POST(
     { status: 200 },
   );
 }
+
+export const POST = withPermission(
+  { permissions: ['security:manage'] },
+  handleAttachEvidence,
+);

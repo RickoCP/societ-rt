@@ -2,9 +2,10 @@
  * GET /api/iot/devices/health — IoT device health dashboard.
  *
  * Returns aggregated health information for all devices in a household.
- * Requires authentication.
+ * Requires authentication and device:read permission.
  *
  * @see Requirements 44.1, 44.4, 44.5
+ * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -12,7 +13,8 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { GetDeviceHealthDashboardUseCase } from '@core/domains/iot/usecases';
 
 // ---------------------------------------------------------------------------
@@ -27,20 +29,14 @@ const querySchema = z.object({
 // GET handler — Device health dashboard
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleGetDeviceHealth: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  // 2. Validate query params
+  // 1. Validate query params
   const { searchParams } = new URL(request.url);
   const validation = querySchema.safeParse({
     householdId: searchParams.get('householdId') ?? undefined,
@@ -57,7 +53,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Execute use case
+  // 2. Execute use case
   const useCase = container.resolve<GetDeviceHealthDashboardUseCase>(
     'getDeviceHealthDashboardUseCase',
   );
@@ -73,7 +69,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const dashboard = result.data;
 
-  // 4. Return safe response
+  // 3. Return safe response
   return NextResponse.json(
     {
       data: {
@@ -90,4 +86,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['iot:read'] },
+  handleGetDeviceHealth,
+);

@@ -1,7 +1,12 @@
 /**
  * POST /api/events/[id]/rsvp — Submit an RSVP for a community event.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
+ *
+ * Permission Mapping:
+ * - POST /api/events/[id]/rsvp → announcement:read (any user who can read events can RSVP)
  *
  * @see Requirements 14.3, 14.4
  */
@@ -12,7 +17,11 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { SubmitRsvpUseCase } from '@core/domains/event/usecases';
 import type { PrismaClient } from '@/generated/prisma/client';
 
@@ -25,32 +34,60 @@ const submitRsvpSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface RsvpResponse {
+  data: {
+    id: string;
+    eventId: string;
+    userId: string;
+    response: string;
+    createdAt: string;
+  };
+}
+
+// ---------------------------------------------------------------------------
 // POST handler — Submit RSVP
 // ---------------------------------------------------------------------------
 
-export async function POST(
+/**
+ * Handle POST /api/events/[id]/rsvp — Submit an RSVP for a community event.
+ *
+ * AuthorizationContext is guaranteed to have announcement:read permission
+ * after withPermission validation.
+ *
+ * Any authenticated user who can read events can submit an RSVP.
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @param context - Route context with params
+ * @returns NextResponse with RSVP or error
+ *
+ * @see Permission Mapping: POST /api/events/[id]/rsvp → announcement:read
+ */
+const handleSubmitRsvp: AuthorizedRouteHandler<RsvpResponse> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  context?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<RsvpResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await params;
+  const { id } = await context?.params ?? { id: '' };
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  if (!id) {
     return NextResponse.json(
       {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Event ID is required',
         correlationId,
-      },
-      { status: 401 },
+      } as unknown as RsvpResponse,
+      { status: 400 },
     );
   }
 
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -60,7 +97,7 @@ export async function POST(
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      },
+      } as unknown as RsvpResponse,
       { status: 400 },
     );
   }
@@ -72,12 +109,12 @@ export async function POST(
         code: 'COMMON_VALIDATION_FAILED',
         fields: formatZodErrors(validation.error),
         correlationId,
-      },
+      } as unknown as RsvpResponse,
       { status: 400 },
     );
   }
 
-  // 3. Check quota if attending
+  // 2. Check quota if attending
   if (validation.data.response === 'attending') {
     try {
       const prisma = container.resolve<PrismaClient>('prismaClient');
@@ -92,7 +129,7 @@ export async function POST(
         });
         if (attendingCount >= event.maxRsvp) {
           return NextResponse.json(
-            { code: 'EVENT_RSVP_FULL', message: 'Event has reached maximum capacity.', correlationId },
+            { code: 'EVENT_RSVP_FULL', message: 'Event has reached maximum capacity.', correlationId } as unknown as RsvpResponse,
             { status: 409 },
           );
         }
@@ -102,7 +139,7 @@ export async function POST(
     }
   }
 
-  // 4. Execute use case via DI
+  // 3. Execute use case via DI
   const useCase = container.resolve<SubmitRsvpUseCase>('submitRsvpUseCase');
   const result = await useCase.execute({
     authContext,
@@ -112,7 +149,7 @@ export async function POST(
 
   // 4. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<RsvpResponse>;
   }
 
   const rsvp = result.data;
@@ -129,4 +166,22 @@ export async function POST(
     },
     { status: 201 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Exported Route Handler with Permission Check
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/events/[id]/rsvp — Submit an RSVP for a community event.
+ *
+ * Permission: announcement:read (any user who can read events can RSVP)
+ *
+ * This includes: TENANT_OWNER, ORG_ADMIN, RT_ADMIN, SECURITY, RESIDENT roles.
+ *
+ * @see Permission Mapping: POST /api/events/[id]/rsvp → announcement:read
+ */
+export const POST = withPermission(
+  { permissions: ['announcement:read'] },
+  handleSubmitRsvp,
+);

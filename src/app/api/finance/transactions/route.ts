@@ -2,9 +2,10 @@
  * POST /api/finance/transactions — Record a new financial transaction.
  * GET  /api/finance/transactions — List transactions with optional date range.
  *
- * BFF pattern: validate input → resolve auth context → execute use case / query → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case / query → return safe response.
  *
  * @see Requirements 7.1, 7.2, 7.3
+ * @see Multi-Tenant Integration Cutover — Task 4.4
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,17 +14,10 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
-import { UserRole } from '@core/protocols/AuthContext';
+import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RecordTransactionUseCase } from '@core/domains/finance/usecases';
 import type { FinanceRepository } from '@core/domains/finance/repositories/FinanceRepository';
-
-// Roles allowed to manage kas (record transactions). Warga is view-only.
-const KAS_MANAGER_ROLES: string[] = [
-  UserRole.Ketua_RT,
-  UserRole.Pengurus,
-  UserRole.Super_Admin,
-];
 
 // ---------------------------------------------------------------------------
 // Input schemas
@@ -41,39 +35,54 @@ const recordTransactionSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface TransactionCreateResponse {
+  data: {
+    id: string;
+    type: string;
+    amount: number;
+    description: string;
+    category: string;
+    date: string;
+    createdBy: string;
+    createdAt: string;
+  };
+}
+
+interface TransactionListResponse {
+  data: Array<{
+    id: string;
+    type: string;
+    amount: number;
+    description: string;
+    category: string;
+    date: string;
+    createdBy: string;
+    createdAt: string;
+  }>;
+  balance: number;
+  totalIncome: number;
+  totalExpense: number;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// ---------------------------------------------------------------------------
 // POST handler — Record transaction
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+const handleRecordTransaction: AuthorizedRouteHandler<TransactionCreateResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<TransactionCreateResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 1b. Role check — only kas managers can record transactions.
-  if (!KAS_MANAGER_ROLES.includes(authContext.role)) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'You do not have permission to manage kas.',
-        correlationId,
-      },
-      { status: 403 },
-    );
-  }
-
-  // 2. Parse and validate input
+  // Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -85,7 +94,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<TransactionCreateResponse>;
   }
 
   const validation = recordTransactionSchema.safeParse(body);
@@ -97,10 +106,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<TransactionCreateResponse>;
   }
 
-  // 3. Execute use case via DI
+  // Execute use case via DI
   const useCase = container.resolve<RecordTransactionUseCase>(
     'recordTransactionUseCase',
   );
@@ -112,9 +121,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
   });
 
-  // 4. Map result to safe response
+  // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<TransactionCreateResponse>;
   }
 
   const tx = result.data;
@@ -134,30 +143,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
 
 // ---------------------------------------------------------------------------
 // GET handler — List transactions
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleListTransactions: AuthorizedRouteHandler<TransactionListResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<TransactionListResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse query params
+  // Parse query params
   const searchParams = request.nextUrl.searchParams;
   const startDateParam = searchParams.get('startDate');
   const endDateParam = searchParams.get('endDate');
@@ -179,10 +178,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<TransactionListResponse>;
   }
 
-  // 3. Query repository directly for read operations
+  // Query repository directly for read operations
   const financeRepository = container.resolve<FinanceRepository>(
     'financeRepository',
   );
@@ -193,7 +192,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<TransactionListResponse>;
   }
 
   const allTransactions = result.data.transactions;
@@ -233,4 +232,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Export wrapped handlers with permission enforcement
+// ---------------------------------------------------------------------------
+
+export const POST = withPermission(
+  { permissions: ['finance:write'] },
+  handleRecordTransaction,
+);
+
+export const GET = withPermission(
+  { permissions: ['finance:read'] },
+  handleListTransactions,
+);

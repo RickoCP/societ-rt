@@ -1,32 +1,32 @@
 /**
  * POST /api/tenants/siren/import — Bulk-set per-RT siren device ids from a CSV.
  *
- * Admin-only (Super_Admin, enforced in the use case). Accepts multipart
- * form-data with a `file` field, or a raw text/csv body. Returns a summary of
- * updated / cleared / skipped rows.
+ * Platform admin only (requires platform:provision permission).
+ * Accepts multipart form-data with a `file` field, or a raw text/csv body.
+ * Returns a summary of updated / cleared / skipped rows.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { ImportTenantSirenCsvUseCase } from '@core/domains/tenant/usecases';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+// ---------------------------------------------------------------------------
+// POST — Import siren CSV (PLATFORM_ADMIN only)
+// ---------------------------------------------------------------------------
+
+const handleImportSirenCsv: AuthorizedRouteHandler<unknown> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Auth
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  // 2. Read CSV content (multipart file or raw body)
+  // 1. Read CSV content (multipart file or raw body)
   let csvContent: string;
   const contentType = request.headers.get('content-type') ?? '';
   try {
@@ -69,13 +69,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<ImportTenantSirenCsvUseCase>(
     'importTenantSirenCsvUseCase',
   );
   const result = await useCase.execute({ authContext, csvContent });
 
-  // 4. Map result
+  // 3. Map result
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -90,4 +90,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+export const POST = withPermission(
+  { permissions: ['platform:provision'] },
+  handleImportSirenCsv,
+);

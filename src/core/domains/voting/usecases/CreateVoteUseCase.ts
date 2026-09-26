@@ -8,9 +8,11 @@
  * 4. Return ok(vote)
  *
  * @see Requirements 8.1, 8.2
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { VotingRepository } from '../repositories/VotingRepository';
@@ -23,7 +25,7 @@ import { votingInsufficientOptions } from '../errors/votingErrors';
 
 export interface CreateVoteUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreateVoteInput;
   }): Promise<DomainResult<Vote>>;
 }

@@ -5,6 +5,8 @@
  * Filterable by actionType, startDate, endDate.
  * Audit entries are append-only — no update or delete via API.
  *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
+ *
  * @see Requirements 18.2, 18.5
  */
 
@@ -12,31 +14,47 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { AuditRepository } from '@core/domains/audit/repositories/AuditRepository';
+
+// ---------------------------------------------------------------------------
+// Response Types
+// ---------------------------------------------------------------------------
+
+interface AuditLogEntry {
+  id: string;
+  actorUserId: string;
+  actionType: string;
+  resourceType: string;
+  resourceId: string;
+  details: unknown;
+  ipAddress: string | null;
+  impersonatorId: string | null;
+  timestamp: string;
+}
+
+interface AuditLogResponse {
+  data: AuditLogEntry[];
+  pagination: {
+    total: number;
+    page: number;
+    pageSize: number;
+  };
+}
 
 // ---------------------------------------------------------------------------
 // GET handler — List audit logs
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleGetAuditLogs: AuthorizedRouteHandler<AuditLogResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<AuditLogResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Extract query params
+  // Extract query params
   const { searchParams } = new URL(request.url);
   const actionType = searchParams.get('actionType') ?? undefined;
   const startDateStr = searchParams.get('startDate');
@@ -62,7 +80,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // 3. Query repository
+  // Query repository
   const auditRepository =
     container.resolve<AuditRepository>('auditRepository');
   const result = await auditRepository.findByTenant(authContext.tenantId, {
@@ -74,7 +92,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<AuditLogResponse>;
   }
 
   const paginated = result.data;
@@ -100,4 +118,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+// Export wrapped handler with required audit:read permission
+export const GET = withPermission(
+  { permissions: ['audit:read'] },
+  handleGetAuditLogs,
+);

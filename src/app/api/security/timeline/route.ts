@@ -1,10 +1,11 @@
 /**
  * GET /api/security/timeline — Get security incident timeline.
  *
- * Role-restricted to Ketua_RT, Pengurus, Security_Guard.
- * BFF pattern: resolve auth → validate query → execute use case → return safe response.
+ * Role-restricted to users with security:read permission.
+ * BFF pattern: validate query → withPermission wrapper → execute use case → return safe response.
  *
  * @see Requirements 31.3, 31.9
+ * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -12,7 +13,8 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { GetIncidentTimelineUseCase } from '@core/domains/securityCenter/usecases';
 
 // ---------------------------------------------------------------------------
@@ -27,24 +29,14 @@ const querySchema = z.object({
 // GET handler — Incident timeline
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleGetTimeline: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Validate query params
+  // 1. Validate query params
   const { searchParams } = new URL(request.url);
   const hoursParam = searchParams.get('hours');
   const validation = querySchema.safeParse({
@@ -62,7 +54,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   try {
     const useCase = container.resolve<GetIncidentTimelineUseCase>(
       'getIncidentTimelineUseCase',
@@ -72,7 +64,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       hours: validation.data.hours,
     });
 
-    // 4. Map result to safe response
+    // 3. Map result to safe response
     if (!result.success) {
       return mapAppErrorToHttpResponse(result.error, correlationId);
     }
@@ -103,4 +95,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 500 },
     );
   }
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['security:read'] },
+  handleGetTimeline,
+);

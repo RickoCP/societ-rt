@@ -6,6 +6,7 @@ export type {
   Invoice,
   InvoiceStatus,
   CreateInvoiceInput,
+  UpdateInvoiceInput,
 } from './Invoice';
 export type {
   PaymentReconciliation,

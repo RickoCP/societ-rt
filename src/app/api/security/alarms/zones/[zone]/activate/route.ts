@@ -1,9 +1,12 @@
 /**
  * POST /api/security/alarms/zones/:zone/activate — Activate all sirens in a zone.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * Role-restricted to users with security:manage permission.
+ * BFF pattern: validate input → withPermission wrapper → execute use case → return safe response.
  *
  * @see Requirements 36.2, 36.4, 36.6
+ * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
+ * @see Permission Mapping: POST /api/security/alarms/zones/:zone/activate → security:manage
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -12,7 +15,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { ActivateZoneSirenUseCase } from '@core/domains/alarm/usecases';
 
 // ---------------------------------------------------------------------------
@@ -29,23 +33,18 @@ const activateZoneSchema = z.object({
 // POST handler — Activate zone sirens
 // ---------------------------------------------------------------------------
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ zone: string }> },
-): Promise<NextResponse> {
+const handleActivateZone: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+  routeContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+  // 1. Extract zone from route params
+  const { zone } = await routeContext!.params!;
 
-  const { zone } = await params;
-
+  // 2. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -72,37 +71,59 @@ export async function POST(
     );
   }
 
-  const useCase = container.resolve<ActivateZoneSirenUseCase>(
-    'activateZoneSirenUseCase',
-  );
-  const result = await useCase.execute({
-    authContext,
-    data: {
-      zone: decodeURIComponent(zone),
-      triggerSource: validation.data.triggerSource,
-      triggerType: validation.data.triggerType,
-      duration: validation.data.duration,
-    },
-  });
+  // 3. Execute use case via DI
+  try {
+    const useCase = container.resolve<ActivateZoneSirenUseCase>(
+      'activateZoneSirenUseCase',
+    );
+    const result = await useCase.execute({
+      authContext,
+      data: {
+        zone: decodeURIComponent(zone),
+        triggerSource: validation.data.triggerSource,
+        triggerType: validation.data.triggerType,
+        duration: validation.data.duration,
+      },
+    });
 
-  if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    // 4. Map result to safe response
+    if (!result.success) {
+      return mapAppErrorToHttpResponse(result.error, correlationId);
+    }
+
+    const events = result.data;
+
+    return NextResponse.json(
+      {
+        data: events.map((event) => ({
+          id: event.id,
+          alarmDeviceId: event.alarmDeviceId,
+          triggerSource: event.triggerSource,
+          triggerType: event.triggerType,
+          duration: event.duration,
+          activatedAt: event.activatedAt.toISOString(),
+          deactivatedAt: event.deactivatedAt?.toISOString() ?? null,
+        })),
+      },
+      { status: 200 },
+    );
+  } catch {
+    return NextResponse.json(
+      {
+        code: 'COMMON_UNEXPECTED_ERROR',
+        message: 'Internal server error',
+        correlationId,
+      },
+      { status: 500 },
+    );
   }
+};
 
-  const events = result.data;
-
-  return NextResponse.json(
-    {
-      data: events.map((event) => ({
-        id: event.id,
-        alarmDeviceId: event.alarmDeviceId,
-        triggerSource: event.triggerSource,
-        triggerType: event.triggerType,
-        duration: event.duration,
-        activatedAt: event.activatedAt.toISOString(),
-        deactivatedAt: event.deactivatedAt?.toISOString() ?? null,
-      })),
-    },
-    { status: 200 },
-  );
-}
+/**
+ * POST /api/security/alarms/zones/:zone/activate — Activate all sirens in a zone
+ * Permission: security:manage
+ */
+export const POST = withPermission(
+  { permissions: ['security:manage'] },
+  handleActivateZone,
+);

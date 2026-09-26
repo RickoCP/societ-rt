@@ -8,13 +8,14 @@
  * 4. Return ok(packageLog)
  *
  * @see Requirements 15.3, 15.4
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
 } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { VisitorRepository } from '../repositories/VisitorRepository';
@@ -26,7 +27,7 @@ import type { PackageLog, LogPackageInput } from '../entities';
 
 export interface LogPackageUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: LogPackageInput;
   }): Promise<DomainResult<PackageLog>>;
 }

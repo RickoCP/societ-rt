@@ -2,7 +2,13 @@
  * POST /api/events — Create a new community event.
  * GET  /api/events — List events for the tenant.
  *
- * BFF pattern: validate input → resolve auth context → execute use case / query → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case / query → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
+ *
+ * Permission Mapping:
+ * - GET /api/events → announcement:read (community events are viewable by all who can read announcements)
+ * - POST /api/events → announcement:publish (only admins who can publish announcements can create events)
  *
  * @see Requirements 14.1, 14.2
  */
@@ -13,7 +19,11 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { CreateEventUseCase } from '@core/domains/event/usecases';
 import type { EventRepository } from '@core/domains/event/repositories/EventRepository';
 import type { PrismaClient } from '@/generated/prisma/client';
@@ -32,27 +42,61 @@ const createEventSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface EventResponse {
+  data: {
+    id: string;
+    title: string;
+    description: string;
+    date: string;
+    time: string;
+    location: string;
+    createdBy: string;
+    createdAt: string;
+  };
+}
+
+interface EventListResponse {
+  data: Array<{
+    id: string;
+    title: string;
+    description: string;
+    date: string;
+    time: string;
+    location: string;
+    createdBy: string;
+    authorName: string;
+    rsvpCount: number;
+    createdAt: string;
+  }>;
+}
+
+// ---------------------------------------------------------------------------
 // POST handler — Create event
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handle POST /api/events — Create a new community event.
+ *
+ * AuthorizationContext is guaranteed to have announcement:publish permission
+ * after withPermission validation.
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @returns NextResponse with created event or error
+ *
+ * @see Permission Mapping: POST /api/events → announcement:publish
+ */
+const handleCreateEvent: AuthorizedRouteHandler<EventResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<EventResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -62,7 +106,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      },
+      } as unknown as EventResponse,
       { status: 400 },
     );
   }
@@ -74,12 +118,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         code: 'COMMON_VALIDATION_FAILED',
         fields: formatZodErrors(validation.error),
         correlationId,
-      },
+      } as unknown as EventResponse,
       { status: 400 },
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<CreateEventUseCase>('createEventUseCase');
   const result = await useCase.execute({
     authContext,
@@ -92,9 +136,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<EventResponse>;
   }
 
   const event = result.data;
@@ -114,39 +158,41 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
 
 // ---------------------------------------------------------------------------
 // GET handler — List events
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handle GET /api/events — List events for the tenant.
+ *
+ * AuthorizationContext is guaranteed to have announcement:read permission
+ * after withPermission validation.
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @returns NextResponse with events list or error
+ *
+ * @see Permission Mapping: GET /api/events → announcement:read
+ */
+const handleListEvents: AuthorizedRouteHandler<EventListResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<EventListResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Query repository
+  // 1. Query repository
   const eventRepository =
     container.resolve<EventRepository>('eventRepository');
   const result = await eventRepository.findByTenant(authContext.tenantId);
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<EventListResponse>;
   }
 
-  // Get RSVP counts for all events
+  // 2. Get RSVP counts for all events
   const prisma = container.resolve<PrismaClient>('prismaClient');
   const eventIds = result.data.map(e => e.id);
   let rsvpMap = new Map<string, number>();
@@ -161,7 +207,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch { /* ignore if table doesn't exist */ }
   }
 
-  // Resolve author names
+  // 3. Resolve author names
   const creatorIds = [...new Set(result.data.map(e => e.createdBy))];
   const users = await prisma.user.findMany({
     where: { id: { in: creatorIds } },
@@ -186,4 +232,36 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Exported Route Handlers with Permission Checks
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/events — List events for the tenant.
+ *
+ * Permission: announcement:read (community events are viewable by all who can read announcements)
+ *
+ * This includes: TENANT_OWNER, ORG_ADMIN, RT_ADMIN, SECURITY, RESIDENT roles.
+ *
+ * @see Permission Mapping: /api/events GET → announcement:read
+ */
+export const GET = withPermission(
+  { permissions: ['announcement:read'] },
+  handleListEvents,
+);
+
+/**
+ * POST /api/events — Create a new community event.
+ *
+ * Permission: announcement:publish (only admins who can publish announcements can create events)
+ *
+ * This includes: TENANT_OWNER, ORG_ADMIN, RT_ADMIN roles.
+ *
+ * @see Permission Mapping: /api/events POST → announcement:publish
+ */
+export const POST = withPermission(
+  { permissions: ['announcement:publish'] },
+  handleCreateEvent,
+);

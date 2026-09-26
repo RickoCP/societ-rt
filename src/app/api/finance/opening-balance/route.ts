@@ -6,7 +6,9 @@
  * transaction per tenant per year. Submitting again for the same year
  * overwrites the previous value.
  *
- * BFF pattern: validate input → resolve auth context → enforce role → mutate.
+ * BFF pattern: withPermission → validate input → mutate → return safe response.
+ *
+ * @see Multi-Tenant Integration Cutover — Task 4.4 (Cleanup)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -14,48 +16,50 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
-import { UserRole } from '@core/protocols';
+import { withPermission } from '@infrastructure/middleware/authorization';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { PrismaClient } from '@/generated/prisma/client';
 
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
 const OPENING_BALANCE_CATEGORY = 'saldo_awal';
+
+// ---------------------------------------------------------------------------
+// Input schemas
+// ---------------------------------------------------------------------------
 
 const openingBalanceSchema = z.object({
   year: z.number().int().min(1970).max(9999),
   amount: z.number().nonnegative('Amount must be zero or positive'),
 });
 
-export async function PUT(request: NextRequest): Promise<NextResponse> {
+// ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface OpeningBalanceResponse {
+  data: {
+    year: number;
+    amount: number;
+    transactionId: string | null;
+  };
+}
+
+// ---------------------------------------------------------------------------
+// PUT handler — Set opening balance
+// ---------------------------------------------------------------------------
+
+const handleSetOpeningBalance: AuthorizedRouteHandler<OpeningBalanceResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<OpeningBalanceResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Auth
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  // 2. Role check — only Ketua_RT, Pengurus, Super_Admin can manage kas
-  const allowedRoles: string[] = [
-    UserRole.Ketua_RT,
-    UserRole.Pengurus,
-    UserRole.Super_Admin,
-  ];
-  if (!allowedRoles.includes(authContext.role)) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'You do not have permission to manage kas.',
-        correlationId,
-      },
-      { status: 403 },
-    );
-  }
-
-  // 3. Validate input
+  // Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -63,7 +67,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
       { status: 400 },
-    );
+    ) as NextResponse<OpeningBalanceResponse>;
   }
 
   const validation = openingBalanceSchema.safeParse(body);
@@ -75,7 +79,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<OpeningBalanceResponse>;
   }
 
   const { year, amount } = validation.data;
@@ -132,6 +136,15 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
-    );
+    ) as NextResponse<OpeningBalanceResponse>;
   }
-}
+};
+
+// ---------------------------------------------------------------------------
+// Export wrapped handler with permission enforcement
+// ---------------------------------------------------------------------------
+
+export const PUT = withPermission(
+  { permissions: ['finance:write'] },
+  handleSetOpeningBalance,
+);

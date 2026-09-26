@@ -3,22 +3,23 @@
  * PATCH /api/tenants/[id] — Update tenant branding.
  *
  * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
- * GET: requires auth (any role).
- * PATCH: requires auth (Ketua_RT or Super_Admin).
+ * GET: requires tenant management permission.
+ * PATCH: requires tenant management permission.
  *
  * @see Requirements 2.3, 2.6
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { UserRole } from '@core/protocols';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { TenantRepository } from '@core/domains/tenant/repositories/TenantRepository';
 import type { UpdateTenantBrandingUseCase } from '@core/domains/tenant/usecases';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Input schema for PATCH (branding fields)
@@ -34,35 +35,23 @@ const updateBrandingSchema = z.object({
 // GET — Get tenant by ID
 // ---------------------------------------------------------------------------
 
-export async function GET(
+const handleGetTenant: AuthorizedRouteHandler<unknown> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  _authContext: AuthorizationContext,
+  routeContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
+  // 1. Extract tenant ID from route params
+  const { id } = await routeContext!.params!;
 
-  // 2. Extract tenant ID from route params
-  const { id } = await params;
-
-  // 3. Resolve repository and find tenant
+  // 2. Resolve repository and find tenant
   const tenantRepository =
     container.resolve<TenantRepository>('tenantRepository');
   const result = await tenantRepository.findById(id);
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -102,51 +91,29 @@ export async function GET(
     },
     { status: 200 },
   );
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['tenant:manage'] },
+  handleGetTenant,
+);
 
 // ---------------------------------------------------------------------------
 // PATCH — Update tenant branding
 // ---------------------------------------------------------------------------
 
-export async function PATCH(
+const handleUpdateBranding: AuthorizedRouteHandler<unknown> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
+  // 1. Extract tenant ID from route params
+  const { id } = await routeContext!.params!;
 
-  // 2. Check Ketua_RT or Super_Admin role
-  if (
-    authContext.role !== UserRole.Ketua_RT &&
-    authContext.role !== UserRole.Super_Admin
-  ) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'You do not have permission to perform this action.',
-        correlationId,
-      },
-      { status: 403 },
-    );
-  }
-
-  // 3. Extract tenant ID from route params
-  const { id } = await params;
-
-  // 4. Parse and validate input
+  // 2. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -173,10 +140,10 @@ export async function PATCH(
     );
   }
 
-  // 5. Override tenantId from route param for the use case
+  // 3. Override tenantId from route param for the use case
   const useCaseAuthContext = { ...authContext, tenantId: id };
 
-  // 6. Execute use case via DI
+  // 4. Execute use case via DI
   const updateBrandingUseCase =
     container.resolve<UpdateTenantBrandingUseCase>(
       'updateTenantBrandingUseCase',
@@ -186,7 +153,7 @@ export async function PATCH(
     branding: validation.data,
   });
 
-  // 7. Map result to safe response
+  // 5. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -206,4 +173,9 @@ export async function PATCH(
     },
     { status: 200 },
   );
-}
+};
+
+export const PATCH = withPermission(
+  { permissions: ['tenant:manage'] },
+  handleUpdateBranding,
+);

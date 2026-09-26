@@ -1,11 +1,12 @@
 /**
  * GET /api/security/map/heatmap — Get incident heatmap data.
  *
- * BFF pattern: resolve auth → validate query → execute use case → return safe response.
+ * BFF pattern: validate query → withPermission wrapper → execute use case → return safe response.
  *
  * Accepts `days` query param: 7, 30, or 90 (defaults to 30).
  *
  * @see Requirements 42.7
+ * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,7 +14,8 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { GetIncidentHeatmapUseCase } from '@core/domains/map/usecases';
 import type { HeatmapTimePeriod } from '@core/domains/map/entities/SecurityMapTypes';
 
@@ -32,24 +34,14 @@ const querySchema = z.object({
 // GET handler — Incident heatmap
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleGetHeatmap: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Validate query params
+  // 1. Validate query params
   const { searchParams } = new URL(request.url);
   const validation = querySchema.safeParse({
     days: searchParams.get('days') ?? undefined,
@@ -68,7 +60,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const timePeriodDays = Number(validation.data.days) as HeatmapTimePeriod;
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   try {
     const useCase = container.resolve<GetIncidentHeatmapUseCase>(
       'getIncidentHeatmapUseCase',
@@ -78,7 +70,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       timePeriodDays,
     });
 
-    // 4. Map result to safe response
+    // 3. Map result to safe response
     if (!result.success) {
       return mapAppErrorToHttpResponse(result.error, correlationId);
     }
@@ -109,4 +101,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 500 },
     );
   }
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['security:read'] },
+  handleGetHeatmap,
+);

@@ -1,6 +1,10 @@
 /**
  * POST /api/privacy/consent — Record user consent.
  *
+ * BFF pattern: resolve auth → validate input → record consent → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
+ *
  * @see Requirements 27.3, 27.4
  */
 
@@ -8,20 +12,32 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { PrivacyRepository } from '@core/domains/privacy/repositories/PrivacyRepository';
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+// ---------------------------------------------------------------------------
+// Response Types
+// ---------------------------------------------------------------------------
+
+interface ConsentResponse {
+  data: {
+    userId: string;
+    consentVersion: string;
+    consentTimestamp: string;
+  };
+}
+
+// ---------------------------------------------------------------------------
+// POST handler — Record consent
+// ---------------------------------------------------------------------------
+
+const handleRecordConsent: AuthorizedRouteHandler<ConsentResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<ConsentResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
 
   let body: unknown;
   try {
@@ -32,7 +48,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      },
+      } as unknown as ConsentResponse,
       { status: 400 },
     );
   }
@@ -44,7 +60,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Consent version is required',
         correlationId,
-      },
+      } as unknown as ConsentResponse,
       { status: 400 },
     );
   }
@@ -57,7 +73,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   );
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<ConsentResponse>;
   }
 
   return NextResponse.json(
@@ -70,4 +86,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+// Export wrapped handler with privacy:manage permission
+export const POST = withPermission(
+  { permissions: ['privacy:manage'] },
+  handleRecordConsent,
+);

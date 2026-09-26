@@ -1,9 +1,10 @@
 /**
  * POST /api/administration/letters/[id]/approve — Approve a letter request.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: validate input → withPermission wrapper → execute use case → return safe response.
  *
  * @see Requirements 13.2
+ * @see Requirements 2.1, 2.2, 2.3 — Route Handler withPermission Migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -12,7 +13,9 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { ApproveLetterRequestUseCase } from '@core/domains/administration/usecases';
 
 // ---------------------------------------------------------------------------
@@ -27,42 +30,23 @@ const approveSchema = z.object({
 // POST handler — Approve letter request
 // ---------------------------------------------------------------------------
 
-export async function POST(
+/**
+ * Handler for POST /api/administration/letters/[id]/approve
+ * Approves a letter request (admin action).
+ *
+ * Permission: admin:manage (approve letter)
+ */
+const handleApproveLetterRequest: AuthorizedRouteHandler = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await params;
+  const { id } = await routeContext!.params!;
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // Only Super_Admin and Ketua_RT can approve
-  const APPROVE_ROLES = ['Super_Admin', 'Ketua_RT'];
-  if (!APPROVE_ROLES.includes(authContext.role)) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'You do not have permission.',
-        correlationId,
-      },
-      { status: 403 },
-    );
-  }
-
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -89,7 +73,7 @@ export async function POST(
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<ApproveLetterRequestUseCase>(
     'approveLetterRequestUseCase',
   );
@@ -99,7 +83,7 @@ export async function POST(
     data: validation.data,
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -122,4 +106,17 @@ export async function POST(
     },
     { status: 200 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Exports with withPermission wrapper
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/administration/letters/[id]/approve
+ * Permission: admin:manage — Approve a letter request
+ */
+export const POST = withPermission(
+  { permissions: ['admin:manage'] },
+  handleApproveLetterRequest,
+);

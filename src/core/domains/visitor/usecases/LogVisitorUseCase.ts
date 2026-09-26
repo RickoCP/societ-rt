@@ -8,13 +8,14 @@
  * 4. Return ok(visitorLog)
  *
  * @see Requirements 15.1, 15.2
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
 } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { VisitorRepository } from '../repositories/VisitorRepository';
@@ -26,7 +27,7 @@ import type { VisitorLog, LogVisitorInput } from '../entities';
 
 export interface LogVisitorUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: LogVisitorInput;
   }): Promise<DomainResult<VisitorLog>>;
 }

@@ -38,6 +38,16 @@ import { HomeRepositoryImpl } from '@infrastructure/repositories/societHome/Home
 import { SecurityCenterRepositoryImpl } from '@infrastructure/repositories/securityCenter/SecurityCenterRepositoryImpl';
 import { DoorMonitoringRepositoryImpl } from '@infrastructure/repositories/doorMonitoring/DoorMonitoringRepositoryImpl';
 import { EmergencyContactRepositoryImpl } from '@infrastructure/repositories/emergencyContact/EmergencyContactRepositoryImpl';
+import { PrismaMembershipRepositoryImpl } from '@infrastructure/repositories/membership/PrismaMembershipRepository';
+import { PrismaMembershipWriteRepositoryImpl } from '@infrastructure/repositories/membership/PrismaMembershipWriteRepository';
+import { PrismaMembershipInvitationRepositoryImpl } from '@infrastructure/repositories/membership/PrismaMembershipInvitationRepository';
+import { PrismaAdminMembershipRepositoryImpl } from '@infrastructure/repositories/membership/PrismaAdminMembershipRepository';
+import { RefreshTokenRepositoryImpl } from '@infrastructure/repositories/auth/RefreshTokenRepositoryImpl';
+import { PrismaSubscriptionPlanRepositoryImpl } from '@infrastructure/repositories/subscription/PrismaSubscriptionPlanRepository';
+import { PrismaSubscriptionRepositoryImpl } from '@infrastructure/repositories/subscription/PrismaSubscriptionRepository';
+import { PrismaOrgUnitRepositoryImpl, PrismaOrgUnitWriteRepositoryImpl } from '@infrastructure/repositories/orgunit';
+import { AuditTrailRepositoryImpl } from '@infrastructure/repositories/audit/AuditTrailRepositoryImpl';
+
 
 export function registerRepositories(container: AwilixContainer): void {
   container.register({
@@ -73,5 +83,19 @@ export function registerRepositories(container: AwilixContainer): void {
     securityCenterRepository: asFunction(SecurityCenterRepositoryImpl).singleton(),
     doorMonitoringRepository: asFunction(DoorMonitoringRepositoryImpl).singleton(),
     emergencyContactRepository: asFunction(EmergencyContactRepositoryImpl).singleton(),
+    membershipRepository: asFunction(PrismaMembershipRepositoryImpl).singleton(),
+    membershipWriteRepository: asFunction(PrismaMembershipWriteRepositoryImpl).singleton(),
+    membershipInvitationRepository: asFunction(PrismaMembershipInvitationRepositoryImpl).singleton(),
+    adminMembershipRepository: asFunction(PrismaAdminMembershipRepositoryImpl).singleton(),
+    refreshTokenRepository: asFunction(RefreshTokenRepositoryImpl).singleton(),
+    // FASE 1.17 — Subscription Management (Task 44)
+    subscriptionPlanRepository: asFunction(PrismaSubscriptionPlanRepositoryImpl).singleton(),
+    subscriptionRepository: asFunction(PrismaSubscriptionRepositoryImpl).singleton(),
+    // FASE 1.19 — OrgUnit Management (Task 57-58)
+    orgUnitRepository: asFunction(PrismaOrgUnitRepositoryImpl).singleton(),
+    orgUnitWriteRepository: asFunction(PrismaOrgUnitWriteRepositoryImpl).singleton(),
+    // FASE 1.20 — Audit Trail Implementation (Task 62)
+    auditTrailRepository: asFunction(AuditTrailRepositoryImpl).singleton(),
+
   });
 }

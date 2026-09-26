@@ -2,9 +2,10 @@
  * POST /api/administration/letters — Submit a new letter request.
  * GET  /api/administration/letters — List letter requests for the tenant.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: validate input → withPermission wrapper → execute use case → return safe response.
  *
  * @see Requirements 13.1
+ * @see Requirements 2.1, 2.2, 2.3 — Route Handler withPermission Migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,7 +14,9 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { SubmitLetterRequestUseCase } from '@core/domains/administration/usecases';
 import type { AdministrationRepository } from '@core/domains/administration/repositories/AdministrationRepository';
 
@@ -30,24 +33,20 @@ const submitLetterSchema = z.object({
 // POST handler — Submit letter request
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handler for POST /api/administration/letters
+ * Creates a new letter request.
+ *
+ * Permission: admin:write (create letter request)
+ */
+const handlePostLetterRequest: AuthorizedRouteHandler = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -74,7 +73,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<SubmitLetterRequestUseCase>(
     'submitLetterRequestUseCase',
   );
@@ -83,7 +82,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     data: validation.data,
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -103,30 +102,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
 
 // ---------------------------------------------------------------------------
 // GET handler — List letter requests
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handler for GET /api/administration/letters
+ * Lists letter requests for the tenant.
+ *
+ * Permission: admin:read (list letters)
+ */
+const handleGetLetterRequests: AuthorizedRouteHandler = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Extract pagination params
+  // 1. Extract pagination params
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
   const pageSize = Math.min(
@@ -134,11 +129,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     Math.max(1, Number(searchParams.get('pageSize') ?? '20')),
   );
 
-  // 3. Query repository — admins see all, regular users see only their own
+  // 2. Query repository — admins see all, regular users see only their own
   const administrationRepository =
     container.resolve<AdministrationRepository>('administrationRepository');
 
-  const ADMIN_ROLES = ['Super_Admin', 'Ketua_RT'];
+  const ADMIN_ROLES = ['Super_Admin', 'Ketua_RT', 'PLATFORM_ADMIN', 'RT_ADMIN'];
   const isAdmin = ADMIN_ROLES.includes(authContext.role);
 
   if (isAdmin) {
@@ -209,4 +204,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Exports with withPermission wrapper
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/administration/letters
+ * Permission: admin:write — Create new letter request
+ */
+export const POST = withPermission(
+  { permissions: ['admin:write'] },
+  handlePostLetterRequest,
+);
+
+/**
+ * GET /api/administration/letters
+ * Permission: admin:read — List letter requests
+ */
+export const GET = withPermission(
+  { permissions: ['admin:read'] },
+  handleGetLetterRequests,
+);

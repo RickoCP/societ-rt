@@ -5,6 +5,8 @@
  *  - GET:  list installation requests for the tenant (optional ?status=).
  *
  * BFF pattern: validate input → resolve auth → execute use case → safe response.
+ *
+ * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,7 +15,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { RequestDoorSensorInstallationUseCase } from '@core/domains/doorMonitoring/usecases';
 import type { DoorMonitoringRepository } from '@core/domains/doorMonitoring/repositories';
 import type { DoorInstallationStatus } from '@core/domains/doorMonitoring/entities';
@@ -25,23 +28,20 @@ const createSchema = z.object({
 
 const STATUSES = ['pending', 'approved', 'rejected'] as const;
 
-function unauthorized(correlationId: string): NextResponse {
-  return NextResponse.json(
-    { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-    { status: 401 },
-  );
-}
-
 // ---------------------------------------------------------------------------
 // POST — create request
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handler for creating door sensor installation requests.
+ * Requires device:write permission for RT admins to request installations.
+ */
+const handleCreateRequest: AuthorizedRouteHandler<void> = async (
+  request: NextRequest,
+  authContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) return unauthorized(correlationId);
 
   let body: unknown;
   try {
@@ -93,18 +93,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
 
 // ---------------------------------------------------------------------------
 // GET — list requests
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handler for listing door sensor installation requests.
+ * Requires device:read permission to view installation requests.
+ */
+const handleListRequests: AuthorizedRouteHandler<void> = async (
+  request: NextRequest,
+  authContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) return unauthorized(correlationId);
 
   const statusParam = new URL(request.url).searchParams.get('status');
   const status =
@@ -142,4 +146,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+export const POST = withPermission(
+  { permissions: ['device:write'] },
+  handleCreateRequest,
+);
+
+export const GET = withPermission(
+  { permissions: ['device:read'] },
+  handleListRequests,
+);

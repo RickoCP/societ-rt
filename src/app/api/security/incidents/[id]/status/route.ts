@@ -4,9 +4,10 @@
  * Validates the status transition against the allowed transitions map
  * and delegates to UpdateIncidentStatusUseCase.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: validate input → withPermission wrapper → execute use case → return safe response.
  *
  * @see Requirements 32.2, 32.4, 32.8
+ * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -15,7 +16,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { UpdateIncidentStatusUseCase } from '@core/domains/incident/usecases';
 
 // ---------------------------------------------------------------------------
@@ -38,23 +40,27 @@ const updateStatusSchema = z.object({
 // PATCH handler — Update incident status
 // ---------------------------------------------------------------------------
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+const handleUpdateStatus: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+  routeContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  // 1. Extract incident ID from route params
+  const { id } = await routeContext?.params ?? { id: '' };
+
+  if (!id) {
     return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Incident ID is required',
+        correlationId,
+      },
+      { status: 400 },
     );
   }
-
-  const { id } = await params;
 
   // 2. Parse and validate input
   let body: unknown;
@@ -115,4 +121,9 @@ export async function PATCH(
     },
     { status: 200 },
   );
-}
+};
+
+export const PATCH = withPermission(
+  { permissions: ['security:write'] },
+  handleUpdateStatus,
+);

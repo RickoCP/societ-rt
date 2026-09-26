@@ -3,44 +3,45 @@
  * POST /api/tenants — Registers a new tenant (RT/RW community).
  *
  * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
- * This is a protected endpoint — requires Super_Admin role.
+ * This is a protected endpoint — requires platform-level permissions (PLATFORM_ADMIN).
  *
  * @see Requirements 2.1, 2.2, 2.5
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { UserRole } from '@core/protocols';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { RegisterTenantUseCase } from '@core/domains/tenant/usecases';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { PrismaClient } from '@/generated/prisma/client';
 
 // ---------------------------------------------------------------------------
-// GET — List tenants (Super_Admin only)
+// Input schema
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const createTenantSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  rtRwNumber: z.string().min(1, 'RT/RW number is required'),
+  region: z.string().min(1, 'Region is required'),
+  address: z.string().min(1, 'Address is required'),
+  contactPerson: z.string().min(1, 'Contact person is required'),
+});
+
+// ---------------------------------------------------------------------------
+// GET — List tenants (PLATFORM_ADMIN only)
+// ---------------------------------------------------------------------------
+
+const handleGetTenants: AuthorizedRouteHandler<unknown> = async (
+  request: NextRequest,
+  _authContext: AuthorizationContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  if (authContext.role !== UserRole.Super_Admin) {
-    return NextResponse.json(
-      { code: 'AUTH_INSUFFICIENT_ROLE', message: 'Forbidden', correlationId },
-      { status: 403 },
-    );
-  }
 
   const page = Math.max(1, Number(request.nextUrl.searchParams.get('page')) || 1);
   const pageSize = 20;
@@ -82,54 +83,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 500 },
     );
   }
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['platform:provision'] },
+  handleGetTenants,
+);
 
 // ---------------------------------------------------------------------------
-// Input schema
+// POST — Create tenant (PLATFORM_ADMIN only)
 // ---------------------------------------------------------------------------
 
-const createTenantSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  rtRwNumber: z.string().min(1, 'RT/RW number is required'),
-  region: z.string().min(1, 'Region is required'),
-  address: z.string().min(1, 'Address is required'),
-  contactPerson: z.string().min(1, 'Contact person is required'),
-});
-
-// ---------------------------------------------------------------------------
-// Route handler
-// ---------------------------------------------------------------------------
-
-export async function POST(request: NextRequest): Promise<NextResponse> {
+const handleCreateTenant: AuthorizedRouteHandler<unknown> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context from middleware-set headers
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Check Super_Admin role
-  if (authContext.role !== UserRole.Super_Admin) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'You do not have permission to perform this action.',
-        correlationId,
-      },
-      { status: 403 },
-    );
-  }
-
-  // 3. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -156,13 +128,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 4. Extract client IP for audit
+  // 2. Extract client IP for audit
   const ipAddress =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     request.headers.get('x-real-ip') ??
     undefined;
 
-  // 5. Execute use case via DI
+  // 3. Execute use case via DI
   const registerTenantUseCase =
     container.resolve<RegisterTenantUseCase>('registerTenantUseCase');
   const result = await registerTenantUseCase.execute({
@@ -171,7 +143,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     ipAddress,
   });
 
-  // 6. Map result to safe response
+  // 4. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -194,4 +166,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
+
+export const POST = withPermission(
+  { permissions: ['platform:provision'] },
+  handleCreateTenant,
+);

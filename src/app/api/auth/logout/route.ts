@@ -1,48 +1,56 @@
 /**
  * POST /api/auth/logout — Invalidates the user session and clears the auth cookie.
  *
- * BFF pattern: resolve auth context → execute use case → clear cookie → return safe response.
- * This is a protected endpoint — requires valid auth context from middleware.
+ * BFF pattern: auth context from wrapper → execute use case → clear cookie → return safe response.
+ * This is an auth-only endpoint — requires valid JWT but no specific permission.
  *
- * @see Requirements 3.6
+ * @see Requirements 17.1, 17.3, 17.4
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withAuthOnlyRoute,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import { AUTH_TOKEN_COOKIE } from '@infrastructure/utils/cookieConfig';
 import type { LogoutUseCase } from '@core/domains/auth/usecases';
+
+// ---------------------------------------------------------------------------
+// Response Types
+// ---------------------------------------------------------------------------
+
+interface LogoutSuccessResponse {
+  data: { message: string };
+}
 
 // ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handler for POST /api/auth/logout
+ *
+ * Receives AuthorizationContext from withAuthOnlyRoute wrapper.
+ * User is guaranteed to be authenticated (valid JWT).
+ */
+const handleLogout: AuthorizedRouteHandler<LogoutSuccessResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<LogoutSuccessResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context from middleware-set headers
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Extract client IP for audit
+  // 1. Extract client IP for audit
   const ipAddress =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     request.headers.get('x-real-ip') ??
     undefined;
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const logoutUseCase = container.resolve<LogoutUseCase>('logoutUseCase');
   const result = await logoutUseCase.execute({
     userId: authContext.userId,
@@ -50,12 +58,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     ipAddress,
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(
+      result.error,
+      correlationId,
+    ) as NextResponse<LogoutSuccessResponse>;
   }
 
-  // 5. Clear auth cookie and return success
+  // 4. Clear auth cookie and return success
   const response = NextResponse.json(
     {
       data: { message: 'Logged out' },
@@ -72,4 +83,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
 
   return response;
-}
+};
+
+// Export wrapped handler with auth-only (requires valid JWT, no specific permission)
+export const POST = withAuthOnlyRoute(handleLogout);

@@ -11,15 +11,16 @@
  * 7. Return ok(events) with all recorded alarm events
  *
  * @see Requirements 36.2, 36.4, 36.5, 36.6, 36.8, 36.9, 36.10
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
   RealtimeBusProtocol,
   IoTGatewayProtocol,
 } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok, validationError } from '@core/utils';
 import type { AlarmRepository } from '../repositories/AlarmRepository';
@@ -51,7 +52,7 @@ export interface ActivateZoneSirenInput {
 
 export interface ActivateZoneSirenUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: ActivateZoneSirenInput;
   }): Promise<DomainResult<AlarmEvent[]>>;
 }

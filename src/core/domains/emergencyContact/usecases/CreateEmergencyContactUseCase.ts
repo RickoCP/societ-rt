@@ -1,9 +1,15 @@
 /**
  * CreateEmergencyContactUseCase — Adds an emergency contact to the caller's
  * tenant (RT). Admin-only (Ketua_RT / Pengurus / Super_Admin).
+ *
+ * @see Requirements 6.2, 6.5, 6.7 (AuthorizationContext migration)
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import { UserRole } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { isAuthorizationContext } from '@core/domains/authorization/types';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import { authInsufficientRole } from '@core/domains/auth/errors/authErrors';
@@ -17,14 +23,28 @@ import {
   emergencyContactInvalidPhone,
 } from '../errors';
 import {
-  EMERGENCY_CONTACT_ADMIN_ROLES,
   isValidLabel,
   isValidPhone,
 } from './emergencyContactValidation';
 
+// Legacy admin roles for emergency contact management
+const LEGACY_ADMIN_ROLES: ReadonlySet<UserRole> = new Set([
+  UserRole.Super_Admin,
+  UserRole.Ketua_RT,
+  UserRole.Pengurus,
+]);
+
+// New membership admin roles for emergency contact management
+const MEMBERSHIP_ADMIN_ROLES: ReadonlySet<MembershipRole> = new Set([
+  MembershipRole.PLATFORM_ADMIN,
+  MembershipRole.TENANT_OWNER,
+  MembershipRole.RT_ADMIN,
+  MembershipRole.ORG_ADMIN,
+]);
+
 export interface CreateEmergencyContactUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     input: CreateEmergencyContactInput;
   }): Promise<DomainResult<EmergencyContact>>;
 }
@@ -37,9 +57,15 @@ export const CreateEmergencyContactUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): CreateEmergencyContactUseCase => ({
   execute: async ({ authContext, input }) => {
-    // 1. Role gate.
-    if (!EMERGENCY_CONTACT_ADMIN_ROLES.has(authContext.role)) {
-      return fail(authInsufficientRole());
+    // 1. Role gate - support both legacy and new role types.
+    if (isAuthorizationContext(authContext)) {
+      if (!MEMBERSHIP_ADMIN_ROLES.has(authContext.role)) {
+        return fail(authInsufficientRole());
+      }
+    } else {
+      if (!LEGACY_ADMIN_ROLES.has(authContext.role)) {
+        return fail(authInsufficientRole());
+      }
     }
 
     // 2. Validate.
@@ -74,7 +100,7 @@ export const CreateEmergencyContactUseCaseImpl = ({
         resourceType: 'emergency_contact',
         resourceId: result.data.id,
         details: { category: result.data.category },
-        impersonatorId: authContext.impersonatorId,
+        impersonatorId: isAuthorizationContext(authContext) ? undefined : authContext.impersonatorId,
       })
       .catch(() => {
         /* audit must not block the response */

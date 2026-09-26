@@ -1,30 +1,59 @@
 /**
  * POST /api/files/upload — Upload a file.
  *
- * BFF pattern: resolve auth → parse multipart → execute use case → return safe response.
+ * BFF pattern: withPermission → parse multipart → execute use case → return safe response.
  * Validates file size (max 10MB) and MIME type in use case.
  *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
+ *
  * @see Requirements 26.2, 26.3, 26.5
+ * @see Requirements 2.1 — withPermission pattern
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { UploadFileUseCase } from '@core/domains/fileStorage/usecases';
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+// ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface UploadFileSuccessResponse {
+  data: {
+    key: string;
+    url: string;
+  };
+}
+
+interface UploadFileErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+}
+
+// ---------------------------------------------------------------------------
+// POST handler — Upload file
+// ---------------------------------------------------------------------------
+
+/**
+ * Handler for uploading a file.
+ *
+ * AuthorizationContext is guaranteed to have resident:write permission
+ * after withPermission validation.
+ *
+ * @see Permission Mapping: POST /api/files/upload → resident:write
+ */
+const handleUploadFile: AuthorizedRouteHandler<UploadFileSuccessResponse | UploadFileErrorResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<UploadFileSuccessResponse | UploadFileErrorResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
 
   let formData: FormData;
   try {
@@ -78,8 +107,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<UploadFileErrorResponse>;
   }
 
   return NextResponse.json({ data: result.data }, { status: 201 });
-}
+};
+
+// ---------------------------------------------------------------------------
+// Export route handler with permission wrapper
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/files/upload — Upload a file (requires resident:write)
+ *
+ * Users with resident:write permission can upload files.
+ * This includes: TENANT_OWNER, ORG_ADMIN, RT_ADMIN roles.
+ *
+ * @see Permission Mapping: /api/files/upload → resident:write
+ */
+export const POST = withPermission(
+  { permissions: ['resident:write'] },
+  handleUploadFile,
+);

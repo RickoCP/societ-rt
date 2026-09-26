@@ -1,22 +1,22 @@
 /**
  * PATCH /api/tenants/[id]/siren — Set the physical siren device id for a tenant (RT).
  *
- * Admin-only: requires Super_Admin or Ketua_RT. Super_Admin can set it for any
- * RT (device management is a platform-admin task); Ketua_RT for their own RT.
+ * Requires tenant management permission. The use case handles scope validation
+ * (TENANT_OWNER can manage any tenant's siren, RT_ADMIN only their own).
  *
- * BFF pattern: validate input → resolve auth context → role gate → override
- * tenantId from the route param → execute use case → return safe response.
+ * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { UserRole } from '@core/protocols';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { UpdateTenantSirenDeviceUseCase } from '@core/domains/tenant/usecases';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Input schema — accept a device id string or null/empty to clear it.
@@ -32,41 +32,22 @@ const updateSirenSchema = z.object({
     .or(z.literal('')),
 });
 
-export async function PATCH(
+// ---------------------------------------------------------------------------
+// PATCH — Update siren device ID
+// ---------------------------------------------------------------------------
+
+const handleUpdateSiren: AuthorizedRouteHandler<unknown> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+  // 1. Route param — target tenant
+  const { id } = await routeContext!.params!;
 
-  // 2. Role gate — Super_Admin or Ketua_RT only
-  if (
-    authContext.role !== UserRole.Super_Admin &&
-    authContext.role !== UserRole.Ketua_RT
-  ) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'You do not have permission to perform this action.',
-        correlationId,
-      },
-      { status: 403 },
-    );
-  }
-
-  // 3. Route param — target tenant
-  const { id } = await params;
-
-  // 4. Parse and validate input
+  // 2. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -93,10 +74,10 @@ export async function PATCH(
     );
   }
 
-  // 5. Override tenantId from route param so the use case acts on that RT.
+  // 3. Override tenantId from route param so the use case acts on that RT.
   const useCaseAuthContext = { ...authContext, tenantId: id };
 
-  // 6. Execute use case via DI
+  // 4. Execute use case via DI
   const useCase = container.resolve<UpdateTenantSirenDeviceUseCase>(
     'updateTenantSirenDeviceUseCase',
   );
@@ -105,7 +86,7 @@ export async function PATCH(
     input: { sirenDeviceId: validation.data.sirenDeviceId || null },
   });
 
-  // 7. Map result to safe response
+  // 5. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -122,4 +103,9 @@ export async function PATCH(
     },
     { status: 200 },
   );
-}
+};
+
+export const PATCH = withPermission(
+  { permissions: ['tenant:manage'] },
+  handleUpdateSiren,
+);

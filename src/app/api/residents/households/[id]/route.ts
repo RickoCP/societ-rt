@@ -3,7 +3,12 @@
  * PATCH /api/residents/households/:id — Update household data.
  * DELETE /api/residents/households/:id — Remove a household and its residents.
  *
- * BFF pattern: resolve auth context → verify ownership → execute → return safe response.
+ * Permissions:
+ * - GET: household:read
+ * - PATCH: household:manage
+ * - DELETE: household:manage
+ *
+ * BFF pattern: withPermission wrapper → verify ownership → execute → return safe response.
  *
  * @see Requirements 5.1
  */
@@ -12,7 +17,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import { UserRole } from '@core/protocols';
 import type { PrismaClient } from '@/generated/prisma/client';
 
@@ -22,22 +28,15 @@ const EDIT_ROLES = [UserRole.Super_Admin, UserRole.Ketua_RT, UserRole.Pengurus];
 // GET — Household detail with residents
 // ---------------------------------------------------------------------------
 
-export async function GET(
+async function handleGetHousehold(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  authContext: AuthorizationContext,
+  context?: { params?: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  const { id: householdId } = await params;
+  const { id: householdId } = await context!.params!;
 
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
@@ -94,6 +93,11 @@ export async function GET(
   }
 }
 
+export const GET = withPermission(
+  { permissions: ['household:read'] },
+  handleGetHousehold,
+);
+
 // ---------------------------------------------------------------------------
 // PATCH — Update household
 // ---------------------------------------------------------------------------
@@ -106,22 +110,15 @@ const updateHouseholdSchema = z.object({
   longitude: z.number().optional().nullable(),
 });
 
-export async function PATCH(
+async function handleUpdateHousehold(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  authContext: AuthorizationContext,
+  context?: { params?: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  const { id: householdId } = await params;
+  const { id: householdId } = await context!.params!;
 
   let body: unknown;
   try {
@@ -190,26 +187,27 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
+export const PATCH = withPermission(
+  { permissions: ['household:manage'] },
+  handleUpdateHousehold,
+);
+
+// ---------------------------------------------------------------------------
+// DELETE — Remove household
+// ---------------------------------------------------------------------------
+
+async function handleDeleteHousehold(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  authContext: AuthorizationContext,
+  context?: { params?: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+  // 1. Extract route param
+  const { id: householdId } = await context!.params!;
 
-  // 2. Extract route param
-  const { id: householdId } = await params;
-
-  // 3. Delete household (cascade deletes residents via DB constraint)
+  // 2. Delete household (cascade deletes residents via DB constraint)
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
 
@@ -240,3 +238,8 @@ export async function DELETE(
     );
   }
 }
+
+export const DELETE = withPermission(
+  { permissions: ['household:manage'] },
+  handleDeleteHousehold,
+);

@@ -34,3 +34,20 @@ export type {
   RuleEvaluationContext,
   RuleExecutionResult,
 } from './AutomationEngineProtocol';
+export type {
+  EmergencyQueueProtocol,
+  EmergencyEnqueueResult,
+} from './EmergencyQueueProtocol';
+export type {
+  PaymentGatewayProtocol,
+  PaymentMethodType,
+  GatewayPaymentStatus,
+  CurrencyCode,
+  InitiatePaymentRequest,
+  InitiatePaymentResponse,
+  GetPaymentStatusRequest,
+  GetPaymentStatusResponse,
+  RefundPaymentRequest,
+  RefundPaymentResponse,
+  VerifyWebhookRequest,
+} from './PaymentGatewayProtocol';

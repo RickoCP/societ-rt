@@ -4,25 +4,41 @@
  * Returns: current balance, total income, total expense, and per-month breakdown.
  *
  * @see Requirements 7.7, 7.8
+ * @see Multi-Tenant Integration Cutover — Task 4.4
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { PrismaClient } from '@/generated/prisma/client';
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+interface MonthlyData {
+  month: number;
+  year: number;
+  monthLabel: string;
+  income: number;
+  expense: number;
+  balance: number;
+}
+
+interface SummaryResponse {
+  data: {
+    currentBalance: number;
+    totalIncome: number;
+    totalExpense: number;
+    year: number;
+    monthly: MonthlyData[];
+  };
+}
+
+const handleGetSummary: AuthorizedRouteHandler<SummaryResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<SummaryResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
 
   const year = request.nextUrl.searchParams.get('year') ?? new Date().getFullYear().toString();
   const tenantId = authContext.tenantId;
@@ -47,14 +63,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const currentBalance = totalIncome - totalExpense;
 
     // Build monthly breakdown for the requested year
-    const monthlyData: Array<{
-      month: number;
-      year: number;
-      monthLabel: string;
-      income: number;
-      expense: number;
-      balance: number;
-    }> = [];
+    const monthlyData: MonthlyData[] = [];
 
     const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
@@ -107,6 +116,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
-    );
+    ) as NextResponse<SummaryResponse>;
   }
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['finance:read'] },
+  handleGetSummary,
+);

@@ -15,6 +15,10 @@
     "prisma:validate": "prisma validate",
     "prisma:seed": "npx tsx prisma/seed.ts",
     "prisma:seed:tenants": "npx tsx prisma/run-seed-tenants.ts",
+    "check:rls-coverage": "npx tsx scripts/check-rls-coverage.ts",
+    "benchmark": "npx tsx scripts/benchmarks/performance-benchmarks.ts",
+    "benchmark:ci": "npx tsx scripts/benchmarks/performance-benchmarks.ts --ci --iterations 5000 --warmup 500",
+    "benchmark:report": "npx tsx scripts/benchmarks/comparison-report.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "postinstall": "prisma generate"
@@ -41,6 +45,7 @@
     "react-hook-form": "^7.75.0",
     "react-i18next": "^17.0.6",
     "react-leaflet": "^5.0.0",
+    "uuid": "^14.0.2",
     "ws": "^8.21.3",
     "zod": "^4.4.2",
     "zustand": "^5.0.12"
@@ -54,6 +59,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^3.2.1",
     "autoprefixer": "^10.5.0",

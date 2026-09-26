@@ -1,6 +1,12 @@
 /**
  * /api/emergency-contacts/[id] — Update or delete a single emergency contact.
+ *
  * Admin roles only (enforced inside the use cases).
+ * Not safety-critical: editing/deleting contacts requires active membership.
+ *
+ * BFF pattern: validate input → withPermission → execute use case → safe response.
+ *
+ * @see Requirements 2.1 — withPermission pattern
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -9,7 +15,9 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type {
   UpdateEmergencyContactUseCase,
   DeleteEmergencyContactUseCase,
@@ -37,28 +45,20 @@ const updateSchema = z
     message: 'At least one field must be provided',
   });
 
-function unauthorized(correlationId: string): NextResponse {
-  return NextResponse.json(
-    { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-    { status: 401 },
-  );
-}
-
 // ---------------------------------------------------------------------------
-// PUT — update
+// PUT — update emergency contact
+// Not safety-critical: editing contacts requires active membership
 // ---------------------------------------------------------------------------
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+const handleUpdateContact: AuthorizedRouteHandler = async (
+  request,
+  authContext,
+  routeContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) return unauthorized(correlationId);
-
-  const { id } = await params;
+  const { id } = await routeContext!.params!;
 
   let body: unknown;
   try {
@@ -86,7 +86,7 @@ export async function PUT(
     'updateEmergencyContactUseCase',
   );
   const result = await useCase.execute({
-    authContext,
+    authContext: authContext as AuthorizationContext,
     id,
     input: validation.data,
   });
@@ -109,32 +109,58 @@ export async function PUT(
     },
     { status: 200 },
   );
-}
+};
+
+/**
+ * PUT /api/emergency-contacts/[id]
+ *
+ * Updates an emergency contact. Not safety-critical - requires active membership.
+ *
+ * @see Requirements 2.1 — withPermission pattern
+ */
+export const PUT = withPermission(
+  { permissions: ['emergency:write'] },
+  handleUpdateContact,
+);
 
 // ---------------------------------------------------------------------------
-// DELETE — remove
+// DELETE — remove emergency contact
+// Not safety-critical: deleting contacts requires active membership
 // ---------------------------------------------------------------------------
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+const handleDeleteContact: AuthorizedRouteHandler = async (
+  request,
+  authContext,
+  routeContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) return unauthorized(correlationId);
-
-  const { id } = await params;
+  const { id } = await routeContext!.params!;
 
   const useCase = container.resolve<DeleteEmergencyContactUseCase>(
     'deleteEmergencyContactUseCase',
   );
-  const result = await useCase.execute({ authContext, id });
+  const result = await useCase.execute({
+    authContext: authContext as AuthorizationContext,
+    id,
+  });
 
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json({ data: { id } }, { status: 200 });
-}
+};
+
+/**
+ * DELETE /api/emergency-contacts/[id]
+ *
+ * Deletes an emergency contact. Not safety-critical - requires active membership.
+ *
+ * @see Requirements 2.1 — withPermission pattern
+ */
+export const DELETE = withPermission(
+  { permissions: ['emergency:write'] },
+  handleDeleteContact,
+);

@@ -2,9 +2,11 @@
  * POST /api/door-sensors — Platform admin registers a physical door sensor for
  * a household and binds it (with a siren zone) to the door-monitoring config.
  *
- * Authorization: Super_Admin only (enforced inside the use case; a coarse role
- * guard here returns 403 early). The target tenant is taken from the auth
- * context headers (x-tenant-id), which an admin tool sets per RT.
+ * Authorization: Super_Admin only (enforced inside the use case; additional
+ * permission check via withPermission wrapper).
+ * Permission: device:manage (admin-level device registration)
+ *
+ * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,7 +15,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { RegisterDoorSensorUseCase } from '@core/domains/doorMonitoring/usecases';
 
 const registerSchema = z.object({
@@ -23,17 +26,16 @@ const registerSchema = z.object({
   sirenZone: z.string().min(1, 'sirenZone is required').max(120),
 });
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handler for registering a new door sensor.
+ * Requires device:manage permission for admin-level device registration.
+ */
+const handleRegisterSensor: AuthorizedRouteHandler<void> = async (
+  request: NextRequest,
+  authContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
 
   let body: unknown;
   try {
@@ -83,4 +85,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
+
+export const POST = withPermission(
+  { permissions: ['device:manage'] },
+  handleRegisterSensor,
+);

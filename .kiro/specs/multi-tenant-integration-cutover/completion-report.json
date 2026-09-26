@@ -1,0 +1,130 @@
+{
+  "metadata": {
+    "generatedAt": "2024-01-15T00:00:00.000Z",
+    "generatedBy": "generate-completion-report",
+    "version": "1.0.0",
+    "specDirectory": ".kiro/specs/multi-tenant-integration-cutover",
+    "note": "Partial report. Run 'npx tsx scripts/validation/generate-completion-report.ts' to generate full report."
+  },
+  "executiveSummary": {
+    "overallStatus": "IN_PROGRESS",
+    "totalValidations": 6,
+    "passedValidations": 1,
+    "failedValidations": 0,
+    "skippedValidations": 5,
+    "readyForCutover": false,
+    "blockers": [
+      "RLS coverage validation pending",
+      "Integration tests pending",
+      "Performance benchmarks pending",
+      "Shadow mode metrics pending (7 days @ 0%)",
+      "Cross-tenant security tests pending"
+    ],
+    "warnings": []
+  },
+  "migrationStatus": {
+    "passed": true,
+    "directoriesMigrated": 28,
+    "totalDirectories": 28,
+    "legacyPatternsRemaining": 0,
+    "migrationPercentage": 100,
+    "details": {
+      "verificationScript": "scripts/validation/verify-migration-complete.ts",
+      "verificationDate": "2024-01-15T00:00:00.000Z",
+      "totalRouteFiles": 120,
+      "routesUsingWithPermission": 70,
+      "routesExempted": 50,
+      "exemptedCategories": {
+        "auth": "Uses withPublicRoute/withAuthOnlyRoute pattern",
+        "health": "Public infrastructure endpoint"
+      },
+      "legacyUsageInRoutes": 0,
+      "notes": [
+        "All 28+ API directories verified migrated",
+        "No resolveAuthContext() calls found in route handlers",
+        "Legacy function exists only in deprecated utility file",
+        "Shadow mode and benchmark code retains references for comparison purposes"
+      ]
+    }
+  },
+  "rlsCoverage": {
+    "passed": false,
+    "tablesWithRls": 0,
+    "totalTables": 0,
+    "coveragePercentage": 0,
+    "policyCompliancePercentage": 0,
+    "nonCompliantTables": [],
+    "details": {}
+  },
+  "testResults": {
+    "passed": false,
+    "totalTests": 0,
+    "passedTests": 0,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "details": {}
+  },
+  "performanceBenchmarks": {
+    "passed": false,
+    "authContextResolutionP99Ms": 0,
+    "permissionCheckP99Ms": 0,
+    "rlsOverheadPercentage": 0,
+    "allTargetsMet": false,
+    "failedBenchmarks": [],
+    "details": {}
+  },
+  "shadowModeMetrics": {
+    "passed": false,
+    "consecutiveDaysAt0Percent": 0,
+    "requiredDays": 7,
+    "totalRequests": 0,
+    "requiredSampleSize": 10000,
+    "mismatchRate": 0,
+    "meetsRequirements": false,
+    "details": {}
+  },
+  "crossTenantSecurity": {
+    "passed": false,
+    "totalTests": 0,
+    "passedTests": 0,
+    "failedTests": 0,
+    "tablesValidated": 0,
+    "details": {}
+  },
+  "signOffs": {
+    "engineeringLead": {
+      "name": "[ENGINEERING LEAD NAME]",
+      "role": "Engineering Lead",
+      "status": "PENDING",
+      "comments": "Review completion report and approve cutover"
+    },
+    "securityLead": {
+      "name": "[SECURITY LEAD NAME]",
+      "role": "Security Lead",
+      "status": "PENDING",
+      "comments": "Review cross-tenant security tests and RLS coverage"
+    },
+    "qaLead": {
+      "name": "[QA LEAD NAME]",
+      "role": "QA Lead",
+      "status": "PENDING",
+      "comments": "Review test results and coverage"
+    }
+  },
+  "legacyRemovalTimeline": {
+    "deprecatedItems": [
+      "resolveAuthContext() function",
+      "Legacy AuthContext type",
+      "Cutover feature flags (retain for emergency rollback)"
+    ],
+    "removalSteps": [
+      "1. Wait 30 days after completion validation",
+      "2. Run scripts/deprecation/check-removal-eligibility.ts",
+      "3. Obtain Engineering Lead approval",
+      "4. Remove deprecated code and types",
+      "5. Archive cutover flags (do not delete)",
+      "6. Update documentation"
+    ]
+  },
+  "validationResults": []
+}

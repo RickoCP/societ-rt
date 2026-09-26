@@ -4,7 +4,14 @@
  * BFF pattern: validate input → execute use case → set cookie → return safe response.
  * This is a public endpoint (no auth required). Tenant context comes from the request body.
  *
+ * Uses `withPublicRoute` wrapper for:
+ * - Rate limiting (10 requests/minute by default)
+ * - Input validation enforcement
+ * - Correlation ID tracking
+ * - Secure error responses
+ *
  * @see Requirements 3.1, 3.4, 3.5, 3.8
+ * @see Requirements 17.1, 17.2, 17.3, 17.4 — Auth Route Exclusion Handling
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -17,6 +24,7 @@ import {
   getAuthCookieConfig,
   AUTH_TOKEN_COOKIE,
 } from '@infrastructure/utils/cookieConfig';
+import { withPublicRoute } from '@infrastructure/middleware/authorization/requirePermission';
 import type { LoginUseCase } from '@core/domains/auth/usecases';
 
 // ---------------------------------------------------------------------------
@@ -33,7 +41,13 @@ const loginSchema = z.object({
 // Route handler
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handles login requests with validation, use case execution, and cookie setting.
+ *
+ * The `withPublicRoute` wrapper provides rate limiting and input validation enforcement,
+ * while this handler focuses on business logic orchestration.
+ */
+async function handleLogin(request: NextRequest): Promise<NextResponse> {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -107,3 +121,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   return response;
 }
+
+/**
+ * POST /api/auth/login
+ *
+ * Public endpoint with rate limiting (10 requests/minute).
+ * No JWT required — this is where users obtain their JWT.
+ */
+export const POST = withPublicRoute(
+  {
+    rateLimit: {
+      maxRequests: 10, // More restrictive for login to prevent brute force
+      windowMs: 60_000, // 1 minute
+    },
+  },
+  handleLogin,
+);

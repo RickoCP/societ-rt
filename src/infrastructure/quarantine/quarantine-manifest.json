@@ -1,0 +1,55 @@
+{
+  "$schema": "./quarantine-manifest.schema.json",
+  "version": "1.0.0",
+  "provenance": {
+    "source": "PHASE_1_2A_ANOMALY_AUDIT",
+    "auditDate": "2026-09-23T05:36:28Z",
+    "decision": "L3",
+    "description": "5 Platform anomalies quarantined per Locked Decision L3. These users have mis-tenanted RT roles on the platform tenant or anomalous ID patterns and cannot receive Membership until explicit remediation."
+  },
+  "invariant": "INV-QUARANTINE-001",
+  "invariantDescription": "Quarantined users cannot receive Membership until explicit remediation",
+  "expectedCount": 5,
+  "quarantinedUsers": [
+    {
+      "alias": "PNA-01",
+      "userId": "00000000-0000-0000-0000-000000000021",
+      "legacyTenant": "platform",
+      "legacyRole": "Ketua_RT",
+      "category": "mis-tenanted-rt-role:has-activity",
+      "notes": "Has domain activity (incidents.reported_by = 2)"
+    },
+    {
+      "alias": "PNA-02",
+      "userId": "00000000-0000-0000-0000-000000000022",
+      "legacyTenant": "platform",
+      "legacyRole": "Pengurus",
+      "category": "mis-tenanted-rt-role:inactive",
+      "notes": "Likely seed/demo artifact (inactive)"
+    },
+    {
+      "alias": "PNA-03",
+      "userId": "00000000-0000-0000-0000-000000000023",
+      "legacyTenant": "platform",
+      "legacyRole": "Warga",
+      "category": "mis-tenanted-rt-role:has-activity",
+      "notes": "Has domain activity but wrong tenant"
+    },
+    {
+      "alias": "PNA-04",
+      "userId": "00000000-0000-0000-0000-000000000024",
+      "legacyTenant": "platform",
+      "legacyRole": "Security_Guard",
+      "category": "mis-tenanted-rt-role:inactive",
+      "notes": "Likely seed/demo artifact (inactive)"
+    },
+    {
+      "alias": "PNA-05",
+      "userId": "42cc1bea-9a68-44b1-aadf-1bb0bb609028",
+      "legacyTenant": "platform",
+      "legacyRole": "Warga",
+      "category": "app-registration-style-id:inactive",
+      "notes": "Anomalous app-registration-style UUID pattern"
+    }
+  ]
+}

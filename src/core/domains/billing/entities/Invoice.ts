@@ -6,17 +6,25 @@
  *
  * Plain TypeScript interface — no classes, no decorators, no external deps.
  *
- * @see Requirements 29.1, 29.7
+ * NOTE: The enhanced Invoice with additional fields (subscriptionId, billingCycle,
+ * paymentUrl, overdueAt, currency, maxRetries, lastRetryAt) requires a Prisma
+ * schema migration. Use InvoiceV2 for the enhanced version.
+ *
+ * @see Requirements 29.1, 29.7, 57
+ * @see Task 47 — Billing and Payment Integration
  */
 
 // ---------------------------------------------------------------------------
-// Value types
+// Value types (compatible with current Prisma schema)
 // ---------------------------------------------------------------------------
 
+/**
+ * Current invoice status values from Prisma schema (lowercase).
+ */
 export type InvoiceStatus = 'pending' | 'paid' | 'failed';
 
 // ---------------------------------------------------------------------------
-// Entity
+// Entity (current schema)
 // ---------------------------------------------------------------------------
 
 export interface Invoice {
@@ -48,4 +56,12 @@ export interface CreateInvoiceInput {
   readonly billingPeriodEnd: Date;
   readonly dueDate: Date;
   readonly idempotencyKey: string;
+}
+
+/** Data for updating an invoice. */
+export interface UpdateInvoiceInput {
+  readonly status?: InvoiceStatus;
+  readonly gatewayTransactionId?: string | null;
+  readonly paidAt?: Date | null;
+  readonly retryCount?: number;
 }

@@ -1,9 +1,10 @@
 /**
  * GET /api/security/patrols/analytics — Get patrol analytics for a time range.
  *
- * BFF pattern: validate query → resolve auth context → execute use case → return safe response.
+ * BFF pattern: validate query → withPermission wrapper → execute use case → return safe response.
  *
  * @see Requirements 35.7
+ * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -12,7 +13,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { GetPatrolAnalyticsUseCase } from '@core/domains/patrol/usecases';
 
 // ---------------------------------------------------------------------------
@@ -28,20 +30,14 @@ const analyticsQuerySchema = z.object({
 // GET handler — Get patrol analytics
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleGetAnalytics: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse query parameters
+  // 1. Parse query parameters
   const { searchParams } = new URL(request.url);
   const queryValidation = analyticsQuerySchema.safeParse({
     from: searchParams.get('from') ?? undefined,
@@ -67,7 +63,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     : thirtyDaysAgo;
   const to = queryValidation.data.to ? new Date(queryValidation.data.to) : now;
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<GetPatrolAnalyticsUseCase>(
     'getPatrolAnalyticsUseCase',
   );
@@ -76,7 +72,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     data: { from, to },
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -100,4 +96,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['security:read'] },
+  handleGetAnalytics,
+);

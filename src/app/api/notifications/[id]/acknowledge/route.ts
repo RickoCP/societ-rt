@@ -2,9 +2,12 @@
  * POST /api/notifications/[id]/acknowledge — Acknowledge a notification
  * and stop further escalation for the associated event.
  *
- * BFF pattern: resolve auth → validate input → execute use case → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
  *
  * @see Requirements 43.3, 43.4
+ * @see Requirements 2.1 — withPermission pattern
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,7 +16,9 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { AcknowledgeNotificationUseCase } from '@core/domains/notification/usecases';
 
 // ---------------------------------------------------------------------------
@@ -25,33 +30,49 @@ const acknowledgeSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface AcknowledgeResponse {
+  data: {
+    eventId: string;
+    acknowledgedBy: string;
+    acknowledgedAt: string;
+    escalationCancelled: boolean;
+  };
+}
+
+interface AcknowledgeErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+  fields?: Record<string, string>;
+}
+
+// ---------------------------------------------------------------------------
 // POST handler — Acknowledge notification
 // ---------------------------------------------------------------------------
 
-export async function POST(
+/**
+ * Handler for acknowledging a notification and stopping escalation.
+ *
+ * AuthorizationContext is guaranteed to have announcement:read permission
+ * after withPermission validation.
+ */
+const handleAcknowledgeNotification: AuthorizedRouteHandler<
+  AcknowledgeResponse | AcknowledgeErrorResponse
+> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext,
+): Promise<NextResponse<AcknowledgeResponse | AcknowledgeErrorResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
+  // 1. Extract notification ID from route params
+  const { id: notificationId } = await routeContext!.params!;
 
-  // 2. Extract notification ID from route params
-  const { id: notificationId } = await params;
-
-  // 3. Parse and validate input
+  // 2. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -78,7 +99,7 @@ export async function POST(
     );
   }
 
-  // 4. Execute use case via DI
+  // 3. Execute use case via DI
   try {
     const useCase = container.resolve<AcknowledgeNotificationUseCase>(
       'acknowledgeNotificationUseCase',
@@ -91,7 +112,7 @@ export async function POST(
       },
     });
 
-    // 5. Map result to safe response
+    // 4. Map result to safe response
     if (!result.success) {
       return mapAppErrorToHttpResponse(result.error, correlationId);
     }
@@ -117,4 +138,17 @@ export async function POST(
       { status: 500 },
     );
   }
-}
+};
+
+/**
+ * POST handler wrapped with announcement:read permission requirement.
+ *
+ * Users with announcement:read permission can acknowledge notifications.
+ * This includes: TENANT_OWNER, ORG_ADMIN, RT_ADMIN, SECURITY, RESIDENT roles.
+ *
+ * @see Permission Mapping: /api/notifications/[id]/acknowledge → announcement:read
+ */
+export const POST = withPermission(
+  { permissions: ['announcement:read'] },
+  handleAcknowledgeNotification,
+);

@@ -1,40 +1,59 @@
 /**
  * GET /api/finance/report — Get a financial report for a date range.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case → return safe response.
  *
  * @see Requirements 7.7, 7.8
+ * @see Multi-Tenant Integration Cutover — Task 4.4 (Cleanup)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GetFinancialReportUseCase } from '@core/domains/finance/usecases';
+
+// ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface FinancialReportResponse {
+  data: {
+    openingBalance: number;
+    closingBalance: number;
+    categorizedTotals: Record<string, number>;
+    dateRange: {
+      start: string;
+      end: string;
+    };
+    transactions: Array<{
+      id: string;
+      type: string;
+      amount: number;
+      description: string;
+      category: string;
+      date: string;
+      createdBy: string;
+      createdAt: string;
+    }>;
+  };
+}
 
 // ---------------------------------------------------------------------------
 // GET handler — Get financial report
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleGetFinancialReport: AuthorizedRouteHandler<FinancialReportResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<FinancialReportResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse and validate query params
+  // Parse and validate query params
   const searchParams = request.nextUrl.searchParams;
   const startDateParam = searchParams.get('startDate');
   const endDateParam = searchParams.get('endDate');
@@ -47,7 +66,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<FinancialReportResponse>;
   }
 
   const startDate = new Date(startDateParam);
@@ -61,10 +80,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<FinancialReportResponse>;
   }
 
-  // 3. Execute use case via DI
+  // Execute use case via DI
   const useCase = container.resolve<GetFinancialReportUseCase>(
     'getFinancialReportUseCase',
   );
@@ -73,9 +92,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     dateRange: { start: startDate, end: endDate },
   });
 
-  // 4. Map result to safe response
+  // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<FinancialReportResponse>;
   }
 
   const report = result.data;
@@ -104,4 +123,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Export wrapped handler with permission enforcement
+// ---------------------------------------------------------------------------
+
+export const GET = withPermission(
+  { permissions: ['finance:read'] },
+  handleGetFinancialReport,
+);

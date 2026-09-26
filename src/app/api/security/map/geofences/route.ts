@@ -1,42 +1,34 @@
 /**
  * GET /api/security/map/geofences — Get geofence polygons (alarm zones and patrol areas).
  *
- * BFF pattern: resolve auth → execute use case → return safe response.
+ * BFF pattern: withPermission wrapper → execute use case → return safe response.
  *
  * No additional query params required.
  *
  * @see Requirements 42.6
+ * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { GetGeofenceVisualizationUseCase } from '@core/domains/map/usecases';
 
 // ---------------------------------------------------------------------------
 // GET handler — Geofence polygons
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleGetGeofences: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Execute use case via DI
+  // Execute use case via DI
   try {
     const useCase = container.resolve<GetGeofenceVisualizationUseCase>(
       'getGeofenceVisualizationUseCase',
@@ -45,7 +37,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       authContext,
     });
 
-    // 3. Map result to safe response
+    // Map result to safe response
     if (!result.success) {
       return mapAppErrorToHttpResponse(result.error, correlationId);
     }
@@ -78,4 +70,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 500 },
     );
   }
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['security:read'] },
+  handleGetGeofences,
+);

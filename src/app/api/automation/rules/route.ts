@@ -2,9 +2,16 @@
  * GET  /api/automation/rules — List automation rules for the tenant.
  * POST /api/automation/rules — Create a new automation rule.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
+ *
+ * Authorization:
+ * - GET: iot:read (list automation rules)
+ * - POST: iot:manage (create automation rules)
  *
  * @see Requirements 39.1, 39.7, 39.8
+ * @see Requirements 2.1 — withPermission pattern
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,7 +20,9 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { CreateAutomationRuleUseCase } from '@core/domains/automation/usecases';
 import type { AutomationRepository } from '@core/domains/automation/repositories/AutomationRepository';
 
@@ -84,17 +93,20 @@ const createRuleSchema = z.object({
 // GET handler — List automation rules
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+/**
+ * Lists all automation rules for the current tenant.
+ *
+ * AuthorizationContext is guaranteed to have iot:read permission
+ * after withPermission validation.
+ *
+ * @see Permission Mapping: GET /api/automation/rules → iot:read
+ */
+const handleListRules: AuthorizedRouteHandler<void> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<void>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
 
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
@@ -112,7 +124,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   );
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<void>;
   }
 
   return NextResponse.json(
@@ -138,24 +150,27 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       pageSize: result.data.pageSize,
     },
     { status: 200 },
-  );
-}
+  ) as NextResponse<void>;
+};
 
 // ---------------------------------------------------------------------------
 // POST handler — Create automation rule
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Creates a new automation rule.
+ *
+ * AuthorizationContext is guaranteed to have iot:manage permission
+ * after withPermission validation.
+ *
+ * @see Permission Mapping: POST /api/automation/rules → iot:manage
+ */
+const handleCreateRule: AuthorizedRouteHandler<void> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<void>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
 
   let body: unknown;
   try {
@@ -168,7 +183,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<void>;
   }
 
   const validation = createRuleSchema.safeParse(body);
@@ -180,7 +195,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<void>;
   }
 
   const useCase = container.resolve<CreateAutomationRuleUseCase>(
@@ -202,7 +217,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<void>;
   }
 
   const rule = result.data;
@@ -227,5 +242,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     },
     { status: 201 },
-  );
-}
+  ) as NextResponse<void>;
+};
+
+// ---------------------------------------------------------------------------
+// Export route handlers with permission wrappers
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/automation/rules — List automation rules (requires iot:read)
+ *
+ * @see Permission Mapping: GET /api/automation/rules → iot:read
+ */
+export const GET = withPermission(
+  { permissions: ['iot:read'] },
+  handleListRules,
+);
+
+/**
+ * POST /api/automation/rules — Create automation rule (requires iot:manage)
+ *
+ * @see Permission Mapping: POST /api/automation/rules → iot:manage
+ */
+export const POST = withPermission(
+  { permissions: ['iot:manage'] },
+  handleCreateRule,
+);

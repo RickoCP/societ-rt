@@ -83,16 +83,21 @@ enum AnnouncementCategory {
 // =============================================================================
 
 /// Subscription plan that determines feature limits and user count limits per tenant.
+/// Supports CRUD operations with unique name enforcement and change logging.
+/// @see Requirement 17 (AC 1-7)
 model SubscriptionPlan {
-  id        String   @id @default(uuid()) @map("id")
-  name      String   @map("name") // Free, Pro, Enterprise
-  maxUsers  Int?     @map("max_users") // null = unlimited
-  features  String[] @map("features")
-  price     Decimal  @map("price") @db.Decimal(10, 2)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid()) @map("id")
+  name         String   @unique @map("name") // Basic, Standard, Pro (unique)
+  maxUsers     Int?     @map("max_users") // null = unlimited
+  features     String[] @map("features")
+  price        Decimal  @map("price") @db.Decimal(10, 2)
+  description  String?  @map("description")
+  isSystemPlan Boolean  @default(false) @map("is_system_plan")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  tenants Tenant[]
+  tenants       Tenant[]
+  subscriptions Subscription[]
 
   @@map("subscription_plans")
 }
@@ -154,6 +159,12 @@ model Tenant {
   orgUnits    OrgUnit[]
   memberships Membership[]
 
+  // FASE 1.18 (Task 52) — Tenant ownership transfers
+  tenantTransfers TenantTransfer[]
+
+  // FASE 1.18 (Task 53) — Membership invitations
+  membershipInvitations MembershipInvitation[]
+
   @@unique([rtRwNumber, region], map: "tenants_rt_rw_number_region_unique")
   @@map("tenants")
 }
@@ -172,6 +183,9 @@ model User {
   lockedUntil         DateTime?  @map("locked_until")
   consentTimestamp    DateTime?  @map("consent_timestamp")
   consentVersion      String?    @map("consent_version")
+  /// Token version for forced invalidation - increment to revoke all tokens
+  /// @see Requirement 15 (Token Version for Forced Invalidation)
+  tokenVersion        Int        @default(0) @map("token_version")
   createdAt           DateTime   @default(now()) @map("created_at")
   updatedAt           DateTime   @updatedAt @map("updated_at")
   deletedAt           DateTime?  @map("deleted_at")
@@ -180,6 +194,17 @@ model User {
 
   // M1 (FASE 1.2b) additive back-relation. Does not change the users table columns.
   memberships Membership[]
+  
+  // FASE 1.16 refresh token back-relation
+  refreshTokens RefreshToken[]
+
+  // FASE 1.18 (Task 52) — Tenant ownership transfers
+  initiatedTransfers TenantTransfer[] @relation("TransferInitiator")
+  targetedTransfers  TenantTransfer[] @relation("TransferTarget")
+
+  // FASE 1.18 (Task 53) — Membership invitations
+  sentInvitations     MembershipInvitation[] @relation("InvitationInviter")
+  receivedInvitations MembershipInvitation[] @relation("InvitationInvitee")
 
   @@unique([tenantId, email], map: "users_tenant_id_email_unique")
   @@index([tenantId, id], map: "users_tenant_id_id_idx")
@@ -1467,8 +1492,350 @@ model Membership {
   // Same-tenant org unit scope via composite key (id, tenant_id).
   orgUnit OrgUnit? @relation(fields: [orgUnitId, tenantId], references: [id, tenantId])
 
+  // FASE 1.18 (Task 53) — Membership invitations
+  invitations MembershipInvitation[]
+
   @@index([userId], map: "memberships_user_id_idx")
   @@index([tenantId], map: "memberships_tenant_id_idx")
   @@index([orgUnitId], map: "memberships_org_unit_id_idx")
   @@map("memberships")
+}
+
+// =============================================================================
+// FASE 1.18 — Membership Invitation System (Task 53)
+// =============================================================================
+// Implements membership invitation flow with secure token-based acceptance,
+// expiry handling, and integration with delegation matrix.
+//
+// @see Requirements 22 (Membership Lifecycle), 25 (Delegated Administration)
+// @see Design D7: Invitation expiry default (7 days)
+// =============================================================================
+
+/// MembershipInvitationStatus represents the invitation lifecycle states.
+/// Terminal states: ACCEPTED, REVOKED, EXPIRED
+enum MembershipInvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+/// MembershipInvitation tracks pending invitations for membership.
+/// When created:
+/// 1. A Membership is created with status=INVITED
+/// 2. A MembershipInvitation is created with a secure token (hashed)
+/// 3. User accepts invitation to activate their membership
+/// 4. Invitations expire after configured time (default: 7 days)
+///
+/// Security Properties:
+/// - token stored as SHA-256 hash (never plaintext)
+/// - token is cryptographically secure (256-bit random)
+/// - one-time use only
+/// - inviter must have ACTIVE membership and proper delegation rights
+///
+/// @see Requirement 22 (AC 1-7), Requirement 25 (AC 1-9)
+model MembershipInvitation {
+  id                   String                     @id @default(uuid()) @map("id")
+  /// Reference to the pre-created Membership with status=INVITED
+  membershipId         String                     @map("membership_id")
+  /// Tenant for easier querying without joining
+  tenantId             String                     @map("tenant_id")
+  /// User who created the invitation
+  inviterUserId        String                     @map("inviter_user_id")
+  /// Membership ID of the inviter (for audit)
+  inviterMembershipId  String                     @map("inviter_membership_id")
+  /// SHA-256 hash of the invitation token (never store plaintext)
+  tokenHash            String                     @unique @map("token_hash")
+  /// When the invitation expires (default: 7 days from creation)
+  expiresAt            DateTime                   @map("expires_at")
+  /// Current status of the invitation
+  status               MembershipInvitationStatus @default(PENDING) @map("status")
+  /// Email address the invitation was sent to (optional)
+  invitedEmail         String?                    @map("invited_email")
+  /// User ID if inviting an existing user (optional)
+  invitedUserId        String?                    @map("invited_user_id")
+  /// When the invitation was created
+  createdAt            DateTime                   @default(now()) @map("created_at")
+  /// When the invitation was last updated
+  updatedAt            DateTime                   @updatedAt @map("updated_at")
+  /// When the invitation was accepted
+  acceptedAt           DateTime?                  @map("accepted_at")
+  /// When the invitation was revoked
+  revokedAt            DateTime?                  @map("revoked_at")
+  /// User ID who revoked the invitation
+  revokedBy            String?                    @map("revoked_by")
+
+  membership     Membership @relation(fields: [membershipId], references: [id])
+  tenant         Tenant     @relation(fields: [tenantId], references: [id])
+  inviter        User       @relation("InvitationInviter", fields: [inviterUserId], references: [id])
+  invitedUser    User?      @relation("InvitationInvitee", fields: [invitedUserId], references: [id])
+
+  @@index([membershipId], map: "membership_invitations_membership_id_idx")
+  @@index([tenantId], map: "membership_invitations_tenant_id_idx")
+  @@index([inviterUserId], map: "membership_invitations_inviter_user_id_idx")
+  @@index([status], map: "membership_invitations_status_idx")
+  @@index([expiresAt], map: "membership_invitations_expires_at_idx")
+  @@index([invitedEmail], map: "membership_invitations_invited_email_idx")
+  @@index([invitedUserId], map: "membership_invitations_invited_user_id_idx")
+  @@map("membership_invitations")
+}
+
+// =============================================================================
+// FASE 1.16 — Refresh Token System (Session Hardening)
+// =============================================================================
+// Implements opaque refresh tokens with SHA-256 hash storage, family-based
+// rotation tracking, and reuse detection for secure session management.
+//
+// @see Requirements 14 (Refresh Token), 15 (Token Version), 16 (Session Revocation)
+// @see Design Refresh Token System, Token Versioning sections
+// =============================================================================
+
+/// RefreshToken represents a secure, opaque refresh token for session management.
+/// Tokens are stored as SHA-256 hashes (never plaintext) and organized into
+/// "families" where familyId remains stable across all rotations within the
+/// same authentication session.
+///
+/// Security Properties:
+/// - Opaque random 256-bit tokens (NOT JWT)
+/// - SHA-256 hash storage only (never store plaintext)
+/// - familyId stable across rotations for reuse detection
+/// - generation increments monotonically on each rotation
+/// - Reuse detection: revoked token usage → revoke entire family
+///
+/// @see Requirement 14 (AC 1-9)
+model RefreshToken {
+  id         String    @id @default(uuid()) @map("id")
+  userId     String    @map("user_id")
+  /// SHA-256 hash of the actual refresh token (never store plaintext)
+  tokenHash  String    @unique @map("token_hash")
+  /// Family identifier - stable across all rotations within the same session
+  familyId   String    @map("family_id")
+  /// Generation/sequence counter - increments monotonically on each rotation
+  generation Int       @default(1) @map("generation")
+  /// Token expiration timestamp (default 30 days)
+  expiresAt  DateTime  @map("expires_at")
+  /// Timestamp when token was revoked (null if active)
+  revokedAt  DateTime? @map("revoked_at")
+  /// Reference to the token that replaced this one during rotation
+  replacedBy String?   @map("replaced_by")
+  /// Client user agent for audit purposes
+  userAgent  String?   @map("user_agent")
+  /// Client IP address for audit purposes
+  ipAddress  String?   @map("ip_address")
+  /// Tenant context at token creation (for tenant-specific logout)
+  tenantId   String?   @map("tenant_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "refresh_tokens_user_id_idx")
+  @@index([familyId], map: "refresh_tokens_family_id_idx")
+  @@index([userId, tenantId], map: "refresh_tokens_user_id_tenant_id_idx")
+  @@index([expiresAt], map: "refresh_tokens_expires_at_idx")
+  @@map("refresh_tokens")
+}
+
+
+// =============================================================================
+// FASE 1.17 — Subscription Management (Task 44)
+// =============================================================================
+// Implements subscription status tracking, status history for audit,
+// and plan change logging for the multi-tenant SaaS platform.
+//
+// @see Requirements 17 (Subscription Plan Management), 18 (Subscription Status)
+// @see Design Components > Subscription & Entitlement Foundation
+// =============================================================================
+
+/// SubscriptionStatusEnum represents the subscription lifecycle states.
+/// Separate from TenantStatus/TenantLifecycleStatus per design (L8, L12).
+enum SubscriptionStatusEnum {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CLOSED
+}
+
+/// Subscription tracks a tenant's subscription state including status,
+/// plan assignment, and billing period information. Each tenant has
+/// exactly one Subscription record.
+///
+/// @see Requirement 18 (AC 1-7)
+model Subscription {
+  id               String                 @id @default(uuid()) @map("id")
+  tenantId         String                 @unique @map("tenant_id")
+  planId           String                 @map("plan_id")
+  status           SubscriptionStatusEnum @default(TRIAL) @map("status")
+  startedAt        DateTime               @default(now()) @map("started_at")
+  currentPeriodEnd DateTime?              @map("current_period_end")
+  trialEndsAt      DateTime?              @map("trial_ends_at")
+  suspendedAt      DateTime?              @map("suspended_at")
+  closedAt         DateTime?              @map("closed_at")
+  statusReason     String?                @map("status_reason")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  plan          SubscriptionPlan            @relation(fields: [planId], references: [id])
+  statusHistory SubscriptionStatusHistory[]
+
+  @@index([status], map: "subscriptions_status_idx")
+  @@index([planId], map: "subscriptions_plan_id_idx")
+  @@map("subscriptions")
+}
+
+/// SubscriptionStatusHistory is an append-only audit log for subscription
+/// status changes. Records before/after status, reason, operator, and timestamp
+/// for compliance and debugging purposes.
+///
+/// @see Requirement 18 (AC 4-5)
+model SubscriptionStatusHistory {
+  id             String                  @id @default(uuid()) @map("id")
+  subscriptionId String                  @map("subscription_id")
+  tenantId       String                  @map("tenant_id")
+  fromStatus     SubscriptionStatusEnum? @map("from_status")
+  toStatus       SubscriptionStatusEnum  @map("to_status")
+  reason         String?                 @map("reason")
+  changedBy      String                  @map("changed_by")
+  isAutomated    Boolean                 @default(false) @map("is_automated")
+  metadata       Json?                   @map("metadata")
+  changedAt      DateTime                @default(now()) @map("changed_at")
+  createdAt      DateTime                @default(now()) @map("created_at")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([subscriptionId, changedAt], map: "subscription_status_history_sub_id_changed_at_idx")
+  @@index([tenantId, changedAt], map: "subscription_status_history_tenant_id_changed_at_idx")
+  @@map("subscription_status_history")
+}
+
+/// PlanChangeLogAction defines the type of plan change operation.
+enum PlanChangeLogAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+/// PlanChangeLog is an append-only audit log for subscription plan changes.
+/// Records the operator, action type, and before/after state snapshots
+/// per Requirement 17 AC 7.
+///
+/// @see Requirement 17 (AC 7)
+model PlanChangeLog {
+  id             String              @id @default(uuid()) @map("id")
+  planId         String              @map("plan_id")
+  operatorUserId String              @map("operator_user_id")
+  action         PlanChangeLogAction @map("action")
+  beforeState    Json?               @map("before_state")
+  afterState     Json?               @map("after_state")
+  timestamp      DateTime            @default(now()) @map("timestamp")
+  createdAt      DateTime            @default(now()) @map("created_at")
+
+  @@index([planId, timestamp], map: "plan_change_log_plan_id_timestamp_idx")
+  @@index([operatorUserId, timestamp], map: "plan_change_log_operator_timestamp_idx")
+  @@map("plan_change_logs")
+}
+
+
+// =============================================================================
+// FASE 1.18 — Tenant Ownership Transfer (Task 52)
+// =============================================================================
+// Implements secure tenant ownership transfer flow. This is the ONLY way
+// to assign TENANT_OWNER role — delegation matrix (Task 51) explicitly
+// prohibits it.
+//
+// Transfer flow:
+// 1. Current TENANT_OWNER initiates transfer → PENDING
+// 2. Target user re-authenticates and accepts → ACCEPTED
+// 3. System completes atomic membership swap → COMPLETED
+//
+// Alternative paths:
+// - Current owner cancels → CANCELLED
+// - Time limit exceeded → EXPIRED
+//
+// @see Requirements 54 (Ownership Transfer & Last-Admin Protection)
+// @see Task 52: Tenant Transfer Flow
+// =============================================================================
+
+/// TenantTransferStatus represents the lifecycle states of an ownership transfer.
+enum TenantTransferStatus {
+  /// Transfer initiated by current owner, waiting for target acceptance
+  PENDING
+  /// Target user has accepted, awaiting completion
+  ACCEPTED
+  /// Transfer completed successfully (terminal)
+  COMPLETED
+  /// Transfer cancelled by initiator (terminal)
+  CANCELLED
+  /// Transfer expired without acceptance (terminal)
+  EXPIRED
+}
+
+/// TenantTransfer tracks the lifecycle of a tenant ownership transfer request.
+/// This is the ONLY mechanism for assigning TENANT_OWNER role.
+///
+/// Security Invariants:
+/// - INV-TRANSFER-001: initiatorUserId must be current TENANT_OWNER of tenantId
+/// - INV-TRANSFER-002: targetUserId must have ACTIVE membership in tenantId
+/// - INV-TRANSFER-003: targetUserId must NOT already be TENANT_OWNER in tenantId
+/// - INV-TRANSFER-004: Only one PENDING transfer per tenant at a time
+///
+/// @see Requirement 54 (AC 1-8)
+model TenantTransfer {
+  id                 String               @id @default(uuid()) @map("id")
+  tenantId           String               @map("tenant_id")
+  /// User ID of current TENANT_OWNER who initiated the transfer
+  initiatorUserId    String               @map("initiator_user_id")
+  /// User ID of target user who will become the new TENANT_OWNER
+  targetUserId       String               @map("target_user_id")
+  status             TenantTransferStatus @default(PENDING) @map("status")
+  /// When the transfer request expires (if not accepted)
+  expiresAt          DateTime             @map("expires_at")
+  /// When the target user accepted the transfer
+  acceptedAt         DateTime?            @map("accepted_at")
+  /// When the transfer was completed (ownership swapped)
+  completedAt        DateTime?            @map("completed_at")
+  /// When the transfer was cancelled
+  cancelledAt        DateTime?            @map("cancelled_at")
+  /// Reason for cancellation (optional)
+  cancellationReason String?              @map("cancellation_reason")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+  initiator User   @relation("TransferInitiator", fields: [initiatorUserId], references: [id])
+  target    User   @relation("TransferTarget", fields: [targetUserId], references: [id])
+
+  @@index([tenantId], map: "tenant_transfer_tenant_id_idx")
+  @@index([tenantId, status], map: "tenant_transfer_tenant_id_status_idx")
+  @@index([initiatorUserId], map: "tenant_transfer_initiator_user_id_idx")
+  @@index([targetUserId], map: "tenant_transfer_target_user_id_idx")
+  @@index([status], map: "tenant_transfer_status_idx")
+  @@index([expiresAt], map: "tenant_transfer_expires_at_idx")
+  @@map("tenant_transfers")
+}
+
+/// TransferAuditLog is an append-only audit log for ownership transfer events.
+/// Records before/after state snapshots for compliance and debugging.
+///
+/// @see Requirement 54 (AC 7)
+model TransferAuditLog {
+  id                  String   @id @default(uuid()) @map("id")
+  transferId          String   @map("transfer_id")
+  tenantId            String   @map("tenant_id")
+  eventType           String   @map("event_type")
+  initiatorUserId     String   @map("initiator_user_id")
+  targetUserId        String   @map("target_user_id")
+  /// Snapshot of ownership state before the event
+  beforeState         Json?    @map("before_state")
+  /// Snapshot of ownership state after the event
+  afterState          Json?    @map("after_state")
+  /// Reason (for cancelled/failed events)
+  reason              String?  @map("reason")
+  eventTimestamp      DateTime @default(now()) @map("event_timestamp")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  @@index([transferId], map: "transfer_audit_log_transfer_id_idx")
+  @@index([tenantId, eventTimestamp], map: "transfer_audit_log_tenant_id_timestamp_idx")
+  @@index([eventType], map: "transfer_audit_log_event_type_idx")
+  @@map("transfer_audit_logs")
 }

@@ -2,9 +2,10 @@
  * POST /api/security/patrols — Create a new patrol schedule.
  * GET  /api/security/patrols — List patrol schedules for the tenant.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: validate input → withPermission wrapper → execute use case → return safe response.
  *
  * @see Requirements 12.1
+ * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,7 +14,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { CreatePatrolScheduleUseCase } from '@core/domains/security/usecases';
 import type { SecurityRepository } from '@core/domains/security/repositories/SecurityRepository';
 
@@ -31,24 +33,14 @@ const createScheduleSchema = z.object({
 // POST handler — Create patrol schedule
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+const handleCreateSchedule: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -75,7 +67,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<CreatePatrolScheduleUseCase>(
     'createPatrolScheduleUseCase',
   );
@@ -88,7 +80,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -108,30 +100,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
+
+export const POST = withPermission(
+  { permissions: ['security:write'] },
+  handleCreateSchedule,
+);
 
 // ---------------------------------------------------------------------------
 // GET handler — List patrol schedules
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleListSchedules: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Query repository for schedules
+  // Query repository for schedules
   const securityRepository =
     container.resolve<SecurityRepository>('securityRepository');
   const result = await securityRepository.findSchedulesByTenant(
@@ -144,7 +131,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   return NextResponse.json(
     {
-      data: result.data.map((schedule) => ({
+      data: result.data.map(schedule => ({
         id: schedule.id,
         date: schedule.date.toISOString(),
         timeSlot: schedule.timeSlot,
@@ -155,4 +142,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['security:read'] },
+  handleListSchedules,
+);

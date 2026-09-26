@@ -1,28 +1,66 @@
 /**
  * GET /api/dashboard — Dashboard metrics for the current tenant.
  *
- * BFF pattern: resolve auth → query DB → return safe response.
+ * BFF pattern: withPermission → query DB → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
  *
  * @see Requirements 28.1
+ * @see Requirements 2.1 — withPermission pattern
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { PrismaClient } from '@/generated/prisma/client';
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+/**
+ * Response type for the dashboard endpoint.
+ */
+interface DashboardResponse {
+  data: {
+    totalResidents: number;
+    totalHouseholds: number;
+    pendingLetters: number;
+    activeEmergencies: number;
+    upcomingEvents: number;
+    unpaidIuran: number;
+    currentBalance: number;
+  };
+}
+
+/**
+ * Error response type for the dashboard endpoint.
+ */
+interface DashboardErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+}
+
+/**
+ * Handler for getting tenant dashboard metrics.
+ *
+ * AuthorizationContext is guaranteed to have resident:read permission
+ * after withPermission validation.
+ *
+ * This endpoint aggregates key metrics for the tenant dashboard:
+ * - Total residents and households
+ * - Pending letter requests
+ * - Active emergencies
+ * - Upcoming events
+ * - Unpaid iuran count
+ * - Current financial balance
+ */
+const handleGetDashboard: AuthorizedRouteHandler<DashboardResponse | DashboardErrorResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<DashboardResponse | DashboardErrorResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
 
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
@@ -80,4 +118,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 500 },
     );
   }
-}
+};
+
+/**
+ * GET handler wrapped with resident:read permission requirement.
+ *
+ * Users with resident:read permission can access tenant dashboard metrics.
+ * This includes: TENANT_OWNER, ORG_ADMIN, RT_ADMIN, SECURITY, RESIDENT roles.
+ *
+ * @see Permission Mapping: /api/dashboard → resident:read
+ */
+export const GET = withPermission(
+  { permissions: ['resident:read'] },
+  handleGetDashboard,
+);

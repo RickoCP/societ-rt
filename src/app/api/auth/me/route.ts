@@ -1,33 +1,62 @@
 /**
  * GET /api/auth/me — Returns the current authenticated user's basic info.
  *
- * Reads user context from middleware-set headers (x-user-id, x-user-role, x-tenant-id).
- * This is a lightweight endpoint for the client to know who is logged in.
+ * Reads user context from AuthorizationContext provided by withAuthOnlyRoute wrapper.
+ * This is an auth-only endpoint — requires valid JWT but no specific permission.
  *
- * @see Requirements 1.3
+ * @see Requirements 1.3, 17.1, 17.3, 17.4
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { container } from '@infrastructure/di/container';
+import {
+  withAuthOnlyRoute,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { PrismaClient } from '@/generated/prisma/client';
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+// ---------------------------------------------------------------------------
+// Response Types
+// ---------------------------------------------------------------------------
+
+interface MeSuccessResponse {
+  data: {
+    userId: string;
+    name: string | null;
+    email: string;
+    role: string;
+    tenantId: string;
+    membershipId: string;
+    orgUnitId: string | null;
+  };
+}
+
+interface MeErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+}
+
+type MeResponse = MeSuccessResponse | MeErrorResponse;
+
+// ---------------------------------------------------------------------------
+// Route handler
+// ---------------------------------------------------------------------------
+
+/**
+ * Handler for GET /api/auth/me
+ *
+ * Receives AuthorizationContext from withAuthOnlyRoute wrapper.
+ * User is guaranteed to be authenticated (valid JWT).
+ */
+const handleGetMe: AuthorizedRouteHandler<MeResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<MeResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
 
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
@@ -53,8 +82,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           userId: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: authContext.role, // Use role from AuthorizationContext (server-resolved)
           tenantId: authContext.tenantId,
+          membershipId: authContext.membershipId,
+          orgUnitId: authContext.orgUnitId,
         },
       },
       { status: 200 },
@@ -69,4 +100,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 500 },
     );
   }
-}
+};
+
+// Export wrapped handler with auth-only (requires valid JWT, no specific permission)
+export const GET = withAuthOnlyRoute(handleGetMe);

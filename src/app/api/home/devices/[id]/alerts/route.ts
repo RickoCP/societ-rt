@@ -1,9 +1,10 @@
 /**
  * PATCH /api/home/devices/[id]/alerts — Configure device alert preferences.
  *
- * BFF pattern: resolve auth → validate input → execute use case → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case → return safe response.
  *
  * @see Requirements 37.7
+ * @see Requirements 2.1, 2.2, 2.3 — Route handler migration to withPermission
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -12,7 +13,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { ConfigureDeviceAlertsUseCase } from '@core/domains/societHome/usecases';
 
 // ---------------------------------------------------------------------------
@@ -30,30 +32,41 @@ const configureAlertsSchema = z.object({
 // PATCH handler — Configure device alert preferences
 // ---------------------------------------------------------------------------
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+/**
+ * Handles PATCH /api/home/devices/[id]/alerts request.
+ *
+ * Configures alert preferences for a specific device.
+ * Requires `device:read` permission (read permission since this is configuration, not device control).
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @param context - Route context containing params
+ * @returns NextResponse with updated alert configuration or error
+ */
+const handleConfigureDeviceAlerts: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+  context,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  // 1. Extract device ID from route params
+  const params = context?.params ? await context.params : { id: '' };
+  const deviceId = params.id;
+
+  if (!deviceId) {
     return NextResponse.json(
       {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Device ID is required',
         correlationId,
       },
-      { status: 401 },
+      { status: 400 },
     );
   }
 
-  // 2. Extract device ID from route params
-  const { id: deviceId } = await params;
-
-  // 3. Parse and validate input
+  // 2. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -80,7 +93,7 @@ export async function PATCH(
     );
   }
 
-  // 4. Execute use case via DI
+  // 3. Execute use case via DI
   try {
     const useCase = container.resolve<ConfigureDeviceAlertsUseCase>(
       'configureDeviceAlertsUseCase',
@@ -96,7 +109,7 @@ export async function PATCH(
       },
     });
 
-    // 5. Map result to safe response
+    // 4. Map result to safe response
     if (!result.success) {
       return mapAppErrorToHttpResponse(result.error, correlationId);
     }
@@ -123,4 +136,14 @@ export async function PATCH(
       { status: 500 },
     );
   }
-}
+};
+
+/**
+ * PATCH /api/home/devices/[id]/alerts
+ *
+ * Permission: device:read (configuration requires read access to device)
+ */
+export const PATCH = withPermission(
+  { permissions: ['device:read'] },
+  handleConfigureDeviceAlerts,
+);

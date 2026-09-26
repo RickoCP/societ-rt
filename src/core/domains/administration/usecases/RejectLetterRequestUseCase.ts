@@ -8,13 +8,14 @@
  * 4. Return ok(letterRequest)
  *
  * @see Requirements 13.3, 13.5
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
 } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { AdministrationRepository } from '../repositories/AdministrationRepository';
@@ -26,7 +27,7 @@ import type { LetterRequest, RejectLetterRequestInput } from '../entities';
 
 export interface RejectLetterRequestUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     requestId: string;
     data: RejectLetterRequestInput;
   }): Promise<DomainResult<LetterRequest>>;

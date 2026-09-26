@@ -8,10 +8,17 @@
  * 4. Return ok(invitation)
  *
  * @see Requirements 3.3, 4.6
+ * @see Requirements 6.2, 6.6, 6.7 (AuthorizationContext migration)
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import { UserRole } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import {
+  isAuthorizationContext,
+  getMembershipRole,
+} from '@core/domains/authorization/types';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { AuthRepository } from '../repositories/AuthRepository';
@@ -24,20 +31,27 @@ import { authInsufficientRole } from '../errors/authErrors';
 
 export interface CreateInvitationUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     email: string;
     role: UserRole;
   }): Promise<DomainResult<InvitationToken>>;
 }
 
 // ---------------------------------------------------------------------------
-// Allowed roles for creating invitations
+// Allowed roles for creating invitations (both legacy and new)
 // ---------------------------------------------------------------------------
 
-const ALLOWED_ROLES: ReadonlySet<UserRole> = new Set([
+const ALLOWED_LEGACY_ROLES: ReadonlySet<UserRole> = new Set([
   UserRole.Super_Admin,
   UserRole.Ketua_RT,
   UserRole.Pengurus,
+]);
+
+const ALLOWED_MEMBERSHIP_ROLES: ReadonlySet<MembershipRole> = new Set([
+  MembershipRole.PLATFORM_ADMIN,
+  MembershipRole.TENANT_OWNER,
+  MembershipRole.RT_ADMIN,
+  MembershipRole.ORG_ADMIN,
 ]);
 
 // ---------------------------------------------------------------------------
@@ -52,9 +66,17 @@ export const CreateInvitationUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): CreateInvitationUseCase => ({
   execute: async ({ authContext, email, role }) => {
-    // 1. Check role authorization
-    if (!ALLOWED_ROLES.has(authContext.role)) {
-      return fail(authInsufficientRole());
+    // 1. Check role authorization - support both legacy and new roles
+    if (isAuthorizationContext(authContext)) {
+      // New AuthorizationContext: use MembershipRole
+      if (!ALLOWED_MEMBERSHIP_ROLES.has(authContext.role)) {
+        return fail(authInsufficientRole());
+      }
+    } else {
+      // Legacy AuthContext: use UserRole
+      if (!ALLOWED_LEGACY_ROLES.has(authContext.role)) {
+        return fail(authInsufficientRole());
+      }
     }
 
     // 2. Create invitation via repository

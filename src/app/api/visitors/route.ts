@@ -2,7 +2,9 @@
  * POST /api/visitors — Log a new visitor entry.
  * GET  /api/visitors — List visitor logs for the tenant.
  *
- * BFF pattern: validate input → resolve auth context → execute use case / query → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case / query → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
  *
  * @see Requirements 15.1, 15.2
  */
@@ -13,7 +15,11 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { LogVisitorUseCase } from '@core/domains/visitor/usecases';
 import type { VisitorRepository } from '@core/domains/visitor/repositories/VisitorRepository';
 
@@ -28,27 +34,62 @@ const logVisitorSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface VisitorLogResponse {
+  data: {
+    id: string;
+    visitorName: string;
+    purpose: string;
+    destinationHouseholdId: string;
+    entryTimestamp: string;
+    exitTimestamp: string | null;
+    loggedBy: string;
+    createdAt: string;
+  };
+}
+
+interface VisitorListResponse {
+  data: Array<{
+    id: string;
+    visitorName: string;
+    purpose: string;
+    destinationHouseholdId: string;
+    entryTimestamp: string;
+    exitTimestamp: string | null;
+    loggedBy: string;
+    createdAt: string;
+  }>;
+}
+
+// ---------------------------------------------------------------------------
 // POST handler — Log visitor
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handle POST /api/visitors — Log a new visitor entry.
+ *
+ * AuthorizationContext is guaranteed to have security:manage permission
+ * after withPermission validation.
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @returns NextResponse with created visitor log or error
+ */
+const handleLogVisitor: AuthorizedRouteHandler<VisitorLogResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<VisitorLogResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId } as unknown as VisitorLogResponse,
       { status: 400 },
     );
   }
@@ -56,7 +97,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const validation = logVisitorSchema.safeParse(body);
   if (!validation.success) {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId },
+      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId } as unknown as VisitorLogResponse,
       { status: 400 },
     );
   }
@@ -65,7 +106,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const result = await useCase.execute({ authContext, data: validation.data });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<VisitorLogResponse>;
   }
 
   const log = result.data;
@@ -85,29 +126,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
 
 // ---------------------------------------------------------------------------
 // GET handler — List visitor logs
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handle GET /api/visitors — List visitor logs for the tenant.
+ *
+ * AuthorizationContext is guaranteed to have security:read permission
+ * after withPermission validation.
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @returns NextResponse with visitor logs list or error
+ */
+const handleListVisitors: AuthorizedRouteHandler<VisitorListResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<VisitorListResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
 
   const visitorRepository = container.resolve<VisitorRepository>('visitorRepository');
   const result = await visitorRepository.findByTenant(authContext.tenantId);
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<VisitorListResponse>;
   }
 
   return NextResponse.json(
@@ -125,4 +171,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Exported Route Handlers with Permission Checks
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/visitors — Log a new visitor entry.
+ *
+ * Permission: security:manage (write access to visitor logs)
+ *
+ * @see Permission Mapping: /api/visitors POST → security:manage
+ */
+export const POST = withPermission(
+  { permissions: ['security:manage'] },
+  handleLogVisitor,
+);
+
+/**
+ * GET /api/visitors — List visitor logs for the tenant.
+ *
+ * Permission: security:read (read access to visitor logs)
+ *
+ * @see Permission Mapping: /api/visitors GET → security:read
+ */
+export const GET = withPermission(
+  { permissions: ['security:read'] },
+  handleListVisitors,
+);

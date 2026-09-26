@@ -1,0 +1,4 @@
+﻿src/core/domains/authorization/__tests__/AuthorizationContextResolver.test.ts(17,1): error TS6133: 'DomainResult' is declared but its value is never read.
+src/core/domains/authorization/__tests__/AuthorizationContextResolver.test.ts(35,3): error TS6196: 'AuthorizationContextResult' is declared but never used.
+src/core/domains/authorization/__tests__/OrgUnitScopeAuthorizer.test.ts(21,1): error TS6133: 'DomainResult' is declared but its value is never read.
+src/core/domains/authorization/services/AuthorizationContextResolver.ts(53,10): error TS6133: 'authUserQuarantined' is declared but its value is never read.

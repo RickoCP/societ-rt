@@ -1,8 +1,12 @@
 /**
  * PATCH /api/emergency/[id]/status — Update the status of an emergency alert.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * This is an ADMINISTRATIVE action that requires `emergency:manage` permission
+ * and an ACTIVE membership. Suspended users CANNOT manage emergencies.
  *
+ * BFF pattern: validate input → check permissions → execute use case → return safe response.
+ *
+ * @see Requirements 7.1 — POST /emergency/[id]/acknowledge uses emergency:manage WITHOUT allowSuspended
  * @see Requirements 10.3, 10.5
  */
 
@@ -12,7 +16,11 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { UpdateEmergencyStatusUseCase } from '@core/domains/emergency/usecases';
 
 // ---------------------------------------------------------------------------
@@ -27,29 +35,34 @@ const updateStatusSchema = z.object({
 // PATCH handler — Update emergency alert status
 // ---------------------------------------------------------------------------
 
-export async function PATCH(
+/**
+ * Handler for updating emergency alert status.
+ *
+ * This is an ADMINISTRATIVE action — suspended users cannot manage emergencies.
+ * Only users with `emergency:manage` permission and ACTIVE membership can use this.
+ */
+const handleUpdateEmergencyStatus: AuthorizedRouteHandler<unknown> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await params;
+  const { id } = await (routeContext?.params ?? Promise.resolve({ id: '' }));
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  if (!id) {
     return NextResponse.json(
       {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Emergency alert ID is required',
         correlationId,
       },
-      { status: 401 },
+      { status: 400 },
     );
   }
 
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -76,7 +89,7 @@ export async function PATCH(
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<UpdateEmergencyStatusUseCase>(
     'updateEmergencyStatusUseCase',
   );
@@ -86,7 +99,7 @@ export async function PATCH(
     status: validation.data.status,
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -108,4 +121,22 @@ export async function PATCH(
     },
     { status: 200 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Export wrapped handler
+// ---------------------------------------------------------------------------
+
+/**
+ * PATCH /api/emergency/[id]/status — Update emergency alert status
+ *
+ * ADMINISTRATIVE ACTION: Does NOT use `allowSuspended`.
+ * Only users with ACTIVE membership and `emergency:manage` permission
+ * can acknowledge or resolve emergencies.
+ *
+ * @see Requirements 7.1 — Admin action without allowSuspended
+ */
+export const PATCH = withPermission(
+  { permissions: ['emergency:manage'] },
+  handleUpdateEmergencyStatus,
+);

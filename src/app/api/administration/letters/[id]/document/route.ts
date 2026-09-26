@@ -5,12 +5,15 @@
  * Includes QR code (via external service) and registration number.
  *
  * @see Requirements 13.3
+ * @see Requirements 2.1, 2.2, 2.3 — Route Handler withPermission Migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { PrismaClient } from '@/generated/prisma/client';
 
 const letterTemplates: Record<string, { title: string; header: string }> = {
@@ -28,22 +31,21 @@ const letterTemplates: Record<string, { title: string; header: string }> = {
   },
 };
 
-export async function GET(
+/**
+ * Handler for GET /api/administration/letters/[id]/document
+ * Downloads/generates the letter document.
+ *
+ * Permission: admin:read (download letter document)
+ */
+const handleGetLetterDocument: AuthorizedRouteHandler = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  const { id } = await params;
+  const { id } = await routeContext!.params!;
 
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
@@ -167,4 +169,17 @@ export async function GET(
       { status: 500 },
     );
   }
-}
+};
+
+// ---------------------------------------------------------------------------
+// Exports with withPermission wrapper
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/administration/letters/[id]/document
+ * Permission: admin:read — Download letter document
+ */
+export const GET = withPermission(
+  { permissions: ['admin:read'] },
+  handleGetLetterDocument,
+);

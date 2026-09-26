@@ -1,7 +1,12 @@
 /**
  * POST /api/feature-flags/override — Create a per-tenant feature flag override.
  *
+ * BFF pattern: withPermission → validate input → execute use case → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
+ *
  * @see Requirements 19.4, 19.5
+ * @see Permission Mapping: /api/feature-flags/override POST → tenant:manage
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -10,31 +15,63 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { OverrideFeatureFlagUseCase } from '@core/domains/featureFlag/usecases';
+
+// ---------------------------------------------------------------------------
+// Input schemas
+// ---------------------------------------------------------------------------
 
 const overrideSchema = z.object({
   featureName: z.string().min(1, 'Feature name is required'),
   enabled: z.boolean(),
 });
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
-  const correlationId = request.headers.get('x-correlation-id') ?? generateCorrelationId();
+// ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+interface FeatureFlagOverrideResponse {
+  data: {
+    id: string;
+    featureName: string;
+    enabled: boolean;
+    overriddenBy: string;
+    createdAt: string;
+  };
+}
+
+// ---------------------------------------------------------------------------
+// POST handler — Override feature flag
+// ---------------------------------------------------------------------------
+
+/**
+ * Handle POST /api/feature-flags/override — Create a per-tenant feature flag override.
+ *
+ * AuthorizationContext is guaranteed to have tenant:manage permission
+ * after withPermission validation.
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @returns NextResponse with created override or error
+ */
+const handleOverrideFeatureFlag: AuthorizedRouteHandler<FeatureFlagOverrideResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<FeatureFlagOverrideResponse>> => {
+  const correlationId =
+    request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId } as unknown as FeatureFlagOverrideResponse,
       { status: 400 },
     );
   }
@@ -42,7 +79,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const validation = overrideSchema.safeParse(body);
   if (!validation.success) {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId },
+      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId } as unknown as FeatureFlagOverrideResponse,
       { status: 400 },
     );
   }
@@ -55,7 +92,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<FeatureFlagOverrideResponse>;
   }
 
   const override = result.data;
@@ -71,4 +108,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Exported Route Handlers with Permission Checks
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/feature-flags/override — Create a per-tenant feature flag override.
+ *
+ * Permission: tenant:manage (tenant configuration write access)
+ *
+ * @see Permission Mapping: /api/feature-flags/override POST → tenant:manage
+ */
+export const POST = withPermission(
+  { permissions: ['tenant:manage'] },
+  handleOverrideFeatureFlag,
+);

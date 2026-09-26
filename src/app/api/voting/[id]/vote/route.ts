@@ -3,7 +3,11 @@
  *
  * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
  *
+ * Authorization:
+ * - POST: vote:cast (cast a vote)
+ *
  * @see Requirements 8.3, 8.4, 8.5
+ * @see Requirements 2.1, 2.2, 2.3 — Route authorization migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -12,7 +16,9 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { CastVoteUseCase } from '@core/domains/voting/usecases';
 
 // ---------------------------------------------------------------------------
@@ -27,29 +33,29 @@ const castVoteSchema = z.object({
 // POST handler — Cast vote
 // ---------------------------------------------------------------------------
 
-export async function POST(
+const handleCastVote: AuthorizedRouteHandler<void> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<void>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await params;
+  const params = await routeContext?.params;
+  const voteId = params?.id;
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  if (!voteId) {
     return NextResponse.json(
       {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Vote ID is required',
         correlationId,
       },
-      { status: 401 },
-    );
+      { status: 400 },
+    ) as NextResponse<void>;
   }
 
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -61,7 +67,7 @@ export async function POST(
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<void>;
   }
 
   const validation = castVoteSchema.safeParse(body);
@@ -73,24 +79,36 @@ export async function POST(
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<void>;
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<CastVoteUseCase>('castVoteUseCase');
   const result = await useCase.execute({
     authContext,
-    voteId: id,
+    voteId,
     optionId: validation.data.optionId,
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<void>;
   }
 
   return NextResponse.json(
     { data: { message: 'Vote cast successfully' } },
     { status: 200 },
-  );
-}
+  ) as NextResponse<void>;
+};
+
+// ---------------------------------------------------------------------------
+// Export route handler with permission wrapper
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/voting/[id]/vote — Cast a vote (requires vote:cast)
+ */
+export const POST = withPermission(
+  { permissions: ['vote:cast'] },
+  handleCastVote,
+);

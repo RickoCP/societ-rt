@@ -187,6 +187,79 @@ import {
   UpdateEmergencyContactUseCaseImpl,
   DeleteEmergencyContactUseCaseImpl,
 } from '@core/domains/emergencyContact/usecases';
+import {
+  createSubscriptionPlanService,
+  createSubscriptionStatusService,
+  createEntitlementService,
+} from '@core/domains/subscription/services';
+import { createBillingService } from '@core/domains/billing/services';
+import {
+  MembershipLifecycleServiceImpl,
+  DelegationMatrixServiceImpl,
+  MembershipInvitationServiceImpl,
+  AdminMembershipServiceImpl,
+} from '@core/domains/membership/services';
+import {
+  TenantTransferServiceImpl,
+} from '@core/domains/transfer/services';
+import {
+  HouseholdIsolationServiceImpl,
+} from '@core/domains/household/services';
+import {
+  TenantOnboardingServiceImpl,
+} from '@core/domains/tenant/services';
+import {
+  OrgUnitManagementServiceImpl,
+  OrgUnitHierarchyReaderImpl,
+  OrgUnitCrudServiceImpl,
+  MultiClusterServiceImpl,
+} from '@core/domains/orgunit/services';
+import {
+  OrgUnitScopeAuthorizerImpl,
+} from '@core/domains/authorization/services';
+import {
+  AuthorizationConcurrencyServiceImpl,
+} from '@core/domains/authorization/services';
+import {
+  CacheInvalidationServiceImpl,
+} from '@core/domains/authorization/services';
+import {
+  BatchOperationsServiceImpl,
+} from '@core/domains/authorization/services';
+import {
+  PermissionSyncServiceImpl,
+} from '@core/domains/authorization/services';
+import {
+  AuthorizationErrorHandlerServiceImpl,
+} from '@core/domains/authorization/services';
+import {
+  CrossTenantPreventionServiceImpl,
+} from '@core/domains/authorization/services';
+import {
+  LoggingMembershipEventEmitter,
+  LoggingDelegationAuditEmitter,
+  LoggingTransferAuditEmitter,
+  LoggingInvitationEventEmitter,
+  LoggingAdminMembershipAuditEmitter,
+  LoggingHouseholdIsolationAuditEmitter,
+  LoggingOnboardingEventEmitter,
+  LoggingOrgUnitEventEmitter,
+  LoggingIoTDeviceIsolationAuditEmitter,
+} from '@infrastructure/events';
+import {
+  IoTDeviceIsolationServiceImpl,
+} from '@core/domains/iot/services';
+import {
+  AuditTrailServiceImpl,
+  AuditSecurityEventsServiceImpl,
+  TenantDataIsolationAuditServiceImpl,
+} from '@core/domains/audit/services';
+import {
+  NotificationSecurityServiceImpl,
+} from '@core/domains/notification/services';
+import {
+  LoggingAuditTrailEmitter,
+} from '@infrastructure/events';
 
 export function registerUseCases(container: AwilixContainer): void {
   container.register({
@@ -341,5 +414,69 @@ export function registerUseCases(container: AwilixContainer): void {
     createEmergencyContactUseCase: asFunction(CreateEmergencyContactUseCaseImpl).singleton(),
     updateEmergencyContactUseCase: asFunction(UpdateEmergencyContactUseCaseImpl).singleton(),
     deleteEmergencyContactUseCase: asFunction(DeleteEmergencyContactUseCaseImpl).singleton(),
+    // FASE 1.17 — Subscription Management (Task 44)
+    subscriptionPlanService: asFunction(createSubscriptionPlanService).singleton(),
+    subscriptionStatusService: asFunction(createSubscriptionStatusService).singleton(),
+    // FASE 1.17 — Entitlement Enforcement (Task 45)
+    entitlementService: asFunction(createEntitlementService).singleton(),
+    // FASE 1.17 — Billing and Payment Integration (Task 47)
+    billingService: asFunction(createBillingService).singleton(),
+    // FASE 1.18 — Membership Lifecycle Management (Task 50)
+    membershipEventEmitter: asFunction(LoggingMembershipEventEmitter).singleton(),
+    membershipLifecycleService: asFunction(MembershipLifecycleServiceImpl).singleton(),
+    // FASE 1.18 — Delegation Matrix (Task 51)
+    // NOTE: key must be `auditEmitter` to match the destructured parameter in
+    // DelegationMatrixServiceImpl under Awilix PROXY injection mode.
+    auditEmitter: asFunction(LoggingDelegationAuditEmitter).singleton(),
+    delegationMatrixService: asFunction(DelegationMatrixServiceImpl).singleton(),
+    // FASE 1.18 — Tenant Ownership Transfer (Task 52)
+    // NOTE: transferAuditEmitter key used for TenantTransferService dependency
+    transferAuditEmitter: asFunction(LoggingTransferAuditEmitter).singleton(),
+    tenantTransferService: asFunction(TenantTransferServiceImpl).singleton(),
+    // FASE 1.18 — Membership Invitation Flow (Task 53)
+    invitationEventEmitter: asFunction(LoggingInvitationEventEmitter).singleton(),
+    membershipInvitationService: asFunction(MembershipInvitationServiceImpl).singleton(),
+    // FASE 1.18 — Admin Membership Management (Task 54)
+    adminMembershipAuditEmitter: asFunction(LoggingAdminMembershipAuditEmitter).singleton(),
+    adminMembershipService: asFunction(AdminMembershipServiceImpl).singleton(),
+    // FASE 1.18 — Household Isolation Enforcement (Task 55, INV-HOUSEHOLD-001)
+    householdIsolationAuditEmitter: asFunction(LoggingHouseholdIsolationAuditEmitter).singleton(),
+    householdIsolationService: asFunction(HouseholdIsolationServiceImpl).singleton(),
+    // FASE 1.18 — Tenant Onboarding Flow (Task 49)
+    onboardingEventEmitter: asFunction(LoggingOnboardingEventEmitter).singleton(),
+    tenantOnboardingService: asFunction(TenantOnboardingServiceImpl).singleton(),
+    // FASE 1.19 — OrgUnit Management Service (Task 57)
+    orgUnitEventEmitter: asFunction(LoggingOrgUnitEventEmitter).singleton(),
+    orgUnitManagementService: asFunction(OrgUnitManagementServiceImpl).singleton(),
+    // FASE 1.19 — OrgUnit Hierarchy and CRUD Services (Task 58)
+    orgUnitHierarchyReader: asFunction(OrgUnitHierarchyReaderImpl).singleton(),
+    orgUnitScopeAuthorizer: asFunction(OrgUnitScopeAuthorizerImpl).singleton(),
+    orgUnitCrudService: asFunction(OrgUnitCrudServiceImpl).singleton(),
+    // FASE 1.19 — Multi-Cluster Support (Task 59)
+    multiClusterService: asFunction(MultiClusterServiceImpl).singleton(),
+    // FASE 1.19 — IoT Device Isolation Enforcement (Task 60, INV-IOT-001)
+    iotDeviceIsolationAuditEmitter: asFunction(LoggingIoTDeviceIsolationAuditEmitter).singleton(),
+    iotDeviceIsolationService: asFunction(IoTDeviceIsolationServiceImpl).singleton(),
+    // FASE 1.20 — Audit Trail Implementation (Task 62)
+    auditTrailEmitter: asFunction(LoggingAuditTrailEmitter).singleton(),
+    auditTrailService: asFunction(AuditTrailServiceImpl).singleton(),
+    // FASE 1.20 — Authorization Concurrency Handling (Task 63, Req 28)
+    authorizationConcurrencyService: asFunction(AuthorizationConcurrencyServiceImpl).singleton(),
+    // FASE 1.20 — Cache Invalidation Strategy (Task 64, Req 29)
+    cacheInvalidationService: asFunction(CacheInvalidationServiceImpl).singleton(),
+    // FASE 1.20 — Audit Security Events (Task 65, Req 30)
+    auditSecurityEventsService: asFunction(AuditSecurityEventsServiceImpl).singleton(),
+    // FASE 1.20 — Batch Operations Support (Task 66, Req 33)
+    batchOperationsService: asFunction(BatchOperationsServiceImpl).singleton(),
+    // FASE 1.20 — Permission Sync Mechanism (Task 67, Req 35)
+    permissionSyncService: asFunction(PermissionSyncServiceImpl).singleton(),
+    // FASE 1.20 — Tenant Data Isolation Audit (Task 68, Req 38)
+    tenantDataIsolationAuditService: asFunction(TenantDataIsolationAuditServiceImpl).singleton(),
+    // FASE 1.20 — Authorization Error Handling (Task 69, Req 39)
+    authorizationErrorHandler: asFunction(AuthorizationErrorHandlerServiceImpl).singleton(),
+    // FASE 1.20 — Notification Security (Task 71, Req 56)
+    notificationSecurityService: asFunction(NotificationSecurityServiceImpl).singleton(),
+    // FASE 1.20 — Cross-Tenant Prevention (Task 72, Req 59, Tenant Isolation)
+    crossTenantPreventionService: asFunction(CrossTenantPreventionServiceImpl).singleton(),
   });
 }

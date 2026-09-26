@@ -10,9 +10,11 @@
  * 6. Return ok(undefined)
  *
  * @see Requirements 8.3, 8.4, 8.5
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, notFoundError } from '@core/utils';
 import type { VotingRepository } from '../repositories/VotingRepository';
@@ -24,7 +26,7 @@ import { votingDeadlinePassed } from '../errors/votingErrors';
 
 export interface CastVoteUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     voteId: string;
     optionId: string;
   }): Promise<DomainResult<void>>;

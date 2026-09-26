@@ -5,6 +5,8 @@
  *  - GET: fetch the current door-sensor config for a household.
  *
  * Ownership is enforced inside the use case (SetMonitoringWindowUseCase).
+ *
+ * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,7 +15,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { SetMonitoringWindowUseCase } from '@core/domains/doorMonitoring/usecases';
 import type { DoorMonitoringRepository } from '@core/domains/doorMonitoring/repositories';
 
@@ -25,28 +28,23 @@ const windowSchema = z.object({
   enabled: z.boolean(),
 });
 
-function unauthorized(correlationId: string): NextResponse {
-  return NextResponse.json(
-    { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-    { status: 401 },
-  );
-}
-
 // ---------------------------------------------------------------------------
 // PUT — set window
 // ---------------------------------------------------------------------------
 
-export async function PUT(
+/**
+ * Handler for setting the monitoring window for a household's door sensor.
+ * Requires device:write permission. Ownership is enforced in the use case.
+ */
+const handleSetWindow: AuthorizedRouteHandler<void> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ householdId: string }> },
-): Promise<NextResponse> {
+  authContext,
+  context,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) return unauthorized(correlationId);
-
-  const { householdId } = await params;
+  const { householdId } = await context!.params!;
 
   let body: unknown;
   try {
@@ -101,23 +99,25 @@ export async function PUT(
     },
     { status: 200 },
   );
-}
+};
 
 // ---------------------------------------------------------------------------
 // GET — current config for a household
 // ---------------------------------------------------------------------------
 
-export async function GET(
+/**
+ * Handler for fetching the current door-sensor config for a household.
+ * Requires device:read permission to view sensor configuration.
+ */
+const handleGetConfig: AuthorizedRouteHandler<void> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ householdId: string }> },
-): Promise<NextResponse> {
+  authContext,
+  context,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) return unauthorized(correlationId);
-
-  const { householdId } = await params;
+  const { householdId } = await context!.params!;
 
   const repo = container.resolve<DoorMonitoringRepository>(
     'doorMonitoringRepository',
@@ -144,4 +144,14 @@ export async function GET(
     },
     { status: 200 },
   );
-}
+};
+
+export const PUT = withPermission(
+  { permissions: ['device:write'] },
+  handleSetWindow,
+);
+
+export const GET = withPermission(
+  { permissions: ['device:read'] },
+  handleGetConfig,
+);

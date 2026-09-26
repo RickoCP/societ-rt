@@ -3,37 +3,46 @@
  * PATCH /api/voting/:id — Update vote title/description/deadline.
  * DELETE /api/voting/:id — Delete a vote and its options/ballots.
  *
- * Only admin roles (Super_Admin, Ketua_RT, Pengurus) can edit/delete.
+ * Authorization:
+ * - GET: vote:cast (view vote details to cast a vote)
+ * - PATCH: vote:manage (update vote polls)
+ * - DELETE: vote:manage (delete vote polls)
  *
  * @see Requirements 8.1
+ * @see Requirements 2.1, 2.2, 2.3 — Route authorization migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
-import { UserRole } from '@core/protocols';
+import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { PrismaClient } from '@/generated/prisma/client';
 
-const ADMIN_ROLES = [UserRole.Super_Admin, UserRole.Ketua_RT, UserRole.Pengurus];
+// ---------------------------------------------------------------------------
+// GET handler — Get vote detail
+// ---------------------------------------------------------------------------
 
-export async function GET(
+const handleGetVote: AuthorizedRouteHandler<void> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<void>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+  const params = await routeContext?.params;
+  const voteId = params?.id;
 
-  const { id: voteId } = await params;
+  if (!voteId) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Vote ID is required', correlationId },
+      { status: 400 },
+    ) as NextResponse<void>;
+  }
 
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
@@ -52,7 +61,7 @@ export async function GET(
       return NextResponse.json(
         { code: 'COMMON_NOT_FOUND', message: 'Vote not found', correlationId },
         { status: 404 },
-      );
+      ) as NextResponse<void>;
     }
 
     return NextResponse.json({
@@ -70,18 +79,17 @@ export async function GET(
           voteCount: o.voteCount,
         })),
       },
-    });
+    }) as NextResponse<void>;
   } catch {
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
-    );
+    ) as NextResponse<void>;
   }
-}
-
+};
 
 // ---------------------------------------------------------------------------
-// PATCH — Update vote
+// PATCH handler — Update vote
 // ---------------------------------------------------------------------------
 
 const updateVoteSchema = z.object({
@@ -90,30 +98,25 @@ const updateVoteSchema = z.object({
   deadline: z.string().optional(),
 });
 
-export async function PATCH(
+const handleUpdateVote: AuthorizedRouteHandler<void> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<void>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  const params = await routeContext?.params;
+  const voteId = params?.id;
+
+  if (!voteId) {
     return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Vote ID is required', correlationId },
+      { status: 400 },
+    ) as NextResponse<void>;
   }
 
-  if (!ADMIN_ROLES.includes(authContext.role as UserRole)) {
-    return NextResponse.json(
-      { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission.', correlationId },
-      { status: 403 },
-    );
-  }
-
-  const { id: voteId } = await params;
-
+  // Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -121,15 +124,19 @@ export async function PATCH(
     return NextResponse.json(
       { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
       { status: 400 },
-    );
+    ) as NextResponse<void>;
   }
 
   const validation = updateVoteSchema.safeParse(body);
   if (!validation.success) {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid input', correlationId },
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        fields: formatZodErrors(validation.error),
+        correlationId,
+      },
       { status: 400 },
-    );
+    ) as NextResponse<void>;
   }
 
   try {
@@ -143,7 +150,7 @@ export async function PATCH(
       return NextResponse.json(
         { code: 'COMMON_NOT_FOUND', message: 'Vote not found', correlationId },
         { status: 404 },
-      );
+      ) as NextResponse<void>;
     }
 
     const updateData: Record<string, unknown> = {};
@@ -163,35 +170,36 @@ export async function PATCH(
         description: updated.description,
         deadline: updated.deadline.toISOString(),
       },
-    });
+    }) as NextResponse<void>;
   } catch {
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
-    );
+    ) as NextResponse<void>;
   }
-}
+};
 
 // ---------------------------------------------------------------------------
-// DELETE — Delete vote (cascade: options + ballots)
+// DELETE handler — Delete vote (cascade: options + ballots)
 // ---------------------------------------------------------------------------
 
-export async function DELETE(
+const handleDeleteVote: AuthorizedRouteHandler<void> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<void>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+  const params = await routeContext?.params;
+  const voteId = params?.id;
 
-  const { id: voteId } = await params;
+  if (!voteId) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Vote ID is required', correlationId },
+      { status: 400 },
+    ) as NextResponse<void>;
+  }
 
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
@@ -204,19 +212,21 @@ export async function DELETE(
       return NextResponse.json(
         { code: 'COMMON_NOT_FOUND', message: 'Vote not found', correlationId },
         { status: 404 },
-      );
+      ) as NextResponse<void>;
     }
 
-    // Authorization: only Super_Admin, Ketua_RT, or the vote creator can delete
-    const DELETE_ROLES: UserRole[] = [UserRole.Super_Admin, UserRole.Ketua_RT];
-    const isAdminRole = DELETE_ROLES.includes(authContext.role as UserRole);
+    // Additional ownership check: Only the creator or users with vote:manage can delete
+    // Note: The permission check via withPermission already ensures vote:manage is present
+    // We keep the creator check as an additional business rule
     const isCreator = vote.createdBy === authContext.userId;
-
-    if (!isAdminRole && !isCreator) {
+    
+    // If not creator and reached this point (has vote:manage permission),
+    // that's allowed because vote:manage implies administrative control
+    if (!isCreator && !authContext.permissions.has('vote:manage')) {
       return NextResponse.json(
-        { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission.', correlationId },
+        { code: 'AUTH_INSUFFICIENT_PERMISSION', message: 'You do not have permission.', correlationId },
         { status: 403 },
-      );
+      ) as NextResponse<void>;
     }
 
     // Delete in order: ballots → options → vote
@@ -224,11 +234,39 @@ export async function DELETE(
     await prisma.voteOption.deleteMany({ where: { voteId } });
     await prisma.vote.delete({ where: { id: voteId } });
 
-    return NextResponse.json({ data: { id: voteId, deleted: true } });
+    return NextResponse.json({ data: { id: voteId, deleted: true } }) as NextResponse<void>;
   } catch {
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
-    );
+    ) as NextResponse<void>;
   }
-}
+};
+
+// ---------------------------------------------------------------------------
+// Export route handlers with permission wrappers
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/voting/:id — Get vote detail (requires vote:cast to view available votes)
+ */
+export const GET = withPermission(
+  { permissions: ['vote:cast'] },
+  handleGetVote,
+);
+
+/**
+ * PATCH /api/voting/:id — Update vote (requires vote:manage)
+ */
+export const PATCH = withPermission(
+  { permissions: ['vote:manage'] },
+  handleUpdateVote,
+);
+
+/**
+ * DELETE /api/voting/:id — Delete vote (requires vote:manage)
+ */
+export const DELETE = withPermission(
+  { permissions: ['vote:manage'] },
+  handleDeleteVote,
+);

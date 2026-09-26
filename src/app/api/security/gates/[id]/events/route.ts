@@ -1,7 +1,9 @@
 /**
  * GET /api/security/gates/[id]/events — Get paginated event history for a gate.
  *
- * BFF pattern: validate input → resolve auth context → query repository → return safe response.
+ * BFF pattern: withPermission → validate query → query repository → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
  *
  * @see Requirements 33.2, 33.6
  */
@@ -12,7 +14,11 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GateRepository } from '@core/domains/gate/repositories/GateRepository';
 
 // ---------------------------------------------------------------------------
@@ -27,32 +33,51 @@ const eventsQuerySchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface GateEventsResponse {
+  data: Array<{
+    id: string;
+    gateId: string;
+    state: string;
+    duration: number;
+    timestamp: string;
+  }>;
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// ---------------------------------------------------------------------------
 // GET handler — Gate event history (paginated)
 // ---------------------------------------------------------------------------
 
-export async function GET(
+/**
+ * Handle GET /api/security/gates/[id]/events — Get paginated event history for a gate.
+ *
+ * AuthorizationContext is guaranteed to have security:read permission
+ * after withPermission validation.
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @param context - Route context containing params promise
+ * @returns NextResponse with gate events or error
+ */
+const handleGetGateEvents: AuthorizedRouteHandler<GateEventsResponse> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  context?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<GateEventsResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
+  const { id: gateId } = await (context?.params ?? Promise.resolve({ id: '' }));
 
-  const { id: gateId } = await params;
-
-  // 2. Parse query parameters
+  // 1. Parse query parameters
   const { searchParams } = new URL(request.url);
   const queryValidation = eventsQuerySchema.safeParse({
     page: searchParams.get('page') ?? undefined,
@@ -67,14 +92,14 @@ export async function GET(
         code: 'COMMON_VALIDATION_FAILED',
         fields: formatZodErrors(queryValidation.error),
         correlationId,
-      },
+      } as unknown as GateEventsResponse,
       { status: 400 },
     );
   }
 
   const { page, pageSize, from, to } = queryValidation.data;
 
-  // 3. Query repository for gate events
+  // 2. Query repository for gate events
   const gateRepository =
     container.resolve<GateRepository>('gateRepository');
 
@@ -87,7 +112,7 @@ export async function GET(
   );
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<GateEventsResponse>;
   }
 
   const { data: events, total } = result.data;
@@ -110,4 +135,20 @@ export async function GET(
     },
     { status: 200 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Exported Route Handlers with Permission Checks
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/security/gates/[id]/events — Get paginated event history for a gate.
+ *
+ * Permission: security:read (view gate events)
+ *
+ * @see Permission Mapping: /api/security/gates/[id]/events GET → security:read
+ */
+export const GET = withPermission(
+  { permissions: ['security:read'] },
+  handleGetGateEvents,
+);

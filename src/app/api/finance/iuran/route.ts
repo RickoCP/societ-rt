@@ -2,9 +2,10 @@
  * POST /api/finance/iuran — Record an iuran (monthly dues) payment.
  * GET  /api/finance/iuran — Get iuran payment status for a household/month.
  *
- * BFF pattern: validate input → resolve auth context → execute use case / query → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case / query → return safe response.
  *
  * @see Requirements 7.4, 7.5
+ * @see Multi-Tenant Integration Cutover — Task 4.4
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,17 +14,10 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
-import { UserRole } from '@core/protocols/AuthContext';
+import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RecordIuranPaymentUseCase } from '@core/domains/finance/usecases';
 import type { FinanceRepository } from '@core/domains/finance/repositories/FinanceRepository';
-
-// Roles allowed to manage iuran. Warga is view-only.
-const KAS_MANAGER_ROLES: string[] = [
-  UserRole.Ketua_RT,
-  UserRole.Pengurus,
-  UserRole.Super_Admin,
-];
 
 // ---------------------------------------------------------------------------
 // Input schemas
@@ -38,39 +32,38 @@ const recordIuranPaymentSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface IuranRecordResponse {
+  message: string;
+}
+
+interface IuranStatusResponse {
+  data: {
+    id: string;
+    householdId: string;
+    month: string;
+    status: string;
+    paidAt: string | null;
+    transactionId: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+// ---------------------------------------------------------------------------
 // POST handler — Record iuran payment
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+const handleRecordIuranPayment: AuthorizedRouteHandler<IuranRecordResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<IuranRecordResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 1b. Role check — only kas managers can record iuran payments.
-  if (!KAS_MANAGER_ROLES.includes(authContext.role)) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'You do not have permission to manage iuran.',
-        correlationId,
-      },
-      { status: 403 },
-    );
-  }
-
-  // 2. Parse and validate input
+  // Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -82,7 +75,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<IuranRecordResponse>;
   }
 
   const validation = recordIuranPaymentSchema.safeParse(body);
@@ -94,10 +87,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<IuranRecordResponse>;
   }
 
-  // 3. Execute use case via DI
+  // Execute use case via DI
   const useCase = container.resolve<RecordIuranPaymentUseCase>(
     'recordIuranPaymentUseCase',
   );
@@ -108,39 +101,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     transactionId: validation.data.transactionId,
   });
 
-  // 4. Map result to safe response
+  // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<IuranRecordResponse>;
   }
 
   return NextResponse.json(
     { message: 'Iuran payment recorded successfully' },
     { status: 201 },
   );
-}
+};
 
 // ---------------------------------------------------------------------------
 // GET handler — Get iuran status
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleGetIuranStatus: AuthorizedRouteHandler<IuranStatusResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<IuranStatusResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse and validate query params
+  // Parse and validate query params
   const searchParams = request.nextUrl.searchParams;
   const householdId = searchParams.get('householdId');
   const month = searchParams.get('month');
@@ -153,7 +136,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<IuranStatusResponse>;
   }
 
   if (!MONTH_REGEX.test(month)) {
@@ -164,10 +147,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<IuranStatusResponse>;
   }
 
-  // 3. Query repository directly for read operations
+  // Query repository directly for read operations
   const financeRepository = container.resolve<FinanceRepository>(
     'financeRepository',
   );
@@ -177,9 +160,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     month,
   );
 
-  // 4. Map result to safe response
+  // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<IuranStatusResponse>;
   }
 
   const status = result.data;
@@ -199,4 +182,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Export wrapped handlers with permission enforcement
+// ---------------------------------------------------------------------------
+
+export const POST = withPermission(
+  { permissions: ['finance:write'] },
+  handleRecordIuranPayment,
+);
+
+export const GET = withPermission(
+  { permissions: ['finance:read'] },
+  handleGetIuranStatus,
+);

@@ -2,11 +2,11 @@
  * Registry Index — Orchestrates all DI registrations in the correct order.
  *
  * Registration order:
- * 1. Modules (protocol implementations / adapters)
- * 2. Repositories
- * 3. Use Cases
- * 4. ViewModels
- * 5. Logging
+ * 1. Logging (needed by other services)
+ * 2. Modules (protocol implementations / adapters)
+ * 3. Repositories
+ * 4. Use Cases
+ * 5. ViewModels
  */
 
 import type { AwilixContainer } from 'awilix';
@@ -17,9 +17,9 @@ import { registerViewModels } from './viewModelContainer';
 import { registerLogging } from './loggingContainer';
 
 export function registerAll(container: AwilixContainer): void {
+  registerLogging(container);
   registerModules(container);
   registerRepositories(container);
   registerUseCases(container);
   registerViewModels(container);
-  registerLogging(container);
 }

@@ -2,65 +2,42 @@
  * POST /api/tenants/[id]/reactivate — Reactivates a suspended tenant.
  *
  * BFF pattern: resolve auth context → execute use case → return safe response.
- * This is a protected endpoint — requires Super_Admin role.
+ * This is a protected endpoint — requires platform:suspend permission (PLATFORM_ADMIN).
  *
  * @see Requirements 30.2
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { UserRole } from '@core/protocols';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { ReactivateTenantUseCase } from '@core/domains/tenant/usecases';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
-// Route handler
+// POST — Reactivate tenant (PLATFORM_ADMIN only)
 // ---------------------------------------------------------------------------
 
-export async function POST(
+const handleReactivateTenant: AuthorizedRouteHandler<unknown> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
+  // 1. Extract tenant ID from route params
+  const { id } = await routeContext!.params!;
 
-  // 2. Check Super_Admin role
-  if (authContext.role !== UserRole.Super_Admin) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'You do not have permission to perform this action.',
-        correlationId,
-      },
-      { status: 403 },
-    );
-  }
-
-  // 3. Extract tenant ID from route params
-  const { id } = await params;
-
-  // 4. Extract client IP for audit
+  // 2. Extract client IP for audit
   const ipAddress =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     request.headers.get('x-real-ip') ??
     undefined;
 
-  // 5. Execute use case via DI
+  // 3. Execute use case via DI
   const reactivateTenantUseCase =
     container.resolve<ReactivateTenantUseCase>('reactivateTenantUseCase');
   const result = await reactivateTenantUseCase.execute({
@@ -69,7 +46,7 @@ export async function POST(
     ipAddress,
   });
 
-  // 6. Map result to safe response
+  // 4. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -78,4 +55,9 @@ export async function POST(
     { data: { message: 'Tenant reactivated successfully' } },
     { status: 200 },
   );
-}
+};
+
+export const POST = withPermission(
+  { permissions: ['platform:suspend'] },
+  handleReactivateTenant,
+);

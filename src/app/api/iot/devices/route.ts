@@ -1,9 +1,10 @@
 /**
  * GET /api/iot/devices — List IoT devices for the authenticated user's household.
  *
- * BFF pattern: validate input → resolve auth context → validate device ownership → query → return safe response.
+ * BFF pattern: validate input → withPermission wrapper → validate device ownership → query → return safe response.
  *
  * @see Requirements 37.1, 37.4, 44.5
+ * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -11,7 +12,8 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { IoTRepository } from '@core/domains/iot/repositories/IoTRepository';
 
 // ---------------------------------------------------------------------------
@@ -26,20 +28,14 @@ const querySchema = z.object({
 // GET handler — List devices for a household
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleListDevices: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  // 2. Validate query params
+  // 1. Validate query params
   const { searchParams } = new URL(request.url);
   const validation = querySchema.safeParse({
     householdId: searchParams.get('householdId'),
@@ -58,7 +54,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const { householdId } = validation.data;
 
-  // 3. Query repository
+  // 2. Query repository
   const iotRepository = container.resolve<IoTRepository>('iotRepository');
   const result = await iotRepository.findByHousehold(
     authContext.tenantId,
@@ -69,7 +65,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
-  // 4. Return safe response
+  // 3. Return safe response
   return NextResponse.json(
     {
       data: result.data.map(device => ({
@@ -87,4 +83,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['iot:read'] },
+  handleListDevices,
+);

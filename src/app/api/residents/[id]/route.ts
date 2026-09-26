@@ -1,8 +1,11 @@
 /**
  * PATCH /api/residents/:id — Update a resident's residency status.
+ * PUT   /api/residents/:id — Edit resident data.
  * DELETE /api/residents/:id — Remove a resident.
  *
  * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
  *
  * @see Requirements 5.3, 5.5
  */
@@ -13,49 +16,93 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
-import { UserRole } from '@core/protocols';
+import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { UpdateResidentStatusUseCase } from '@core/domains/resident/usecases';
 import type { PrismaClient } from '@/generated/prisma/client';
 
-const EDIT_ROLES = [UserRole.Super_Admin, UserRole.Ketua_RT, UserRole.Pengurus];
-
 // ---------------------------------------------------------------------------
-// Input schema
+// Input schemas
 // ---------------------------------------------------------------------------
 
 const updateStatusSchema = z.object({
   status: z.enum(['tetap', 'kontrak', 'kos', 'pindah']),
 });
 
+const updateResidentSchema = z.object({
+  name: z.string().min(1).optional(),
+  nik: z.string().length(16).optional(),
+  dateOfBirth: z.string().optional(),
+  gender: z.enum(['male', 'female']).optional(),
+  phone: z.string().optional().nullable(),
+  status: z.enum(['tetap', 'kontrak', 'kos', 'pindah']).optional(),
+  categories: z.array(z.string()).optional(),
+  emergencyContactName: z.string().optional().nullable(),
+  emergencyContactPhone: z.string().optional().nullable(),
+  emergencyContactRelationship: z.string().optional().nullable(),
+});
+
 // ---------------------------------------------------------------------------
-// Route handler
+// Response Types
 // ---------------------------------------------------------------------------
 
-export async function PATCH(
+interface UpdateStatusResponse {
+  data: {
+    id: string;
+    name: string;
+    status: string;
+    updatedAt: string;
+  };
+}
+
+interface DeleteResponse {
+  data: {
+    id: string;
+    deleted: boolean;
+  };
+}
+
+interface UpdateResidentResponse {
+  data: {
+    id: string;
+    name: string;
+    nik: string;
+    dateOfBirth: string;
+    gender: string;
+    phone: string | null;
+    status: string;
+    categories: string[];
+  };
+}
+
+// ---------------------------------------------------------------------------
+// PATCH handler — Update resident status
+// ---------------------------------------------------------------------------
+
+const handlePatchStatus: AuthorizedRouteHandler<UpdateStatusResponse> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<UpdateStatusResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  // Extract route param
+  const params = await routeContext?.params;
+  const residentId = params?.id;
+
+  if (!residentId) {
     return NextResponse.json(
       {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Resident ID is required',
         correlationId,
-      },
-      { status: 401 },
+      } as unknown as UpdateStatusResponse,
+      { status: 400 },
     );
   }
 
-  // 2. Extract route param
-  const { id: residentId } = await params;
-
-  // 3. Parse and validate input
+  // Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -65,7 +112,7 @@ export async function PATCH(
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      },
+      } as unknown as UpdateStatusResponse,
       { status: 400 },
     );
   }
@@ -77,12 +124,12 @@ export async function PATCH(
         code: 'COMMON_VALIDATION_FAILED',
         fields: formatZodErrors(validation.error),
         correlationId,
-      },
+      } as unknown as UpdateStatusResponse,
       { status: 400 },
     );
   }
 
-  // 4. Execute use case via DI
+  // Execute use case via DI
   const useCase = container.resolve<UpdateResidentStatusUseCase>(
     'updateResidentStatusUseCase',
   );
@@ -92,9 +139,9 @@ export async function PATCH(
     status: validation.data.status,
   });
 
-  // 5. Map result to safe response
+  // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<UpdateStatusResponse>;
   }
 
   const resident = result.data;
@@ -110,37 +157,36 @@ export async function PATCH(
     },
     { status: 200 },
   );
-}
-
+};
 
 // ---------------------------------------------------------------------------
 // DELETE handler — Remove a resident
 // ---------------------------------------------------------------------------
 
-export async function DELETE(
+const handleDeleteResident: AuthorizedRouteHandler<DeleteResponse> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<DeleteResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  // Extract route param
+  const params = await routeContext?.params;
+  const residentId = params?.id;
+
+  if (!residentId) {
     return NextResponse.json(
       {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Resident ID is required',
         correlationId,
-      },
-      { status: 401 },
+      } as unknown as DeleteResponse,
+      { status: 400 },
     );
   }
 
-  // 2. Extract route param
-  const { id: residentId } = await params;
-
-  // 3. Delete resident via Prisma
+  // Delete resident via Prisma
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
 
@@ -158,7 +204,7 @@ export async function DELETE(
           code: 'COMMON_NOT_FOUND',
           message: 'Resident not found',
           correlationId,
-        },
+        } as unknown as DeleteResponse,
         { status: 404 },
       );
     }
@@ -175,53 +221,45 @@ export async function DELETE(
         code: 'COMMON_UNEXPECTED_ERROR',
         message: 'Internal server error',
         correlationId,
-      },
+      } as unknown as DeleteResponse,
       { status: 500 },
     );
   }
-}
-
+};
 
 // ---------------------------------------------------------------------------
 // PUT handler — Edit resident data
 // ---------------------------------------------------------------------------
 
-const updateResidentSchema = z.object({
-  name: z.string().min(1).optional(),
-  nik: z.string().length(16).optional(),
-  dateOfBirth: z.string().optional(),
-  gender: z.enum(['male', 'female']).optional(),
-  phone: z.string().optional().nullable(),
-  status: z.enum(['tetap', 'kontrak', 'kos', 'pindah']).optional(),
-  categories: z.array(z.string()).optional(),
-  emergencyContactName: z.string().optional().nullable(),
-  emergencyContactPhone: z.string().optional().nullable(),
-  emergencyContactRelationship: z.string().optional().nullable(),
-});
-
-export async function PUT(
+const handlePutResident: AuthorizedRouteHandler<UpdateResidentResponse> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<UpdateResidentResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  // Extract route param
+  const params = await routeContext?.params;
+  const residentId = params?.id;
+
+  if (!residentId) {
     return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Resident ID is required',
+        correlationId,
+      } as unknown as UpdateResidentResponse,
+      { status: 400 },
     );
   }
-
-  const { id: residentId } = await params;
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId } as unknown as UpdateResidentResponse,
       { status: 400 },
     );
   }
@@ -229,7 +267,7 @@ export async function PUT(
   const validation = updateResidentSchema.safeParse(body);
   if (!validation.success) {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId },
+      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId } as unknown as UpdateResidentResponse,
       { status: 400 },
     );
   }
@@ -245,24 +283,9 @@ export async function PUT(
 
     if (!resident) {
       return NextResponse.json(
-        { code: 'COMMON_NOT_FOUND', message: 'Resident not found', correlationId },
+        { code: 'COMMON_NOT_FOUND', message: 'Resident not found', correlationId } as unknown as UpdateResidentResponse,
         { status: 404 },
       );
-    }
-
-    // Permission check: admin roles OR member of same household
-    const isAdminRole = EDIT_ROLES.includes(authContext.role as UserRole);
-    if (!isAdminRole) {
-      const isMember = await prisma.resident.findFirst({
-        where: { householdId: resident.householdId, tenantId: authContext.tenantId },
-        select: { id: true },
-      });
-      if (!isMember) {
-        return NextResponse.json(
-          { code: 'AUTH_INSUFFICIENT_ROLE', message: 'You do not have permission to edit this resident.', correlationId },
-          { status: 403 },
-        );
-      }
     }
 
     // Build update data
@@ -298,8 +321,24 @@ export async function PUT(
     });
   } catch {
     return NextResponse.json(
-      { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
+      { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId } as unknown as UpdateResidentResponse,
       { status: 500 },
     );
   }
-}
+};
+
+// Export wrapped handlers with required permissions
+export const PATCH = withPermission(
+  { permissions: ['resident:write'] },
+  handlePatchStatus,
+);
+
+export const DELETE = withPermission(
+  { permissions: ['resident:write'] },
+  handleDeleteResident,
+);
+
+export const PUT = withPermission(
+  { permissions: ['resident:write'] },
+  handlePutResident,
+);

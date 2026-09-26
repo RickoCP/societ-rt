@@ -1,49 +1,48 @@
 /**
  * GET /api/security/incidents/:id — Get incident detail.
- * PATCH /api/security/incidents/:id — Update an incident report (legacy).
- * DELETE /api/security/incidents/:id — Delete an incident report (legacy).
+ * PATCH /api/security/incidents/:id — Update an incident report.
+ * DELETE /api/security/incidents/:id — Delete an incident report.
  *
  * @see Requirements 32.1, 32.2, 32.7
+ * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
+import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { IncidentRepository } from '@core/domains/incident/repositories/IncidentRepository';
-import { UserRole } from '@core/protocols';
 import type { PrismaClient } from '@/generated/prisma/client';
-
-const ADMIN_ROLES = [
-  UserRole.Super_Admin,
-  UserRole.Ketua_RT,
-  UserRole.Pengurus,
-  UserRole.Security_Guard,
-];
 
 // ---------------------------------------------------------------------------
 // GET handler — Get incident detail
 // ---------------------------------------------------------------------------
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+const handleGetIncident: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+  routeContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  // 1. Extract incident ID from route params
+  const { id } = await routeContext?.params ?? { id: '' };
+
+  if (!id) {
     return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Incident ID is required',
+        correlationId,
+      },
+      { status: 400 },
     );
   }
-
-  const { id } = await params;
 
   // 2. Query repository for incident detail
   const incidentRepository =
@@ -86,10 +85,15 @@ export async function GET(
     },
     { status: 200 },
   );
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['security:read'] },
+  handleGetIncident,
+);
 
 // ---------------------------------------------------------------------------
-// PATCH handler — Update incident report (legacy)
+// PATCH handler — Update incident report
 // ---------------------------------------------------------------------------
 
 const updateSchema = z.object({
@@ -98,34 +102,29 @@ const updateSchema = z.object({
   severityLevel: z.enum(['low', 'medium', 'high', 'critical']).optional(),
 });
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+const handleUpdateIncident: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+  routeContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+  // 1. Extract incident ID from route params
+  const { id } = await routeContext?.params ?? { id: '' };
 
-  if (!ADMIN_ROLES.includes(authContext.role as UserRole)) {
+  if (!id) {
     return NextResponse.json(
       {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'You do not have permission.',
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Incident ID is required',
         correlationId,
       },
-      { status: 403 },
+      { status: 400 },
     );
   }
 
-  const { id } = await params;
-
+  // 2. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -145,7 +144,7 @@ export async function PATCH(
     return NextResponse.json(
       {
         code: 'COMMON_VALIDATION_FAILED',
-        message: 'Invalid input',
+        fields: formatZodErrors(validation.error),
         correlationId,
       },
       { status: 400 },
@@ -189,39 +188,38 @@ export async function PATCH(
       { status: 500 },
     );
   }
-}
+};
+
+export const PATCH = withPermission(
+  { permissions: ['security:write'] },
+  handleUpdateIncident,
+);
 
 // ---------------------------------------------------------------------------
-// DELETE handler — Delete incident report (legacy)
+// DELETE handler — Delete incident report
 // ---------------------------------------------------------------------------
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+const handleDeleteIncident: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+  routeContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+  // 1. Extract incident ID from route params
+  const { id } = await routeContext?.params ?? { id: '' };
 
-  if (!ADMIN_ROLES.includes(authContext.role as UserRole)) {
+  if (!id) {
     return NextResponse.json(
       {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'You do not have permission.',
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Incident ID is required',
         correlationId,
       },
-      { status: 403 },
+      { status: 400 },
     );
   }
-
-  const { id } = await params;
 
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
@@ -250,4 +248,9 @@ export async function DELETE(
       { status: 500 },
     );
   }
-}
+};
+
+export const DELETE = withPermission(
+  { permissions: ['security:write'] },
+  handleDeleteIncident,
+);

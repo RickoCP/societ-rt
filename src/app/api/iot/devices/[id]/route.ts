@@ -5,13 +5,15 @@
  * Both endpoints validate device ownership (device must belong to the user's tenant).
  *
  * @see Requirements 37.1, 37.4, 37.11, 38.6
+ * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { IoTRepository } from '@core/domains/iot/repositories/IoTRepository';
 import type { UnpairDeviceUseCase } from '@core/domains/iot/usecases';
 import type { IoTDevice } from '@core/domains/iot/entities';
@@ -57,25 +59,17 @@ async function findDeviceByIdAndTenant(
 // GET handler — Device detail
 // ---------------------------------------------------------------------------
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+const handleGetDevice: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+  context,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+  const { id } = await context!.params!;
 
-  const { id } = await params;
-
-  // 2. Query device (tenant-scoped ownership check)
+  // 1. Query device (tenant-scoped ownership check)
   const deviceCheck = await findDeviceByIdAndTenant(authContext.tenantId, id);
 
   if (!deviceCheck.found) {
@@ -87,7 +81,7 @@ export async function GET(
 
   const device = deviceCheck.device;
 
-  // 3. Get recent events for this device
+  // 2. Get recent events for this device
   const iotRepository = container.resolve<IoTRepository>('iotRepository');
   const eventsResult = await iotRepository.findEventsByDevice(
     authContext.tenantId,
@@ -122,31 +116,28 @@ export async function GET(
     },
     { status: 200 },
   );
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['iot:read'] },
+  handleGetDevice,
+);
 
 // ---------------------------------------------------------------------------
 // DELETE handler — Unpair device
 // ---------------------------------------------------------------------------
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+const handleDeleteDevice: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+  context,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
+  const { id } = await context!.params!;
 
-  const { id } = await params;
-
-  // 2. Verify device exists within tenant (ownership check)
+  // 1. Verify device exists within tenant (ownership check)
   const deviceCheck = await findDeviceByIdAndTenant(authContext.tenantId, id);
 
   if (!deviceCheck.found) {
@@ -156,7 +147,7 @@ export async function DELETE(
     );
   }
 
-  // 3. Execute unpair use case
+  // 2. Execute unpair use case
   const useCase = container.resolve<UnpairDeviceUseCase>('unpairDeviceUseCase');
   const result = await useCase.execute({
     authContext,
@@ -171,4 +162,9 @@ export async function DELETE(
     { data: { id, deleted: true } },
     { status: 200 },
   );
-}
+};
+
+export const DELETE = withPermission(
+  { permissions: ['iot:manage'] },
+  handleDeleteDevice,
+);

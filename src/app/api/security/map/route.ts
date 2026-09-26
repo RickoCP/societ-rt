@@ -1,12 +1,13 @@
 /**
  * GET /api/security/map — Get all security map layers with optional layer filter.
  *
- * BFF pattern: resolve auth → validate query → execute use case → return safe response.
+ * BFF pattern: validate query → withPermission wrapper → execute use case → return safe response.
  *
  * Accepts optional `layers` query param (comma-separated):
  * incidents, cctv, panic_alerts, gates, patrol_routes, guard_positions
  *
  * @see Requirements 42.1, 42.4, 42.6, 42.7
+ * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -14,7 +15,8 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { GetSecurityMapDataUseCase } from '@core/domains/map/usecases';
 import type { SecurityMapLayer } from '@core/domains/map/entities/SecurityMapTypes';
 
@@ -55,24 +57,14 @@ const querySchema = z.object({
 // GET handler — All security map layers
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleGetMapData: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Validate query params
+  // 1. Validate query params
   const { searchParams } = new URL(request.url);
   const validation = querySchema.safeParse({
     layers: searchParams.get('layers') ?? undefined,
@@ -89,13 +81,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Parse layers filter
+  // 2. Parse layers filter
   const layersParam = validation.data.layers;
   const layers: SecurityMapLayer[] | undefined = layersParam
     ? (layersParam.split(',').map(s => s.trim()) as SecurityMapLayer[])
     : undefined;
 
-  // 4. Execute use case via DI
+  // 3. Execute use case via DI
   try {
     const useCase = container.resolve<GetSecurityMapDataUseCase>(
       'getSecurityMapDataUseCase',
@@ -105,7 +97,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       layers,
     });
 
-    // 5. Map result to safe response
+    // 4. Map result to safe response
     if (!result.success) {
       return mapAppErrorToHttpResponse(result.error, correlationId);
     }
@@ -181,4 +173,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 500 },
     );
   }
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['security:read'] },
+  handleGetMapData,
+);

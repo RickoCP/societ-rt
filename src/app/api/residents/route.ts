@@ -4,6 +4,8 @@
  *
  * BFF pattern: validate input → resolve auth context → execute use case / query → return safe response.
  *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
+ *
  * @see Requirements 5.2, 5.3, 5.7
  */
 
@@ -13,7 +15,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { AddResidentUseCase } from '@core/domains/resident/usecases';
 import type { ResidentRepository } from '@core/domains/resident/repositories/ResidentRepository';
 import type { ResidentCategory, ResidencyStatus } from '@core/domains/resident/entities';
@@ -42,27 +45,54 @@ const addResidentSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response Types
+// ---------------------------------------------------------------------------
+
+interface ResidentResponse {
+  data: {
+    id: string;
+    householdId: string;
+    name: string;
+    nik: string;
+    dateOfBirth: string;
+    gender: string;
+    phone: string | null;
+    status: string;
+    categories: string[];
+    createdAt: string;
+  };
+}
+
+interface ResidentListResponse {
+  data: Array<{
+    id: string;
+    householdId: string;
+    name: string;
+    nik: string;
+    dateOfBirth: string;
+    gender: string;
+    phone: string | null;
+    status: string;
+    categories: string[];
+    createdAt: string;
+  }>;
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+// ---------------------------------------------------------------------------
 // POST handler — Add resident
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+const handleAddResident: AuthorizedRouteHandler<ResidentResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<ResidentResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse and validate input
+  // Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -72,7 +102,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      },
+      } as unknown as ResidentResponse,
       { status: 400 },
     );
   }
@@ -84,12 +114,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         code: 'COMMON_VALIDATION_FAILED',
         fields: formatZodErrors(validation.error),
         correlationId,
-      },
+      } as unknown as ResidentResponse,
       { status: 400 },
     );
   }
 
-  // 3. Execute use case via DI
+  // Execute use case via DI
   const useCase = container.resolve<AddResidentUseCase>('addResidentUseCase');
   const result = await useCase.execute({
     authContext,
@@ -99,9 +129,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
   });
 
-  // 4. Map result to safe response
+  // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<ResidentResponse>;
   }
 
   const resident = result.data;
@@ -123,30 +153,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
 
 // ---------------------------------------------------------------------------
 // GET handler — List residents
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+const handleListResidents: AuthorizedRouteHandler<ResidentListResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<ResidentListResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse query params
+  // Parse query params
   const searchParams = request.nextUrl.searchParams;
 
   const householdId = searchParams.get('householdId') ?? undefined;
@@ -164,7 +184,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     ? (categoriesParam.split(',').filter((c) => c.trim().length > 0) as ResidentCategory[])
     : undefined;
 
-  // 3. Query repository directly for read operations
+  // Query repository directly for read operations
   const residentRepository = container.resolve<ResidentRepository>(
     'residentRepository',
   );
@@ -180,9 +200,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
   );
 
-  // 4. Map result to safe response
+  // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<ResidentListResponse>;
   }
 
   const paginated = result.data;
@@ -207,4 +227,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     },
     { status: 200 },
   );
-}
+};
+
+// Export wrapped handlers with required permissions
+export const POST = withPermission(
+  { permissions: ['resident:write'] },
+  handleAddResident,
+);
+
+export const GET = withPermission(
+  { permissions: ['resident:read'] },
+  handleListResidents,
+);

@@ -1,28 +1,29 @@
 /**
  * GET /api/tenants/siren/export — Export all RTs and their siren device ids as CSV.
  *
- * Admin-only (Super_Admin, enforced in the use case). The CSV opens directly in
- * Excel and also serves as the import template.
+ * Platform admin only (requires platform:provision permission).
+ * The CSV opens directly in Excel and also serves as the import template.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { ExportTenantSirenCsvUseCase } from '@core/domains/tenant/usecases';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+// ---------------------------------------------------------------------------
+// GET — Export siren CSV (PLATFORM_ADMIN only)
+// ---------------------------------------------------------------------------
+
+const handleExportSirenCsv: AuthorizedRouteHandler<unknown> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
-
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
 
   const useCase = container.resolve<ExportTenantSirenCsvUseCase>(
     'exportTenantSirenCsvUseCase',
@@ -42,4 +43,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   });
-}
+};
+
+export const GET = withPermission(
+  { permissions: ['platform:provision'] },
+  handleExportSirenCsv,
+);

@@ -1,41 +1,68 @@
 /**
  * POST /api/admin/impersonate — Start an impersonation session.
  *
- * Super_Admin only. Creates a time-limited token (max 60 min).
+ * Requires PLATFORM_ADMIN role with platform:manage permission.
+ * Creates a time-limited token (max 60 min).
  *
  * @see Requirements 30.3, 30.4
+ * @see Requirements 2.1, 2.2, 2.3 (Route Handler withPermission Migration)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
-import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { ImpersonateUseCase } from '@core/domains/operational/usecases';
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Response type for impersonation start endpoint.
+ */
+interface ImpersonateResponse {
+  data: {
+    sessionId: string;
+    token: string;
+    expiresAt: string;
+  };
+}
+
+/**
+ * Error response type.
+ */
+interface ErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+}
+
+/**
+ * Request body for starting impersonation.
+ */
+interface ImpersonateRequestBody {
+  impersonatedUserId?: string;
+  tenantId?: string;
+  durationMinutes?: number;
+}
+
+/**
+ * Handler for starting an impersonation session.
+ *
+ * AuthorizationContext is guaranteed to have platform:manage permission
+ * after withPermission validation.
+ */
+const handleStartImpersonation: AuthorizedRouteHandler<
+  ImpersonateResponse | ErrorResponse
+> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<ImpersonateResponse | ErrorResponse>> => {
   const correlationId =
-    request.headers.get('x-correlation-id') ?? generateCorrelationId();
+    request.headers.get('x-correlation-id') ?? crypto.randomUUID();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  if (authContext.role !== 'Super_Admin') {
-    return NextResponse.json(
-      {
-        code: 'AUTH_INSUFFICIENT_ROLE',
-        message: 'Forbidden',
-        correlationId,
-      },
-      { status: 403 },
-    );
-  }
-
+  // Parse and validate request body
   let body: unknown;
   try {
     body = await request.json();
@@ -50,11 +77,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const { impersonatedUserId, tenantId, durationMinutes } = body as {
-    impersonatedUserId?: string;
-    tenantId?: string;
-    durationMinutes?: number;
-  };
+  const { impersonatedUserId, tenantId, durationMinutes } =
+    body as ImpersonateRequestBody;
 
   if (!impersonatedUserId || typeof impersonatedUserId !== 'string') {
     return NextResponse.json(
@@ -78,6 +102,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  // Execute impersonation use case
   const useCase = container.resolve<ImpersonateUseCase>('impersonateUseCase');
   const result = await useCase.execute({
     impersonatorId: authContext.userId,
@@ -87,7 +112,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(
+      result.error,
+      correlationId,
+    ) as NextResponse<ErrorResponse>;
   }
 
   return NextResponse.json(
@@ -100,4 +128,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
+
+/**
+ * POST handler wrapped with platform:manage permission requirement.
+ *
+ * Only users with PLATFORM_ADMIN role (having platform:manage permission)
+ * can start impersonation sessions.
+ *
+ * @see Permission Mapping: /api/admin/impersonate → platform:manage
+ */
+export const POST = withPermission(
+  { permissions: ['platform:manage'] },
+  handleStartImpersonation,
+);

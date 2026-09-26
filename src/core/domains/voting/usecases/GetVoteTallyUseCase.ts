@@ -8,10 +8,11 @@
  * 3. If not cached → get from votingRepository.getVoteTally, cache result, return
  *
  * @see Requirements 8.6, 8.7
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
-import type { AuthContext } from '@core/protocols';
 import type { CacheProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { VotingRepository } from '../repositories/VotingRepository';
@@ -23,7 +24,7 @@ import type { VoteTally } from '../entities';
 
 export interface GetVoteTallyUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     voteId: string;
   }): Promise<DomainResult<VoteTally>>;
 }

@@ -17,14 +17,15 @@
  * own observability.
  *
  * @see Requirements 10.1, 10.2, 10.4, 10.5
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
   AlarmProtocol,
 } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { EmergencyRepository } from '../repositories/EmergencyRepository';
@@ -36,7 +37,7 @@ import type { EmergencyAlert, CreateEmergencyAlertInput } from '../entities';
 
 export interface TriggerEmergencyAlertUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreateEmergencyAlertInput;
   }): Promise<DomainResult<EmergencyAlert>>;
 }

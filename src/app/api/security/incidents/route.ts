@@ -2,7 +2,11 @@
  * POST /api/security/incidents — Create a new security incident.
  * GET  /api/security/incidents — List incidents for the tenant (paginated, filterable).
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * Permissions:
+ * - GET: security:read
+ * - POST: security:manage
+ *
+ * BFF pattern: withPermission wrapper → validate input → execute use case → return safe response.
  *
  * @see Requirements 32.1, 32.2, 32.4, 32.7, 32.8
  */
@@ -13,7 +17,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { CreateIncidentUseCase } from '@core/domains/incident/usecases';
 import type { IncidentRepository } from '@core/domains/incident/repositories/IncidentRepository';
 
@@ -68,24 +73,14 @@ const listQuerySchema = z.object({
 // POST handler — Create incident
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+async function handleCreateIncident(
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse> {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -112,7 +107,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<CreateIncidentUseCase>('createIncidentUseCase');
   const result = await useCase.execute({
     authContext,
@@ -129,7 +124,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -159,28 +154,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   );
 }
 
+export const POST = withPermission(
+  { permissions: ['security:manage'] },
+  handleCreateIncident,
+);
+
 // ---------------------------------------------------------------------------
 // GET handler — List incidents (paginated)
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+async function handleListIncidents(
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse> {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse query parameters
+  // 1. Parse query parameters
   const { searchParams } = new URL(request.url);
   const queryValidation = listQuerySchema.safeParse({
     page: searchParams.get('page') ?? undefined,
@@ -203,7 +193,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const { page, pageSize, status, severity, category } = queryValidation.data;
 
-  // 3. Query repository for incidents
+  // 2. Query repository for incidents
   const incidentRepository =
     container.resolve<IncidentRepository>('incidentRepository');
   const result = await incidentRepository.findByTenant(
@@ -249,3 +239,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     { status: 200 },
   );
 }
+
+export const GET = withPermission(
+  { permissions: ['security:read'] },
+  handleListIncidents,
+);

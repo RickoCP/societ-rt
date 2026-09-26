@@ -9,12 +9,16 @@
  * 4. Return ok(device)
  *
  * @see Requirements 36.1, 36.6, 36.7, 36.10
+ * @see Requirements 6.2, 6.5, 6.7 (AuthorizationContext migration)
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import { UserRole } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { isAuthorizationContext } from '@core/domains/authorization/types';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok, authorizationError } from '@core/utils';
-import { UserRole } from '@core/protocols';
 import type { AlarmRepository } from '../repositories/AlarmRepository';
 import type { AlarmDevice, RegisterAlarmDeviceInput } from '../entities';
 
@@ -24,10 +28,26 @@ import type { AlarmDevice, RegisterAlarmDeviceInput } from '../entities';
 
 export interface RegisterAlarmDeviceUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: RegisterAlarmDeviceInput;
   }): Promise<DomainResult<AlarmDevice>>;
 }
+
+// ---------------------------------------------------------------------------
+// Allowed roles for registering alarm devices
+// ---------------------------------------------------------------------------
+
+const ALLOWED_LEGACY_ROLES: ReadonlySet<UserRole> = new Set([
+  UserRole.Ketua_RT,
+  UserRole.Pengurus,
+]);
+
+const ALLOWED_MEMBERSHIP_ROLES: ReadonlySet<MembershipRole> = new Set([
+  MembershipRole.PLATFORM_ADMIN,
+  MembershipRole.TENANT_OWNER,
+  MembershipRole.RT_ADMIN,
+  MembershipRole.ORG_ADMIN,
+]);
 
 // ---------------------------------------------------------------------------
 // Factory implementation
@@ -41,21 +61,33 @@ export const RegisterAlarmDeviceUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): RegisterAlarmDeviceUseCase => ({
   execute: async ({ authContext, data }) => {
-    // 1. Validate role: only Ketua_RT or Pengurus can register alarm devices
-    if (
-      authContext.role !== UserRole.Ketua_RT &&
-      authContext.role !== UserRole.Pengurus
-    ) {
-      return fail(
-        authorizationError(
-          'AUTH_INSUFFICIENT_ROLE',
-          'Only Ketua_RT or Pengurus can register alarm devices',
-          {
-            userMessage:
-              'Anda tidak memiliki izin untuk mendaftarkan perangkat alarm.',
-          },
-        ),
-      );
+    // 1. Validate role: support both legacy and new role types
+    if (isAuthorizationContext(authContext)) {
+      if (!ALLOWED_MEMBERSHIP_ROLES.has(authContext.role)) {
+        return fail(
+          authorizationError(
+            'AUTH_INSUFFICIENT_ROLE',
+            'Only admins can register alarm devices',
+            {
+              userMessage:
+                'Anda tidak memiliki izin untuk mendaftarkan perangkat alarm.',
+            },
+          ),
+        );
+      }
+    } else {
+      if (!ALLOWED_LEGACY_ROLES.has(authContext.role)) {
+        return fail(
+          authorizationError(
+            'AUTH_INSUFFICIENT_ROLE',
+            'Only Ketua_RT or Pengurus can register alarm devices',
+            {
+              userMessage:
+                'Anda tidak memiliki izin untuk mendaftarkan perangkat alarm.',
+            },
+          ),
+        );
+      }
     }
 
     // 2. Register device via repository

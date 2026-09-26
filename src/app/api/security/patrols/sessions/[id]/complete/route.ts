@@ -1,9 +1,10 @@
 /**
  * POST /api/security/patrols/sessions/[id]/complete — Complete a patrol session.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: validate input → withPermission wrapper → execute use case → return safe response.
  *
  * @see Requirements 35.8
+ * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -12,7 +13,8 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { CompletePatrolUseCase } from '@core/domains/patrol/usecases';
 
 // ---------------------------------------------------------------------------
@@ -27,26 +29,29 @@ const completeSessionSchema = z.object({
 // POST handler — Complete patrol session
 // ---------------------------------------------------------------------------
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+const handleCompleteSession: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+  routeContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
+  // 1. Extract session ID from route params
+  const { id: sessionId } = await routeContext?.params ?? { id: '' };
+
+  if (!sessionId) {
     return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Session ID is required',
+        correlationId,
+      },
+      { status: 400 },
     );
   }
 
-  // 2. Extract session ID from route params
-  const { id: sessionId } = await params;
-
-  // 3. Parse and validate input
+  // 2. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -73,7 +78,7 @@ export async function POST(
     );
   }
 
-  // 4. Execute use case via DI
+  // 3. Execute use case via DI
   const useCase = container.resolve<CompletePatrolUseCase>('completePatrolUseCase');
   const result = await useCase.execute({
     authContext,
@@ -81,7 +86,7 @@ export async function POST(
     data: { distanceTraveled: validation.data.distanceTraveled },
   });
 
-  // 5. Map result to safe response
+  // 4. Map result to safe response
   if (!result.success) {
     return mapAppErrorToHttpResponse(result.error, correlationId);
   }
@@ -105,4 +110,9 @@ export async function POST(
     },
     { status: 200 },
   );
-}
+};
+
+export const POST = withPermission(
+  { permissions: ['security:write'] },
+  handleCompleteSession,
+);

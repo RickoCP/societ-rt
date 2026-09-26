@@ -1,9 +1,10 @@
 /**
  * GET /api/home/devices — Get device dashboard for the authenticated Home_Owner.
  *
- * BFF pattern: resolve auth → validate query → execute use case → return safe response.
+ * BFF pattern: withPermission → validate query → execute use case → return safe response.
  *
  * @see Requirements 37.2, 37.5
+ * @see Requirements 2.1, 2.2, 2.3 — Route handler migration to withPermission
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -11,7 +12,8 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { GetDeviceDashboardUseCase } from '@core/domains/societHome/usecases';
 
 // ---------------------------------------------------------------------------
@@ -26,24 +28,24 @@ const querySchema = z.object({
 // GET handler — Device dashboard
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handles GET /api/home/devices request.
+ *
+ * Returns a list of devices for the specified household.
+ * Requires `device:read` permission.
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @returns NextResponse with device dashboard data or error
+ */
+const handleGetDeviceDashboard: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Validate query params
+  // 1. Validate query params
   const { searchParams } = new URL(request.url);
   const validation = querySchema.safeParse({
     householdId: searchParams.get('householdId'),
@@ -60,7 +62,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   try {
     const useCase = container.resolve<GetDeviceDashboardUseCase>(
       'getDeviceDashboardUseCase',
@@ -70,7 +72,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       householdId: validation.data.householdId,
     });
 
-    // 4. Map result to safe response
+    // 3. Map result to safe response
     if (!result.success) {
       return mapAppErrorToHttpResponse(result.error, correlationId);
     }
@@ -99,4 +101,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       { status: 500 },
     );
   }
-}
+};
+
+/**
+ * GET /api/home/devices
+ *
+ * Permission: device:read
+ */
+export const GET = withPermission(
+  { permissions: ['device:read'] },
+  handleGetDeviceDashboard,
+);

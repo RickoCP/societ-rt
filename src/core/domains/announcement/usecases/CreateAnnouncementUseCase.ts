@@ -12,13 +12,14 @@
  * 6. Return ok(announcement)
  *
  * @see Requirements 9.1, 9.2, 9.3, 9.4, 9.5
+ * @see Requirements 6.2, 6.6 (AuthorizationContext migration)
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
 } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { AnnouncementRepository } from '../repositories/AnnouncementRepository';
@@ -42,7 +43,7 @@ const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export interface CreateAnnouncementUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreateAnnouncementInput;
     attachments?: AttachmentInput[];
   }): Promise<DomainResult<Announcement>>;

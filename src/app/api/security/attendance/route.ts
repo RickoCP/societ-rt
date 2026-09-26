@@ -1,7 +1,9 @@
 /**
  * POST /api/security/attendance — Record patrol attendance.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
  *
  * @see Requirements 12.2
  */
@@ -12,7 +14,11 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RecordPatrolAttendanceUseCase } from '@core/domains/security/usecases';
 
 // ---------------------------------------------------------------------------
@@ -25,27 +31,41 @@ const recordAttendanceSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface AttendanceResponse {
+  data: {
+    id: string;
+    scheduleId: string;
+    userId: string;
+    checkInTimestamp: string;
+    createdAt: string;
+  };
+}
+
+// ---------------------------------------------------------------------------
 // POST handler — Record attendance
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handle POST /api/security/attendance — Record patrol attendance.
+ *
+ * AuthorizationContext is guaranteed to have security:manage permission
+ * after withPermission validation.
+ *
+ * @param request - The incoming NextRequest
+ * @param authContext - The resolved AuthorizationContext (provided by withPermission)
+ * @returns NextResponse with recorded attendance or error
+ */
+const handleRecordAttendance: AuthorizedRouteHandler<AttendanceResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<AttendanceResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -55,7 +75,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      },
+      } as unknown as AttendanceResponse,
       { status: 400 },
     );
   }
@@ -67,12 +87,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         code: 'COMMON_VALIDATION_FAILED',
         fields: formatZodErrors(validation.error),
         correlationId,
-      },
+      } as unknown as AttendanceResponse,
       { status: 400 },
     );
   }
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
   const useCase = container.resolve<RecordPatrolAttendanceUseCase>(
     'recordPatrolAttendanceUseCase',
   );
@@ -84,9 +104,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<AttendanceResponse>;
   }
 
   const attendance = result.data;
@@ -103,4 +123,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
+
+// ---------------------------------------------------------------------------
+// Exported Route Handlers with Permission Checks
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/security/attendance — Record patrol attendance.
+ *
+ * Permission: security:manage (write access to security operations)
+ *
+ * @see Permission Mapping: /api/security/attendance POST → security:manage
+ */
+export const POST = withPermission(
+  { permissions: ['security:manage'] },
+  handleRecordAttendance,
+);

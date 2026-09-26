@@ -3,9 +3,17 @@
  * PATCH  /api/automation/rules/:id — Update an automation rule.
  * DELETE /api/automation/rules/:id — Delete an automation rule (disable).
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
+ * BFF pattern: withPermission → validate input → execute use case → return safe response.
+ *
+ * Migrated to withPermission pattern per Requirements 2.1, 2.2, 2.3.
+ *
+ * Authorization:
+ * - GET: iot:read (view automation rule details)
+ * - PATCH: iot:manage (update automation rule)
+ * - DELETE: iot:manage (delete automation rule)
  *
  * @see Requirements 39.1, 39.7
+ * @see Requirements 2.1 — withPermission pattern
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -14,7 +22,9 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { AutomationRepository } from '@core/domains/automation/repositories/AutomationRepository';
 
 // ---------------------------------------------------------------------------
@@ -85,22 +95,23 @@ const updateRuleSchema = z.object({
 // GET handler — Get single rule
 // ---------------------------------------------------------------------------
 
-export async function GET(
+/**
+ * Gets a single automation rule by ID.
+ *
+ * AuthorizationContext is guaranteed to have iot:read permission
+ * after withPermission validation.
+ *
+ * @see Permission Mapping: GET /api/automation/rules/:id → iot:read
+ */
+const handleGetRule: AuthorizedRouteHandler<void> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  context?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<void>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  const { id } = await params;
+  const { id } = await context!.params!;
 
   const automationRepository =
     container.resolve<AutomationRepository>('automationRepository');
@@ -110,7 +121,7 @@ export async function GET(
   );
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<void>;
   }
 
   if (!result.data) {
@@ -121,7 +132,7 @@ export async function GET(
         correlationId,
       },
       { status: 404 },
-    );
+    ) as NextResponse<void>;
   }
 
   const rule = result.data;
@@ -146,29 +157,30 @@ export async function GET(
       },
     },
     { status: 200 },
-  );
-}
+  ) as NextResponse<void>;
+};
 
 // ---------------------------------------------------------------------------
 // PATCH handler — Update rule
 // ---------------------------------------------------------------------------
 
-export async function PATCH(
+/**
+ * Updates an automation rule.
+ *
+ * AuthorizationContext is guaranteed to have iot:manage permission
+ * after withPermission validation.
+ *
+ * @see Permission Mapping: PATCH /api/automation/rules/:id → iot:manage
+ */
+const handleUpdateRule: AuthorizedRouteHandler<void> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  context?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<void>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  const { id } = await params;
+  const { id } = await context!.params!;
 
   let body: unknown;
   try {
@@ -181,7 +193,7 @@ export async function PATCH(
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<void>;
   }
 
   const validation = updateRuleSchema.safeParse(body);
@@ -193,7 +205,7 @@ export async function PATCH(
         correlationId,
       },
       { status: 400 },
-    );
+    ) as NextResponse<void>;
   }
 
   const automationRepository =
@@ -205,7 +217,7 @@ export async function PATCH(
   );
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<void>;
   }
 
   const rule = result.data;
@@ -230,29 +242,30 @@ export async function PATCH(
       },
     },
     { status: 200 },
-  );
-}
+  ) as NextResponse<void>;
+};
 
 // ---------------------------------------------------------------------------
 // DELETE handler — Disable/delete rule
 // ---------------------------------------------------------------------------
 
-export async function DELETE(
+/**
+ * Deletes (disables) an automation rule.
+ *
+ * AuthorizationContext is guaranteed to have iot:manage permission
+ * after withPermission validation.
+ *
+ * @see Permission Mapping: DELETE /api/automation/rules/:id → iot:manage
+ */
+const handleDeleteRule: AuthorizedRouteHandler<void> = async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  authContext: AuthorizationContext,
+  context?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<void>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      { code: 'AUTH_TOKEN_INVALID', message: 'Unauthorized', correlationId },
-      { status: 401 },
-    );
-  }
-
-  const { id } = await params;
+  const { id } = await context!.params!;
 
   const automationRepository =
     container.resolve<AutomationRepository>('automationRepository');
@@ -262,11 +275,45 @@ export async function DELETE(
   );
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<void>;
   }
 
   return NextResponse.json(
     { data: { id, disabled: true } },
     { status: 200 },
-  );
-}
+  ) as NextResponse<void>;
+};
+
+// ---------------------------------------------------------------------------
+// Export route handlers with permission wrappers
+// ---------------------------------------------------------------------------
+
+/**
+ * GET /api/automation/rules/:id — Get automation rule detail (requires iot:read)
+ *
+ * @see Permission Mapping: GET /api/automation/rules/:id → iot:read
+ */
+export const GET = withPermission(
+  { permissions: ['iot:read'] },
+  handleGetRule,
+);
+
+/**
+ * PATCH /api/automation/rules/:id — Update automation rule (requires iot:manage)
+ *
+ * @see Permission Mapping: PATCH /api/automation/rules/:id → iot:manage
+ */
+export const PATCH = withPermission(
+  { permissions: ['iot:manage'] },
+  handleUpdateRule,
+);
+
+/**
+ * DELETE /api/automation/rules/:id — Delete automation rule (requires iot:manage)
+ *
+ * @see Permission Mapping: DELETE /api/automation/rules/:id → iot:manage
+ */
+export const DELETE = withPermission(
+  { permissions: ['iot:manage'] },
+  handleDeleteRule,
+);

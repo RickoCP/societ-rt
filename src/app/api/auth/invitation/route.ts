@@ -1,10 +1,10 @@
 /**
  * POST /api/auth/invitation — Creates a time-limited invitation token.
  *
- * BFF pattern: validate input → resolve auth context → execute use case → return safe response.
- * This is a protected endpoint — requires Ketua_RT or Pengurus role.
+ * BFF pattern: validate input → auth context from wrapper → execute use case → return safe response.
+ * This is a protected endpoint — requires `membership:delegate` permission.
  *
- * @see Requirements 3.3, 4.6
+ * @see Requirements 3.3, 4.6, 17.1
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -14,7 +14,11 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { resolveAuthContext } from '@infrastructure/utils/resolveAuthContext';
+import {
+  withMembershipDelegate,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { CreateInvitationUseCase } from '@core/domains/auth/usecases';
 
 // ---------------------------------------------------------------------------
@@ -29,27 +33,43 @@ const invitationSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response Types
+// ---------------------------------------------------------------------------
+
+interface InvitationSuccessResponse {
+  data: {
+    token: string;
+    expiresAt: string;
+  };
+}
+
+interface InvitationErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type InvitationResponse = InvitationSuccessResponse | InvitationErrorResponse;
+
+// ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+/**
+ * Handler for POST /api/auth/invitation
+ *
+ * Receives AuthorizationContext from withMembershipDelegate wrapper.
+ * User is guaranteed to have `membership:delegate` permission.
+ */
+const handleCreateInvitation: AuthorizedRouteHandler<InvitationResponse> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse<InvitationResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  // 1. Resolve auth context from middleware-set headers
-  const authContext = resolveAuthContext(request);
-  if (!authContext) {
-    return NextResponse.json(
-      {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Unauthorized',
-        correlationId,
-      },
-      { status: 401 },
-    );
-  }
-
-  // 2. Parse and validate input
+  // 1. Parse and validate input
   let body: unknown;
   try {
     body = await request.json();
@@ -78,18 +98,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const { email, role } = validation.data;
 
-  // 3. Execute use case via DI
+  // 2. Execute use case via DI
+  // Note: We pass the full AuthorizationContext for compatibility
+  // The use case can use authContext.userId, authContext.tenantId, etc.
   const createInvitationUseCase =
     container.resolve<CreateInvitationUseCase>('createInvitationUseCase');
   const result = await createInvitationUseCase.execute({
-    authContext,
+    authContext: {
+      userId: authContext.userId,
+      tenantId: authContext.tenantId,
+      role: authContext.role,
+    },
     email,
     role,
   });
 
-  // 4. Map result to safe response
+  // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId);
+    return mapAppErrorToHttpResponse(
+      result.error,
+      correlationId,
+    ) as NextResponse<InvitationResponse>;
   }
 
   const invitation = result.data;
@@ -103,4 +132,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     },
     { status: 201 },
   );
-}
+};
+
+// Export wrapped handler with membership:delegate permission
+// This permission allows creating invitations for new members
+export const POST = withMembershipDelegate(handleCreateInvitation);
