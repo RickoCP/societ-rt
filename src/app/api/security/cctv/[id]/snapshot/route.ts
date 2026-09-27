@@ -9,7 +9,7 @@
  * @see Permission Mapping: POST /api/security/cctv/:id/snapshot → security:read
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
@@ -40,7 +40,18 @@ const handleCaptureSnapshot: AuthorizedRouteHandler<unknown> = async (
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
   // 1. Extract camera ID from route params
-  const { id: cameraId } = await routeContext!.params!;
+  const params = await routeContext!.params!;
+  const cameraId = params.id;
+  if (!cameraId) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Camera ID is required',
+        correlationId,
+      },
+      { status: 400 },
+    );
+  }
 
   // 2. Parse and validate input
   let body: unknown;

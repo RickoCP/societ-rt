@@ -40,7 +40,6 @@ import {
   CleanupError,
   DEFAULT_CLEANUP_OPTIONS,
   DEFAULT_APPROVAL_VALIDITY_MINUTES,
-  CLEANUP_SERVICE_VERSION,
 } from './types';
 
 // ---------------------------------------------------------------------------

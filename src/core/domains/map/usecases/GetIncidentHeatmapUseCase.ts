@@ -7,7 +7,7 @@
  * @see Requirements 42.7, 42.8
  */
 
-import type { AuthContext, UserRole } from '@core/protocols';
+import { UserRole } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, authorizationError } from '@core/utils';
 import type { IncidentRepository } from '../../incident/repositories/IncidentRepository';
@@ -16,16 +16,18 @@ import type {
   HeatmapPoint,
   HeatmapTimePeriod,
 } from '../entities/SecurityMapTypes';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, hasAllowedUserRole } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Allowed roles
 // ---------------------------------------------------------------------------
 
-const ALLOWED_ROLES: readonly UserRole[] = [
+const ALLOWED_ROLES: ReadonlySet<UserRole> = new Set([
   'Ketua_RT' as UserRole,
   'Pengurus' as UserRole,
   'Security_Guard' as UserRole,
-];
+]);
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -33,7 +35,7 @@ const ALLOWED_ROLES: readonly UserRole[] = [
 
 export interface GetIncidentHeatmapUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     timePeriodDays: HeatmapTimePeriod;
   }): Promise<DomainResult<IncidentHeatmapData>>;
 }
@@ -49,7 +51,7 @@ export const GetIncidentHeatmapUseCaseImpl = ({
 }): GetIncidentHeatmapUseCase => ({
   execute: async ({ authContext, timePeriodDays }) => {
     // Role check
-    if (!ALLOWED_ROLES.includes(authContext.role)) {
+    if (!hasAllowedUserRole(authContext, ALLOWED_ROLES)) {
       return fail(
         authorizationError(
           'SECURITY_MAP_ACCESS_DENIED',
@@ -58,7 +60,7 @@ export const GetIncidentHeatmapUseCaseImpl = ({
       );
     }
 
-    const tenantId = authContext.tenantId;
+    const tenantId = getTenantId(authContext);
 
     // Fetch incidents within the time period
     // We fetch a large page to get all incidents for heatmap calculation

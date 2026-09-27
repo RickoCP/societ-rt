@@ -12,12 +12,14 @@
  * @see Requirements 37.1, 37.4, 37.6, 38.2, 38.14
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import type { IoTGatewayProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getMembershipRole, getTenantId, getUserId } from '@core/domains/authorization/types/AuthContextCompat';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import { authorizationError } from '@core/utils';
-import { UserRole } from '@core/protocols';
 import type { IoTRepository } from '../repositories/IoTRepository';
 import type { IoTDevice, IoTDeviceType } from '../entities';
 import { iotPairingFailed } from '../errors/iotErrors';
@@ -39,7 +41,7 @@ export interface PairDeviceInput {
 
 export interface PairDeviceUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: PairDeviceInput;
   }): Promise<DomainResult<IoTDevice>>;
 }
@@ -58,10 +60,14 @@ export const PairDeviceUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): PairDeviceUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+    const role = getMembershipRole(authContext);
+
     // 1. Validate Home_Owner role (only Warga or Ketua_RT can pair devices)
     if (
-      authContext.role !== UserRole.Warga &&
-      authContext.role !== UserRole.Ketua_RT
+      role !== MembershipRole.WARGA &&
+      role !== MembershipRole.RT_ADMIN
     ) {
       return fail(
         authorizationError(
@@ -79,7 +85,7 @@ export const PairDeviceUseCaseImpl = ({
 
     // 3. Pair device via IoT Gateway (Tuya Cloud)
     const gatewayResult = await iotGatewayProtocol.pairDevice(
-      authContext.tenantId,
+      tenantId,
       data.householdId,
       pairingToken,
     );
@@ -90,7 +96,7 @@ export const PairDeviceUseCaseImpl = ({
 
     // 4. Register device in local repository
     const registerResult = await iotRepository.registerDevice(
-      authContext.tenantId,
+      tenantId,
       {
         householdId: data.householdId,
         tuyaDeviceId: gatewayResult.data.tuyaDeviceId,
@@ -109,8 +115,8 @@ export const PairDeviceUseCaseImpl = ({
     // 5. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'iot_device_paired',
         resourceType: 'iot_device',
         resourceId: device.id,

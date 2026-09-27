@@ -12,7 +12,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { withPermission } from '@infrastructure/middleware/authorization';
+import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { ExportResidentCsvUseCase } from '@core/domains/resident/usecases';
 
@@ -20,10 +20,10 @@ import type { ExportResidentCsvUseCase } from '@core/domains/resident/usecases';
 // GET handler — Export residents CSV
 // ---------------------------------------------------------------------------
 
-async function handleExportResidents(
+const handleExportResidents: AuthorizedRouteHandler = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse> {
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -49,7 +49,7 @@ async function handleExportResidents(
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   });
-}
+};
 
 export const GET = withPermission(
   { permissions: ['household:read'] },

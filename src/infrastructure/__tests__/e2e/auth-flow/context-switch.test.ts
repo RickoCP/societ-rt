@@ -916,10 +916,10 @@ describe('Context Switch E2E Integration Tests', () => {
         expect(result.data.memberships).toHaveLength(2);
 
         const rootMembership = result.data.memberships.find(
-          m => m.id === MEMBERSHIP_TENANT_A_ROOT_ID,
+          m => m.membershipId === MEMBERSHIP_TENANT_A_ROOT_ID,
         );
         const childMembership = result.data.memberships.find(
-          m => m.id === MEMBERSHIP_TENANT_A_CHILD_ID,
+          m => m.membershipId === MEMBERSHIP_TENANT_A_CHILD_ID,
         );
 
         expect(rootMembership?.role).toBe(MembershipRole.ORG_ADMIN);

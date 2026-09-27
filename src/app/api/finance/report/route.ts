@@ -42,14 +42,22 @@ interface FinancialReportResponse {
   };
 }
 
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  correlationId: string;
+}
+
+type FinancialReportApiResponse = FinancialReportResponse | ErrorResponse;
+
 // ---------------------------------------------------------------------------
 // GET handler — Get financial report
 // ---------------------------------------------------------------------------
 
-const handleGetFinancialReport: AuthorizedRouteHandler<FinancialReportResponse> = async (
+const handleGetFinancialReport: AuthorizedRouteHandler<FinancialReportApiResponse> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<FinancialReportResponse>> => {
+): Promise<NextResponse<FinancialReportApiResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -66,7 +74,7 @@ const handleGetFinancialReport: AuthorizedRouteHandler<FinancialReportResponse> 
         correlationId,
       },
       { status: 400 },
-    ) as NextResponse<FinancialReportResponse>;
+    );
   }
 
   const startDate = new Date(startDateParam);
@@ -80,7 +88,7 @@ const handleGetFinancialReport: AuthorizedRouteHandler<FinancialReportResponse> 
         correlationId,
       },
       { status: 400 },
-    ) as NextResponse<FinancialReportResponse>;
+    );
   }
 
   // Execute use case via DI
@@ -94,7 +102,7 @@ const handleGetFinancialReport: AuthorizedRouteHandler<FinancialReportResponse> 
 
   // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<FinancialReportResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const report = result.data;

@@ -670,8 +670,8 @@ describe('PerformanceTargetsValidationService', () => {
       expect(isOk(result)).toBe(true);
       if (isOk(result)) {
         expect(result.data.length).toBeGreaterThan(0);
-        expect(result.data[0].name).toBe('Test Benchmark');
-        expect(result.data[0].measuredAt).toBeInstanceOf(Date);
+        expect(result.data[0]!.name).toBe('Test Benchmark');
+        expect(result.data[0]!.measuredAt).toBeInstanceOf(Date);
       }
     });
   });

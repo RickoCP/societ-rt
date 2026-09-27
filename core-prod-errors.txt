@@ -1,0 +1,583 @@
+﻿
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+possibly 'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'IAuditTrailService' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with 
+the other. If this was intentional, convert the expression to 'unknown' first.
+'IAuditTrailService' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with 
+the other. If this was intentional, convert the expression to 'unknown' first.
+'undefined'.
+'undefined'.
+declared but its value is never read.
+is declared but its value is never read.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+'error' does not exist on type 'DomainResult<AuditEvent>'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+does not exist on type 'DomainResult<boolean>'.
+does not exist on type 'DomainResult<boolean>'.
+'error' does not exist on type 'DomainResult<boolean>'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<IsolationVerificationResult>'.
+does not exist on type 'DomainResult<VerificationCheckResult>'.
+does not exist on type 'DomainResult<VerificationCheckResult>'.
+'error' does not exist on type 'DomainResult<VerificationCheckResult>'.
+does not exist on type 'DomainResult<VerificationCheckResult>'.
+does not exist on type 'DomainResult<VerificationCheckResult>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<IsolationAuditReport>'.
+does not exist on type 'DomainResult<readonly IsolationViolationSummary[]>'.
+does not exist on type 'DomainResult<number>'.
+does not exist on type 'DomainResult<number>'.
+possibly 'undefined'.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1274,21): error TS2304: Cannot find name 
+'technicalError'.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1438,21): error TS2304: Cannot find name 
+'technicalError'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+is declared but its value is never read.
+is declared but its value is never read.
+possibly 'undefined'.
+declared but its value is never read.
+'AuthorizationErrorCodeType' is declared but its value is never read.
+is possibly 'undefined'.
+is possibly 'undefined'.
+is possibly 'undefined'.
+is possibly 'undefined'.
+is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+is possibly 'undefined'.
+is possibly 'undefined'.
+is possibly 'undefined'.
+is possibly 'undefined'.
+is possibly 'undefined'.
+is possibly 'undefined'.
+is possibly 'undefined'.
+is possibly 'undefined'.
+Object is possibly 'undefined'.
+Object is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+'entry' is possibly 'undefined'.
+Object is possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+'"SUSPENDED"' is not assignable to type 'MembershipStatus | undefined'.
+'"RT_ADMIN"' is not assignable to type 'MembershipRole | undefined'. Did you mean 'MembershipRole.ORG_ADMIN'?
+'"SUSPENDED"' is not assignable to type 'MembershipStatus | undefined'.
+'"RT_ADMIN"' is not assignable to type 'MembershipRole | undefined'. Did you mean 'MembershipRole.ORG_ADMIN'?
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<boolean>'.
+'error' does not exist on type 'DomainResult<boolean>'.
+'error' does not exist on type 'DomainResult<boolean>'.
+'error' does not exist on type 'DomainResult<boolean>'.
+'error' does not exist on type 'DomainResult<boolean>'.
+'error' does not exist on type 'DomainResult<boolean>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+possibly 'undefined'.
+possibly 'undefined'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+possibly 'undefined'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+possibly 'undefined'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<boolean>'.
+'error' does not exist on type 'DomainResult<boolean>'.
+'error' does not exist on type 'DomainResult<boolean>'.
+'error' does not exist on type 'DomainResult<boolean>'.
+'error' does not exist on type 'DomainResult<boolean>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+possibly 'undefined'.
+possibly 'undefined'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'error' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+'DisasterRecoveryTestingServiceDependencies' is declared but its value is never read.
+'DisasterRecoveryConfig' is declared but its value is never read.
+'ValidationTargetResult' is declared but its value is never read.
+'PerformanceRegression' is declared but its value is never read.
+'ScalabilityLimit' is declared but its value is never read.
+'isFail' is declared but its value is never read.
+Object is possibly 'undefined'.
+Object is possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+validateTenantIsolation: Mock<(input: any) => Promise<{ success: boolean; data: { status: string; message: string; }; 
+}>>; testTokenVersionMismatchRejection: Mock<(jwtVersion: any, dbVersion: any) => Promise<...>>; 
+testRefreshTokenReuseDetection: Mock<...>; validateMembershipResolutionSecurity: Mock<...>; }' is not assignable to type 
+'{ validateTenantIsolation: (input: { authContext: { tenantId: string; }; targetTenantId: string; resourceType: string; 
+resourceId: string; }) => Promise<DomainResult<{ status: string; message: string; }>>; 
+testTokenVersionMismatchRejection: (jwtTokenVersion: number, dbTokenVersion: number) => Promise<...>; testRefre...'.
+does not exist on type 'DomainResult<SecurityTestResult>'.
+does not exist on type 'DomainResult<SecurityTestResult>'.
+does not exist on type 'DomainResult<VulnerabilityScanResult>'.
+does not exist on type 'DomainResult<string>'.
+src/core/domains/authorization/services/AuthorizationConcurrencyService.ts(508,9): error TS6133: '_delay' is declared 
+but its value is never read.
+src/core/domains/authorization/services/CacheInvalidationService.ts(848,9): error TS6133: '_getTTLForType' is declared 
+but its value is never read.
+src/core/domains/authorization/services/CrossTenantPreventionService.ts(1023,39): error TS2532: Object is possibly 
+'undefined'.
+src/core/domains/authorization/services/CrossTenantPreventionService.ts(1023,63): error TS2532: Object is possibly 
+'undefined'.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(915,13): error TS6133: '_durationMs' is 
+declared but its value is never read.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(982,69): error TS18048: 'latestBackup' is 
+possibly 'undefined'.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(1020,13): error TS6133: '_durationMs' is 
+declared but its value is never read.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(1089,13): error TS6133: 'durationMs' is 
+declared but its value is never read.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(1182,13): error TS6133: 'durationMs' is 
+declared but its value is never read.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(1250,13): error TS6133: 'durationMs' is 
+declared but its value is never read.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(1356,13): error TS6133: 'durationMs' is 
+declared but its value is never read.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(1475,13): error TS6133: 'durationMs' is 
+declared but its value is never read.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(1586,13): error TS6133: 'durationMs' is 
+declared but its value is never read.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(1722,13): error TS6133: 'durationMs' is 
+declared but its value is never read.
+src/core/domains/authorization/services/DisasterRecoveryTestingService.ts(1840,13): error TS6133: 'durationMs' is 
+declared but its value is never read.
+src/core/domains/authorization/services/PerformanceTargetsValidationService.ts(35,27): error TS6133: 'technicalError' is 
+declared but its value is never read.
+src/core/domains/authorization/services/PerformanceTargetsValidationService.ts(589,22): error TS2769: No overload 
+matches this call.
+src/core/domains/authorization/services/PerformanceTargetsValidationService.ts(898,40): error TS2532: Object is possibly 
+'undefined'.
+src/core/domains/authorization/services/PerformanceTargetsValidationService.ts(913,5): error TS2322: Type 'number | 
+undefined' is not assignable to type 'number'.
+src/core/domains/authorization/services/PerformanceTargetsValidationService.ts(942,7): error TS2322: Type 'number | 
+undefined' is not assignable to type 'number'.
+src/core/domains/authorization/services/PerformanceTargetsValidationService.ts(943,7): error TS2322: Type 'number | 
+undefined' is not assignable to type 'number'.
+src/core/domains/authorization/services/PerformanceValidationService.ts(786,34): error TS2532: Object is possibly 
+'undefined'.
+src/core/domains/authorization/services/PerformanceValidationService.ts(811,5): error TS2322: Type 'number | undefined' 
+is not assignable to type 'number'.
+src/core/domains/authorization/services/PerformanceValidationService.ts(850,7): error TS2322: Type 'number | undefined' 
+is not assignable to type 'number'.
+src/core/domains/authorization/services/PerformanceValidationService.ts(851,7): error TS2322: Type 'number | undefined' 
+is not assignable to type 'number'.
+src/core/domains/authorization/services/PerformanceValidationService.ts(1344,41): error TS2532: Object is possibly 
+'undefined'.
+src/core/domains/authorization/services/PerformanceValidationService.ts(2041,15): error TS6133: 'opsPerUser' is declared 
+but its value is never read.
+src/core/domains/authorization/services/PerformanceValidationService.ts(2066,15): error TS6133: 'authSorted' is declared 
+but its value is never read.
+src/core/domains/authorization/services/PerformanceValidationService.ts(2067,15): error TS6133: 'permSorted' is declared 
+but its value is never read.
+src/core/domains/authorization/services/PermissionSyncService.ts(40,3): error TS6133: 'permissionSyncTimeout' is 
+declared but its value is never read.
+src/core/domains/authorization/services/PermissionSyncService.ts(41,3): error TS6133: 'permissionSyncSourceUnavailable' 
+is declared but its value is never read.
+src/core/domains/authorization/services/PermissionSyncService.ts(44,3): error TS6133: 'PERMISSION_REGISTRY' is declared 
+but its value is never read.
+src/core/domains/authorization/services/SecurityTestingSuite.ts(1189,21): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/SecurityTestingSuite.ts(1437,7): error TS6133: 'originalJwt' is declared but its 
+value is never read.
+src/core/domains/authorization/services/SecurityTestingSuite.ts(1521,7): error TS6133: 'revokedTokenHash' is declared 
+but its value is never read.
+src/core/domains/authorization/services/ShadowModeFeatureFlagService.ts(34,3): error TS6133: 
+'DEFAULT_SHADOW_MODE_ENV_CONFIG' is declared but its value is never read.
+src/core/domains/authorization/services/ShadowModeFeatureFlagService.ts(636,15): error TS6133: 'checkRoutes' is declared 
+but its value is never read.
+value is never read.
+its value is never read.
+known properties, and 'isNameUnique' does not exist in type 'ISubscriptionPlanRepository'.
+assignable to type 'UserRole'.
+src/core/domains/billing/services/BillingService.ts(37,7): error TS6133: '_DEFAULT_RETRY_INTERVAL_HOURS' is declared but 
+its value is never read.
+src/core/domains/doorMonitoring/usecases/GetDoorStateDashboardUseCase.ts(39,7): error TS2322: Type 'Set<"RT_ADMIN" | 
+"PLATFORM_ADMIN" | "SECURITY_GUARD" | "RT_STAFF">' is not assignable to type 'ReadonlySet<MembershipRole>'.
+src/core/domains/doorMonitoring/usecases/RegisterDoorSensorUseCase.ts(49,7): error TS2322: Type 'Set<"PLATFORM_ADMIN">' 
+is not assignable to type 'ReadonlySet<MembershipRole>'.
+src/core/domains/doorMonitoring/usecases/RequestDoorSensorInstallationUseCase.ts(42,7): error TS2322: Type 
+'Set<"RT_ADMIN" | "RT_STAFF">' is not assignable to type 'ReadonlySet<MembershipRole>'.
+src/core/domains/doorMonitoring/usecases/ResolveDoorInstallationRequestUseCase.ts(46,7): error TS2322: Type 
+'Set<"PLATFORM_ADMIN">' is not assignable to type 'ReadonlySet<MembershipRole>'.
+src/core/domains/doorMonitoring/usecases/SetMonitoringWindowUseCase.ts(47,7): error TS2322: Type 'Set<"RESIDENT" | 
+"RT_ADMIN">' is not assignable to type 'ReadonlySet<MembershipRole>'.
+is declared but its value is never read.
+possibly 'undefined'.
+possibly 'undefined'.
+possibly 'undefined'.
+declared but its value is never read.
+'undefined'.
+'undefined'.
+code: string; message: string; }' is not assignable to parameter of type 'AppError'.
+'undefined'.
+assignable to type 'OrgUnitType'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+'CreateMembershipResult' is declared but never used.
+may only specify known properties, and 'getPath' does not exist in type 'Mocked<IOrgUnitHierarchyReader>'.
+type 'boolean' is not assignable to parameter of type 'DomainResult<boolean>'.
+type 'boolean' is not assignable to parameter of type 'DomainResult<boolean>'.
+type 'boolean' is not assignable to parameter of type 'DomainResult<boolean>'.
+type 'boolean' is not assignable to parameter of type 'DomainResult<boolean>'.
+type 'boolean' is not assignable to parameter of type 'DomainResult<boolean>'.
+type 'boolean' is not assignable to parameter of type 'DomainResult<boolean>'.
+type '() => Promise<boolean>' is not assignable to parameter of type 'NormalizedProcedure<(resourceOrgUnitId: string, 
+membershipOrgUnitId: string, tenantId: string) => Promise<DomainResult<boolean>>>'.
+type '() => Promise<boolean>' is not assignable to parameter of type 'NormalizedProcedure<(resourceOrgUnitId: string, 
+membershipOrgUnitId: string, tenantId: string) => Promise<DomainResult<boolean>>>'.
+but its value is never read.
+may only specify known properties, but 'findByMembership' does not exist in type 
+'Mocked<IMembershipInvitationRepository>'. Did you mean to write 'findByMembershipId'?
+may only specify known properties, and 'getAssignableRoles' does not exist in type 'Mocked<IDelegationMatrixService>'.
+may only specify known properties, and 'getPath' does not exist in type 'Mocked<IOrgUnitHierarchyReader>'.
+'KETUA_RT' does not exist on type 'typeof MembershipRole'.
+'KETUA_RT' does not exist on type 'typeof MembershipRole'.
+'"RESIDENT cannot delegate roles"' is not assignable to type 'DelegationDecisionReason'.
+'KETUA_RT' does not exist on type 'typeof MembershipRole'.
+'KETUA_RT' does not exist on type 'typeof MembershipRole'.
+'KETUA_RT' does not exist on type 'typeof MembershipRole'.
+'KETUA_RT' does not exist on type 'typeof MembershipRole'.
+src/core/domains/membership/services/DelegationMatrixService.ts(420,15): error TS6133: '_reason' is declared but its 
+value is never read.
+value is never read.
+tenantId: string; membershipId: string; orgUnitId: string | null; role: MembershipRole; permissions: Set<string>; 
+tokenVersion: number; }' is missing the following properties from type 'AuthorizationContext': isAuthoritative, 
+isTenantLevel, membership
+tenantId: string; membershipId: string; orgUnitId: string | null; role: MembershipRole; permissions: 
+ReadonlySet<string>; tokenVersion: number; isAuthoritative?: boolean | undefined; isTenantLevel?: boolean | undefined; 
+membership?: Membership | undefined; }' is not assignable to type 'AuthorizationContext'.
+true; }>' is not assignable to type 'MockInstance<(orgUnit: OrgUnit) => PathValidationResult> & ((orgUnit: OrgUnit) => 
+PathValidationResult)'.
+true; }>' is not assignable to type 'MockInstance<(orgUnit: OrgUnit) => PathValidationResult> & ((orgUnit: OrgUnit) => 
+PathValidationResult)'.
+DomainResult<undefined>>' is not assignable to type 'MockInstance<(orgUnit: OrgUnit) => DomainResult<void>> & ((orgUnit: 
+OrgUnit) => DomainResult<void>)'.
+'string | undefined' is not assignable to parameter of type 'string'.
+any) => { isValid: boolean; failedInvariant: string; errorMessage: string; } | { isValid: boolean; failedInvariant?: 
+undefined; errorMessage?: undefined; }>' is not assignable to type '(orgUnit: OrgUnit) => PathValidationResult'.
+any) => { isValid: boolean; failedInvariant: string; errorMessage: string; } | { isValid: boolean; failedInvariant?: 
+undefined; errorMessage?: undefined; }>' is not assignable to type '(orgUnit: OrgUnit) => PathValidationResult'.
+'string | undefined' is not assignable to parameter of type 'string'.
+'undefined'.
+'undefined'.
+'undefined'.
+'undefined'.
+src/core/domains/orgunit/services/MultiClusterService.ts(76,3): error TS6133: 'parentId' is declared but its value is 
+never read.
+src/core/domains/orgunit/services/OrgUnitCrudService.ts(308,3): error TS6133: 'hierarchyReader' is declared but its 
+value is never read.
+src/core/domains/orgunit/services/OrgUnitManagementService.ts(30,24): error TS6196: 'CreateOrgUnitInput' is declared but 
+never used.
+src/core/domains/orgunit/services/OrgUnitManagementService.ts(40,3): error TS6133: 'orgUnitTenantMismatch' is declared 
+but its value is never read.
+src/core/domains/orgunit/services/OrgUnitManagementService.ts(41,3): error TS6133: 'orgUnitCycleDetected' is declared 
+but its value is never read.
+src/core/domains/orgunit/services/OrgUnitManagementService.ts(627,22): error TS2540: Cannot assign to 'name' because it 
+is a read-only property.
+src/core/domains/orgunit/services/OrgUnitManagementService.ts(646,22): error TS2540: Cannot assign to 'type' because it 
+is a read-only property.
+src/core/domains/orgunit/services/OrgUnitManagementService.ts(960,18): error TS2540: Cannot assign to 'applied' because 
+it is a read-only property.
+src/core/domains/subscription/entities/SubscriptionPlan.ts(14,1): error TS6133: 'PlanFeature' is declared but its value 
+is never read.
+declared but its value is never read.
+declared but its value is never read.
+src/core/domains/tenant/services/TenantOnboardingService.ts(31,1): error TS6133: 'TenantRepository' is declared but its 
+value is never read.
+src/core/domains/tenant/services/TenantOnboardingService.ts(31,39): error TS2307: Cannot find module '../repositories' 
+or its corresponding type declarations.
+src/core/domains/tenant/services/TenantOnboardingService.ts(32,24): error TS6196: 'CreateOrgUnitInput' is declared but 
+never used.
+its value is never read.
+declared but its value is never read.
+src/core/domains/transfer/services/TenantTransferService.ts(27,3): error TS6196: 'TransferAuditRecord' is declared but 
+never used.
+src/core/domains/transfer/services/TenantTransferService.ts(34,3): error TS6133: 'isTerminalTransferStatus' is declared 
+but its value is never read.
+src/core/domains/transfer/services/TenantTransferService.ts(36,3): error TS6133: 'isValidTransferStatusTransition' is 
+declared but its value is never read.
+src/core/domains/transfer/services/TenantTransferService.ts(48,3): error TS6133: 'reAuthenticationRequired' is declared 
+but its value is never read.
+src/core/domains/transfer/services/TenantTransferService.ts(53,3): error TS6133: 'invalidTransferStatusTransition' is 
+declared but its value is never read.
+src/core/domains/transfer/services/TenantTransferService.ts(58,1): error TS6192: All imports in import declaration are 
+unused.
+src/core/domains/transfer/services/TenantTransferService.ts(622,35): error TS2322: Type 'TenantTransfer | undefined' is 
+not assignable to type 'TenantTransfer | null'.
+is never read.
+never read.
+never read.
+
+

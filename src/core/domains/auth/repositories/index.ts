@@ -6,7 +6,7 @@ export type {
 
 export type {
   RefreshTokenRepository,
-  CreateRefreshTokenInput,
+  RepoCreateRefreshTokenInput,
   RevokeTokenInput,
   RefreshTokenQueryOptions,
 } from './RefreshTokenRepository';

@@ -174,7 +174,7 @@ export type {
   TokenBindingValidationReason,
   RefreshSecurityEvent,
   RefreshSecurityEventType,
-  SecurityEventSeverity,
+  RefreshSecuritySeverity,
   RefreshSecurityAuditLogger,
   RefreshSecurityValidationResult,
 } from './RefreshTokenSecurityService';

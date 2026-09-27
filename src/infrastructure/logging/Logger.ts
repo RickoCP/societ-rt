@@ -35,7 +35,7 @@
  * @see Requirements 25.1, 25.2
  */
 
-import { logSanitizer, type LogSanitizer, createLogSanitizer } from './LogSanitizer';
+import { logSanitizer, type LogSanitizer } from './LogSanitizer';
 import {
   getLoggingConfiguration,
   type LoggingConfiguration,
@@ -96,55 +96,6 @@ export interface LoggerConfig {
   readonly serviceName?: string;
   /** Override service version */
   readonly serviceVersion?: string;
-}
-
-// ---------------------------------------------------------------------------
-// Legacy Sensitive Keys (kept for backward compatibility reference)
-// ---------------------------------------------------------------------------
-
-/**
- * @deprecated Use LogSanitizer from './LogSanitizer' for comprehensive sanitization.
- * This set is kept for backward compatibility but LogSanitizer provides:
- * - More comprehensive key detection
- * - PII masking instead of full redaction
- * - Pattern detection for embedded secrets
- * - Deep object sanitization
- */
-const LEGACY_SENSITIVE_KEYS = new Set([
-  'password',
-  'token',
-  'accesstoken',
-  'refreshtoken',
-  'access_token',
-  'refresh_token',
-  'otp',
-  'cvv',
-  'secret',
-  'authorization',
-  'cookie',
-  'creditcard',
-  'credit_card',
-]);
-
-/**
- * @deprecated Use LogSanitizer.sanitizePayload() instead.
- * Recursively redact values whose keys match known sensitive patterns.
- * Returns a new object — the original is never mutated.
- */
-function redactSensitive(obj: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(obj)) {
-    if (LEGACY_SENSITIVE_KEYS.has(key.toLowerCase())) {
-      result[key] = '[REDACTED]';
-    } else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      result[key] = redactSensitive(value as Record<string, unknown>);
-    } else {
-      result[key] = value;
-    }
-  }
-
-  return result;
 }
 
 // ---------------------------------------------------------------------------

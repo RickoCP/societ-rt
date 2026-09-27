@@ -734,11 +734,14 @@ async function main(): Promise<void> {
   }
 }
 
-// Run main
-main().catch(error => {
-  console.error('Fatal error:', error);
-  process.exit(2);
-});
+// Run if executed directly (not when imported as a module)
+const isMainModule = process.argv[1]?.includes('verify-performance');
+if (isMainModule) {
+  main().catch(error => {
+    console.error('Fatal error:', error);
+    process.exit(2);
+  });
+}
 
 export {
   type VerificationSummary,

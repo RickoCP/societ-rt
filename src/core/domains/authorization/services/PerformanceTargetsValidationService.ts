@@ -32,7 +32,7 @@
 
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
-import { unexpectedError, technicalError } from '@core/utils';
+import { unexpectedError } from '@core/utils';
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -586,7 +586,7 @@ export const DEFAULT_SCALABILITY_LIMITS = {
  * Default baseline configuration.
  */
 export const DEFAULT_BASELINE_CONFIG: BaselineConfig = {
-  baselines: new Map([
+  baselines: new Map<string, number>([
     [ValidationTargetId.V1_AUTH_CONTEXT_RESOLUTION, 50], // 50ms baseline
     [ValidationTargetId.V2_PERMISSION_LOOKUP, 5], // 5ms baseline
     [ValidationTargetId.V3_RLS_OVERHEAD, 10], // 10% baseline
@@ -895,7 +895,7 @@ export const PerformanceTargetsValidationServiceImpl = (
   // Helper: Clean up old samples
   const cleanupOldSamples = (targetSamples: Array<{ timestamp: Date }>) => {
     const cutoff = Date.now() - retentionMinutes * 60 * 1000;
-    while (targetSamples.length > 0 && targetSamples[0].timestamp.getTime() < cutoff) {
+    while (targetSamples.length > 0 && (targetSamples[0]?.timestamp.getTime() ?? 0) < cutoff) {
       targetSamples.shift();
     }
     while (targetSamples.length > maxSamples) {
@@ -910,7 +910,7 @@ export const PerformanceTargetsValidationServiceImpl = (
   ): number => {
     if (sortedValues.length === 0) return 0;
     const index = Math.ceil((percentile / 100) * sortedValues.length) - 1;
-    return sortedValues[Math.max(0, Math.min(index, sortedValues.length - 1))];
+    return sortedValues[Math.max(0, Math.min(index, sortedValues.length - 1))] ?? 0;
   };
 
   // Helper: Calculate statistics
@@ -939,8 +939,8 @@ export const PerformanceTargetsValidationServiceImpl = (
     const stdDev = Math.sqrt(avgSquaredDiff);
 
     return {
-      min: sorted[0],
-      max: sorted[sorted.length - 1],
+      min: sorted[0] ?? 0,
+      max: sorted[sorted.length - 1] ?? 0,
       mean: Math.round(mean * 100) / 100,
       median: calculatePercentile(sorted, 50),
       p75: calculatePercentile(sorted, 75),

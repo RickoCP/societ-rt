@@ -13,7 +13,6 @@
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   FileStorageProtocol,
 } from '@core/protocols';
@@ -23,6 +22,18 @@ import { UserRole } from '@core/protocols';
 import type { CctvRepository } from '../repositories/CctvRepository';
 import type { CctvSnapshot, CctvSnapshotTriggerType } from '../entities';
 import { cctvCameraNotFound, cctvCameraOffline } from '../errors/cctvErrors';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { hasAllowedUserRole, getTenantId, getUserId } from '@core/domains/authorization/types';
+
+// ---------------------------------------------------------------------------
+// Allowed roles
+// ---------------------------------------------------------------------------
+
+const ALLOWED_ROLES: ReadonlySet<UserRole> = new Set([
+  UserRole.Security_Guard,
+  UserRole.Pengurus,
+  UserRole.Ketua_RT,
+]);
 
 // ---------------------------------------------------------------------------
 // Input type
@@ -40,7 +51,7 @@ export interface CaptureSnapshotInput {
 
 export interface CaptureSnapshotUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CaptureSnapshotInput;
   }): Promise<DomainResult<CctvSnapshot>>;
 }
@@ -59,12 +70,11 @@ export const CaptureSnapshotUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): CaptureSnapshotUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Validate role: only Security_Guard, Pengurus, or Ketua_RT
-    if (
-      authContext.role !== UserRole.Security_Guard &&
-      authContext.role !== UserRole.Pengurus &&
-      authContext.role !== UserRole.Ketua_RT
-    ) {
+    if (!hasAllowedUserRole(authContext, ALLOWED_ROLES)) {
       return fail(
         authorizationError(
           'AUTH_INSUFFICIENT_ROLE',
@@ -75,7 +85,7 @@ export const CaptureSnapshotUseCaseImpl = ({
     }
 
     // 2. Verify camera exists and is online
-    const camerasResult = await cctvRepository.findByTenant(authContext.tenantId);
+    const camerasResult = await cctvRepository.findByTenant(tenantId);
     if (!camerasResult.success) {
       return fail(camerasResult.error);
     }
@@ -95,13 +105,13 @@ export const CaptureSnapshotUseCaseImpl = ({
       originalFilename: `snapshot_${data.cameraId}_${Date.now()}.jpg`,
       mimeType: 'image/jpeg',
       sizeBytes: data.imageBuffer.length,
-      tenantId: authContext.tenantId,
+      tenantId,
       domain: 'cctv',
     });
 
     // 4. Associate snapshot with camera via repository
     const snapshotResult = await cctvRepository.captureSnapshot(
-      authContext.tenantId,
+      tenantId,
       data.cameraId,
       fileMetadata.key,
       data.triggerType,
@@ -116,8 +126,8 @@ export const CaptureSnapshotUseCaseImpl = ({
     // 5. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'cctv_snapshot_captured',
         resourceType: 'cctv_snapshot',
         resourceId: snapshot.id,

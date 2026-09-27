@@ -10,11 +10,13 @@
  * @see Requirements 12.2
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { SecurityRepository } from '../repositories/SecurityRepository';
 import type { PatrolAttendance, RecordAttendanceInput } from '../entities';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -22,7 +24,7 @@ import type { PatrolAttendance, RecordAttendanceInput } from '../entities';
 
 export interface RecordPatrolAttendanceUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: RecordAttendanceInput;
   }): Promise<DomainResult<PatrolAttendance>>;
 }
@@ -39,10 +41,13 @@ export const RecordPatrolAttendanceUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): RecordPatrolAttendanceUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Record attendance via repository
     const result = await securityRepository.recordAttendance(
-      authContext.tenantId,
-      authContext.userId,
+      tenantId,
+      userId,
       data,
     );
 
@@ -55,8 +60,8 @@ export const RecordPatrolAttendanceUseCaseImpl = ({
     // 2. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'patrol_attendance_recorded',
         resourceType: 'patrol_attendance',
         resourceId: attendance.id,

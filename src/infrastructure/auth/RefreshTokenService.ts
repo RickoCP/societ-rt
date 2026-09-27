@@ -15,10 +15,9 @@
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
-import type { RefreshToken, RefreshTokenAuditEntry, RefreshTokenOperation } from '@core/domains/auth/entities/RefreshToken';
+import type { RefreshToken, RefreshTokenAuditEntry } from '@core/domains/auth/entities/RefreshToken';
 import { DEFAULT_REFRESH_TOKEN_CONFIG, getRefreshTokenStatus } from '@core/domains/auth/entities/RefreshToken';
 import type { RefreshTokenRepository, CreateRefreshTokenInput as RepoCreateInput } from '@core/domains/auth/repositories/RefreshTokenRepository';
-import type { AppError } from '@core/utils';
 import { fail, isFail, ok, type DomainResult } from '@core/utils';
 import {
   authRefreshTokenExpired,

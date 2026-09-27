@@ -18,22 +18,25 @@ import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GetTenantHealthUseCase } from '@core/domains/operational/usecases';
 
 /**
- * Response type for tenant health endpoint.
+ * Response type for tenant health endpoint (success).
+ * Matches TenantHealthMetrics from operational domain.
  */
-interface TenantHealthResponse {
+interface TenantHealthSuccessResponse {
   data: {
-    tenantId: string;
-    status: string;
-    activeUsers: number;
-    totalResidents: number;
+    activeUsers30d: number;
+    storageUsageBytes: number;
+    apiRequests30d: number;
     lastActivity: string | null;
-    healthScore: number;
   };
 }
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
+interface ErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
 }
+
+type TenantHealthResponse = TenantHealthSuccessResponse | ErrorResponse;
 
 /**
  * Handler for getting tenant health metrics.
@@ -43,13 +46,24 @@ interface RouteParams {
  */
 const handleGetTenantHealth: AuthorizedRouteHandler<TenantHealthResponse> = async (
   request: NextRequest,
-  authContext: AuthorizationContext,
-  routeContext?: RouteParams,
+  _authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
 ): Promise<NextResponse<TenantHealthResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? crypto.randomUUID();
 
-  const { id: tenantId } = await routeContext!.params;
+  const params = await routeContext?.params;
+  const tenantId = params?.id;
+  if (!tenantId) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Missing id parameter',
+        correlationId,
+      },
+      { status: 400 },
+    );
+  }
 
   const useCase = container.resolve<GetTenantHealthUseCase>(
     'getTenantHealthUseCase',
@@ -57,16 +71,15 @@ const handleGetTenantHealth: AuthorizedRouteHandler<TenantHealthResponse> = asyn
   const result = await useCase.execute({ tenantId });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(
-      result.error,
-      correlationId,
-    ) as NextResponse<TenantHealthResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(
     {
       data: {
-        ...result.data,
+        activeUsers30d: result.data.activeUsers30d,
+        storageUsageBytes: result.data.storageUsageBytes,
+        apiRequests30d: result.data.apiRequests30d,
         lastActivity: result.data.lastActivity?.toISOString() ?? null,
       },
     },

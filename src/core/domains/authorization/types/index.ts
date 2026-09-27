@@ -28,6 +28,10 @@ export {
   isTenantLevel,
   getUserId,
   getTenantId,
+  hasAllowedUserRole,
+  hasAllowedMembershipRole,
+  hasUserRole,
+  getImpersonatorId,
 } from './AuthContextCompat';
 
 // Shadow Authorization Types (FASE 1.9 - Task 21)

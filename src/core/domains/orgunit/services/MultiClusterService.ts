@@ -73,7 +73,7 @@ const notACluster = (orgUnitId: string, actualType: OrgUnitType): AppError => ({
  * Create invalid cluster parent error.
  */
 const invalidClusterParent = (
-  parentId: string | null,
+  _parentId: string | null, // Not used in message but kept for context
   parentType: OrgUnitType | null,
 ): AppError => ({
   code: 'CLUSTER_INVALID_PARENT',

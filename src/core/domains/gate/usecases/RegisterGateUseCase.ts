@@ -10,12 +10,14 @@
  * @see Requirements 33.1, 33.7, 33.10
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { fail, ok, authorizationError } from '@core/utils';
 import { UserRole } from '@core/protocols';
 import type { GateRepository } from '../repositories/GateRepository';
 import type { Gate, RegisterGateInput } from '../entities';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId, hasAllowedUserRole } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -23,7 +25,7 @@ import type { Gate, RegisterGateInput } from '../entities';
 
 export interface RegisterGateUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: RegisterGateInput;
   }): Promise<DomainResult<Gate>>;
 }
@@ -40,11 +42,12 @@ export const RegisterGateUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): RegisterGateUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Validate role: only Ketua_RT or Pengurus can register gates
-    if (
-      authContext.role !== UserRole.Ketua_RT &&
-      authContext.role !== UserRole.Pengurus
-    ) {
+    const ALLOWED_ROLES = new Set([UserRole.Ketua_RT, UserRole.Pengurus]);
+    if (!hasAllowedUserRole(authContext, ALLOWED_ROLES)) {
       return fail(
         authorizationError(
           'AUTH_INSUFFICIENT_ROLE',
@@ -56,7 +59,7 @@ export const RegisterGateUseCaseImpl = ({
 
     // 2. Register gate via repository
     const result = await gateRepository.registerGate(
-      authContext.tenantId,
+      tenantId,
       data,
     );
 
@@ -69,8 +72,8 @@ export const RegisterGateUseCaseImpl = ({
     // 3. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'gate_registered',
         resourceType: 'gate',
         resourceId: gate.id,

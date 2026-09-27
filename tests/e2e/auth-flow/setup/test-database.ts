@@ -11,7 +11,7 @@
  * @see Design Integration Test Suite for Auth Flow
  */
 
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient, TenantStatus, OrgUnitType, UserRole as PrismaUserRole } from '../../../../src/generated/prisma/client';
 import { MembershipRole, MembershipStatus } from '@core/domains/membership/types';
 
 // ---------------------------------------------------------------------------
@@ -31,7 +31,7 @@ export function getTestPrismaClient(): PrismaClient {
   if (!testPrismaClient) {
     testPrismaClient = new PrismaClient({
       log: process.env.DEBUG_PRISMA === 'true' ? ['query', 'error', 'warn'] : ['error'],
-    });
+    } as Parameters<typeof PrismaClient>[0]);
   }
   return testPrismaClient;
 }
@@ -77,7 +77,7 @@ export interface TestTenantConfig {
   readonly id: string;
   readonly name: string;
   readonly slug: string;
-  readonly subscriptionStatus?: 'ACTIVE' | 'SUSPENDED' | 'TRIAL';
+  readonly subscriptionStatus?: TenantStatus;
 }
 
 /**
@@ -105,7 +105,7 @@ export async function createTestTenant(
       email: `${config.slug}@test.societ-rt.local`,
       phone: '+62-000-0000-0000',
       address: 'Test Address',
-      status: config.subscriptionStatus ?? 'ACTIVE',
+      status: config.subscriptionStatus ?? TenantStatus.active,
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -135,7 +135,7 @@ export interface TestOrgUnitConfig {
   readonly id: string;
   readonly tenantId: string;
   readonly name: string;
-  readonly type: 'RT' | 'RW' | 'CLUSTER' | 'TOWER';
+  readonly type: OrgUnitType;
   readonly parentId?: string | null;
   readonly code?: string;
 }
@@ -164,7 +164,7 @@ export async function createTestOrgUnit(
       name: config.name,
       type: config.type,
       code: config.code ?? config.name.toUpperCase().replace(/\s/g, '_'),
-      parentId: config.parentId ?? null,
+      parentId: config.parentId ?? undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -183,7 +183,7 @@ export interface TestUserConfig {
   readonly email: string;
   readonly name: string;
   readonly tokenVersion?: number;
-  readonly legacyRole?: UserRole;
+  readonly legacyRole?: PrismaUserRole;
   readonly legacyTenantId?: string | null;
 }
 
@@ -211,8 +211,8 @@ export async function createTestUser(
       passwordHash: '$2b$10$test-password-hash', // Placeholder for tests
       name: config.name,
       phone: '+62-000-0000-0001',
-      role: config.legacyRole ?? UserRole.Warga,
-      tenantId: config.legacyTenantId ?? null,
+      role: config.legacyRole ?? PrismaUserRole.Warga,
+      tenantId: config.legacyTenantId ?? undefined,
       tokenVersion: config.tokenVersion ?? 1,
       createdAt: new Date(),
       updatedAt: new Date(),

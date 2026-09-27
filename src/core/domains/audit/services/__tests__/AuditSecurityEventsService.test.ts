@@ -174,11 +174,13 @@ describe('AuditSecurityEventsService', () => {
         expect(mockRepository.createCalls).toHaveLength(1);
 
         const call = mockRepository.createCalls[0];
-        expect(call.userId).toBe('user-123');
-        expect(call.tenantId).toBe('tenant-123');
-        expect(call.success).toBe(true);
-        expect(call.ipAddress).toBe('192.168.1.1');
-        expect(call.userAgent).toBe('Mozilla/5.0');
+        if (call) {
+          expect(call.userId).toBe('user-123');
+          expect(call.tenantId).toBe('tenant-123');
+          expect(call.success).toBe(true);
+          expect(call.ipAddress).toBe('192.168.1.1');
+          expect(call.userAgent).toBe('Mozilla/5.0');
+        }
       });
 
       it('should log failed login event with failure reason', async () => {
@@ -195,9 +197,11 @@ describe('AuditSecurityEventsService', () => {
         expect(mockRepository.createCalls).toHaveLength(1);
 
         const call = mockRepository.createCalls[0];
-        expect(call.success).toBe(false);
-        expect(call.errorCode).toBe('AUTH_INVALID_PASSWORD');
-        expect(call.details).toHaveProperty('failureReason', 'Invalid password');
+        if (call) {
+          expect(call.success).toBe(false);
+          expect(call.errorCode).toBe('AUTH_INVALID_PASSWORD');
+          expect(call.details).toHaveProperty('failureReason', 'Invalid password');
+        }
       });
 
       it('should reject events without tenant ID', async () => {
@@ -224,7 +228,11 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].userId).toBeNull();
+        const call = mockRepository.createCalls[0];
+        expect(call).toBeDefined();
+        if (call) {
+          expect(call.userId).toBeNull();
+        }
       });
     });
 
@@ -237,8 +245,12 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].success).toBe(true);
-        expect(mockRepository.createCalls[0].correlationId).toBe('corr-123');
+        const call = mockRepository.createCalls[0];
+        expect(call).toBeDefined();
+        if (call) {
+          expect(call.success).toBe(true);
+          expect(call.correlationId).toBe('corr-123');
+        }
       });
     });
 
@@ -252,11 +264,15 @@ describe('AuditSecurityEventsService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].success).toBe(false);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
-          'failureReason',
-          'Account locked',
-        );
+        const call = mockRepository.createCalls[0];
+        expect(call).toBeDefined();
+        if (call) {
+          expect(call.success).toBe(false);
+          expect(call.details).toHaveProperty(
+            'failureReason',
+            'Account locked',
+          );
+        }
       });
     });
 
@@ -265,10 +281,14 @@ describe('AuditSecurityEventsService', () => {
         const result = await service.logLogout('user-123', 'tenant-123');
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
-          'authEventType',
-          AuthenticationEventType.LOGOUT,
-        );
+        const call = mockRepository.createCalls[0];
+        expect(call).toBeDefined();
+        if (call) {
+          expect(call.details).toHaveProperty(
+            'authEventType',
+            AuthenticationEventType.LOGOUT,
+          );
+        }
       });
     });
 
@@ -277,15 +297,23 @@ describe('AuditSecurityEventsService', () => {
         const result = await service.logTokenRefresh('user-123', 'tenant-123', true);
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].success).toBe(true);
+        const call = mockRepository.createCalls[0];
+        expect(call).toBeDefined();
+        if (call) {
+          expect(call.success).toBe(true);
+        }
       });
 
       it('should log failed token refresh', async () => {
         const result = await service.logTokenRefresh('user-123', 'tenant-123', false);
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].success).toBe(false);
-        expect(mockRepository.createCalls[0].errorCode).toBe('AUTH_TOKEN_REFRESH_FAILED');
+        const call = mockRepository.createCalls[0];
+        expect(call).toBeDefined();
+        if (call) {
+          expect(call.success).toBe(false);
+          expect(call.errorCode).toBe('AUTH_TOKEN_REFRESH_FAILED');
+        }
       });
     });
   });
@@ -306,9 +334,9 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].success).toBe(false);
-        expect(mockRepository.createCalls[0].errorCode).toBe('AUTH_INSUFFICIENT_PERMISSION');
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.success).toBe(false);
+        expect(mockRepository.createCalls[0]!.errorCode).toBe('AUTH_INSUFFICIENT_PERMISSION');
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'denialReason',
           AuthorizationDenialReason.INSUFFICIENT_PERMISSION,
         );
@@ -325,7 +353,7 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'denialReason',
           AuthorizationDenialReason.OUT_OF_SCOPE,
         );
@@ -339,7 +367,7 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'severity',
           SecurityEventSeverity.CRITICAL,
         );
@@ -353,7 +381,7 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].errorCode).toBe('AUTH_USER_QUARANTINED');
+        expect(mockRepository.createCalls[0]!.errorCode).toBe('AUTH_USER_QUARANTINED');
       });
     });
 
@@ -366,7 +394,7 @@ describe('AuditSecurityEventsService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty('requiredPermissions');
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty('requiredPermissions');
       });
     });
 
@@ -380,11 +408,11 @@ describe('AuditSecurityEventsService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'resourceOrgUnitId',
           'target-org-unit',
         );
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'userOrgUnitId',
           'user-org-unit',
         );
@@ -410,11 +438,11 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'escalationType',
           PrivilegeEscalationType.ROLE_UPGRADED,
         );
-        expect(mockRepository.createCalls[0].details).toHaveProperty('targetUserId', 'user-456');
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty('targetUserId', 'user-456');
       });
 
       it('should log admin role assignment with high severity', async () => {
@@ -427,7 +455,7 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'severity',
           SecurityEventSeverity.HIGH,
         );
@@ -442,7 +470,7 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'escalationType',
           PrivilegeEscalationType.IMPERSONATION_STARTED,
         );
@@ -461,7 +489,7 @@ describe('AuditSecurityEventsService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'escalationType',
           PrivilegeEscalationType.ROLE_UPGRADED,
         );
@@ -478,7 +506,7 @@ describe('AuditSecurityEventsService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'escalationType',
           PrivilegeEscalationType.ROLE_DOWNGRADED,
         );
@@ -495,7 +523,7 @@ describe('AuditSecurityEventsService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty('newState');
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty('newState');
       });
     });
   });
@@ -517,11 +545,11 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'anomalyType',
           AnomalyType.BRUTE_FORCE_ATTEMPT,
         );
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'severity',
           SecurityEventSeverity.CRITICAL,
         );
@@ -541,7 +569,7 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].errorCode).toBe('ANOMALY_CROSS_TENANT_ATTEMPT');
+        expect(mockRepository.createCalls[0]!.errorCode).toBe('ANOMALY_CROSS_TENANT_ATTEMPT');
       });
 
       it('should include recommended action when provided', async () => {
@@ -556,7 +584,7 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'recommendedAction',
           'Verify user identity',
         );
@@ -575,8 +603,8 @@ describe('AuditSecurityEventsService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty('automaticActionTaken', true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty('automaticActionTaken', true);
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'automaticAction',
           'Session invalidated',
         );
@@ -594,10 +622,10 @@ describe('AuditSecurityEventsService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'description',
         );
-        const description = mockRepository.createCalls[0].details.description as string;
+        const description = mockRepository.createCalls[0]!.details.description as string;
         expect(description).toContain('15 failed logins');
         expect(description).toContain('5 minutes');
       });
@@ -612,8 +640,8 @@ describe('AuditSecurityEventsService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].tenantId).toBe('source-tenant');
-        expect(mockRepository.createCalls[0].details).toHaveProperty('indicators');
+        expect(mockRepository.createCalls[0]!.tenantId).toBe('source-tenant');
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty('indicators');
       });
     });
 
@@ -627,7 +655,7 @@ describe('AuditSecurityEventsService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].details).toHaveProperty(
+        expect(mockRepository.createCalls[0]!.details).toHaveProperty(
           'description',
           'Unusual data access pattern detected',
         );
@@ -748,7 +776,7 @@ describe('AuditSecurityEventsService', () => {
         },
       });
 
-      const call = mockRepository.createCalls[0];
+      const call = mockRepository.createCalls[0]!;
       expect(call.details).toHaveProperty('password', '[REDACTED]');
       expect(call.details).toHaveProperty('username', 'testuser');
     });
@@ -765,7 +793,7 @@ describe('AuditSecurityEventsService', () => {
         },
       });
 
-      const call = mockRepository.createCalls[0];
+      const call = mockRepository.createCalls[0]!;
       expect(call.details).toHaveProperty('refreshToken', '[REDACTED]');
     });
 
@@ -784,8 +812,8 @@ describe('AuditSecurityEventsService', () => {
         },
       });
 
-      const call = mockRepository.createCalls[0];
-      const indicators = call.details.indicators as Record<string, unknown>;
+      const call = mockRepository.createCalls[0]!;
+      const indicators = call.details!.indicators as Record<string, unknown>;
       expect((indicators.nested as Record<string, unknown>).apiKey).toBe('[REDACTED]');
       expect((indicators.nested as Record<string, unknown>).normalField).toBe('value');
     });
@@ -853,14 +881,14 @@ describe('AuditSecurityEventsService', () => {
     it('should set authentication category for login events', async () => {
       await service.logLoginSuccess('user-123', 'tenant-123');
 
-      const call = mockRepository.createCalls[0];
+      const call = mockRepository.createCalls[0]!;
       expect(call.details).toHaveProperty('category', SecurityEventCategory.AUTHENTICATION);
     });
 
     it('should set authorization denial category', async () => {
       await service.logPermissionDenied('user-123', 'tenant-123', ['admin:delete']);
 
-      const call = mockRepository.createCalls[0];
+      const call = mockRepository.createCalls[0]!;
       expect(call.details).toHaveProperty('category', SecurityEventCategory.AUTHORIZATION_DENIAL);
     });
 
@@ -874,7 +902,7 @@ describe('AuditSecurityEventsService', () => {
         'membership-789',
       );
 
-      const call = mockRepository.createCalls[0];
+      const call = mockRepository.createCalls[0]!;
       expect(call.details).toHaveProperty('category', SecurityEventCategory.PRIVILEGE_ESCALATION);
     });
 
@@ -886,7 +914,7 @@ describe('AuditSecurityEventsService', () => {
         SecurityEventSeverity.WARNING,
       );
 
-      const call = mockRepository.createCalls[0];
+      const call = mockRepository.createCalls[0]!;
       expect(call.details).toHaveProperty('category', SecurityEventCategory.ANOMALY_DETECTION);
     });
   });

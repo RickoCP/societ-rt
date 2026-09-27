@@ -18,7 +18,8 @@
 
 import type { AuthContext, UserRole } from '@core/protocols';
 import type { AuthorizationContext } from './AuthorizationContext';
-import type { MembershipRole } from '@core/domains/membership/types';
+import { MembershipRole, mapLegacyRole } from '@core/domains/membership/types';
+import { UserRole as UserRoleEnum } from '@core/protocols';
 
 // ---------------------------------------------------------------------------
 // Type Union for Migration Compatibility
@@ -169,10 +170,8 @@ export function getMembershipRole(ctx: AuthContextCompat): MembershipRole {
   if (isAuthorizationContext(ctx)) {
     return ctx.role;
   }
-  // Import mapping dynamically to avoid circular dependency
   // Legacy roles map: Super_Admin→PLATFORM_ADMIN, Ketua_RT→RT_ADMIN, etc.
-  const { mapLegacyRole } = require('@core/domains/membership/types');
-  return mapLegacyRole(ctx.role);
+  return mapLegacyRole(ctx.role) as MembershipRole;
 }
 
 /**
@@ -206,9 +205,8 @@ export function isTenantLevel(ctx: AuthContextCompat): boolean {
     return ctx.isTenantLevel;
   }
   // For legacy context, check role
-  const { UserRole } = require('@core/protocols');
   return (
-    ctx.role === UserRole.Super_Admin || ctx.role === UserRole.Ketua_RT
+    ctx.role === UserRoleEnum.Super_Admin || ctx.role === UserRoleEnum.Ketua_RT
   );
 }
 
@@ -236,4 +234,103 @@ export function getUserId(ctx: AuthContextCompat): string {
  */
 export function getTenantId(ctx: AuthContextCompat): string {
   return ctx.tenantId;
+}
+
+// ---------------------------------------------------------------------------
+// Role Checking Helpers for Migration Compatibility
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps UserRole to MembershipRole equivalent for comparison.
+ * This allows checking legacy UserRole values against MembershipRole.
+ */
+const USER_ROLE_TO_MEMBERSHIP_ROLE: ReadonlyMap<UserRole, MembershipRole> = new Map([
+  [UserRoleEnum.Super_Admin, MembershipRole.PLATFORM_ADMIN],
+  [UserRoleEnum.Ketua_RT, MembershipRole.RT_ADMIN],
+  [UserRoleEnum.Pengurus, MembershipRole.ORG_ADMIN],
+  [UserRoleEnum.Warga, MembershipRole.RESIDENT],
+  [UserRoleEnum.Security_Guard, MembershipRole.SECURITY],
+]);
+
+/**
+ * Maps MembershipRole back to UserRole for checking legacy UserRole sets.
+ */
+const MEMBERSHIP_ROLE_TO_USER_ROLE: ReadonlyMap<MembershipRole, UserRole> = new Map([
+  [MembershipRole.PLATFORM_ADMIN, UserRoleEnum.Super_Admin],
+  [MembershipRole.RT_ADMIN, UserRoleEnum.Ketua_RT],
+  [MembershipRole.TENANT_OWNER, UserRoleEnum.Ketua_RT], // TENANT_OWNER maps to Ketua_RT for legacy compatibility
+  [MembershipRole.ORG_ADMIN, UserRoleEnum.Pengurus],
+  [MembershipRole.RESIDENT, UserRoleEnum.Warga],
+  [MembershipRole.SECURITY, UserRoleEnum.Security_Guard],
+]);
+
+/**
+ * Checks if the auth context has one of the allowed UserRole values.
+ * 
+ * For AuthorizationContext: converts MembershipRole to UserRole and checks against the set
+ * For legacy AuthContext: checks directly against the set
+ * 
+ * This is useful during migration when use cases check against UserRole enum values.
+ *
+ * @param ctx - The auth context
+ * @param allowedRoles - Set of allowed UserRole values
+ * @returns true if the context's role is in the allowed set
+ */
+export function hasAllowedUserRole(
+  ctx: AuthContextCompat,
+  allowedRoles: ReadonlySet<UserRole>,
+): boolean {
+  if (isAuthorizationContext(ctx)) {
+    const legacyRole = MEMBERSHIP_ROLE_TO_USER_ROLE.get(ctx.role);
+    return legacyRole !== undefined && allowedRoles.has(legacyRole);
+  }
+  return allowedRoles.has(ctx.role);
+}
+
+/**
+ * Checks if the auth context has one of the allowed MembershipRole values.
+ * 
+ * For AuthorizationContext: checks directly against the set
+ * For legacy AuthContext: converts UserRole to MembershipRole and checks
+ * 
+ * This is useful for new use cases that use MembershipRole.
+ *
+ * @param ctx - The auth context
+ * @param allowedRoles - Set of allowed MembershipRole values
+ * @returns true if the context's role is in the allowed set
+ */
+export function hasAllowedMembershipRole(
+  ctx: AuthContextCompat,
+  allowedRoles: ReadonlySet<MembershipRole>,
+): boolean {
+  if (isAuthorizationContext(ctx)) {
+    return allowedRoles.has(ctx.role);
+  }
+  const membershipRole = USER_ROLE_TO_MEMBERSHIP_ROLE.get(ctx.role);
+  return membershipRole !== undefined && allowedRoles.has(membershipRole);
+}
+
+/**
+ * Checks if the auth context has a specific UserRole (or its MembershipRole equivalent).
+ * 
+ * @param ctx - The auth context
+ * @param role - The UserRole to check
+ * @returns true if the context has the role
+ */
+export function hasUserRole(ctx: AuthContextCompat, role: UserRole): boolean {
+  if (isAuthorizationContext(ctx)) {
+    const legacyRole = MEMBERSHIP_ROLE_TO_USER_ROLE.get(ctx.role);
+    return legacyRole === role;
+  }
+  return ctx.role === role;
+}
+
+/**
+ * Gets impersonatorId if available in the context.
+ * 
+ * @param ctx - The auth context
+ * @returns The impersonator ID if available, undefined otherwise
+ */
+export function getImpersonatorId(ctx: AuthContextCompat): string | undefined {
+  return (ctx as AuthContext).impersonatorId;
 }

@@ -15,15 +15,23 @@ import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/mid
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { BillingRepository } from '@core/domains/billing/repositories/BillingRepository';
 
-interface PlansResponse {
+interface PlansSuccessResponse {
   data: Array<{
     id: string;
     name: string;
-    maxUsers: number;
+    maxUsers: number | null;
     features: string[];
     price: number;
   }>;
 }
+
+interface ErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+}
+
+type PlansResponse = PlansSuccessResponse | ErrorResponse;
 
 const handleGetPlans: AuthorizedRouteHandler<PlansResponse> = async (
   request: NextRequest,
@@ -35,7 +43,7 @@ const handleGetPlans: AuthorizedRouteHandler<PlansResponse> = async (
   const result = await billingRepository.getAllPlans();
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<PlansResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(

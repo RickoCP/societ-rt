@@ -12,7 +12,7 @@
  * @see Requirement 51 AC 9: MANDATORY session invalidation on password change (no exceptions)
  */
 
-import type { AppError, DomainResult } from '@core/utils';
+import type { DomainResult } from '@core/utils';
 import { fail, isFail, ok } from '@core/utils';
 import {
   authUserNotFound,
@@ -21,7 +21,6 @@ import {
 } from '@core/domains/auth/errors/authErrors';
 import type {
   TokenVersionService,
-  TokenVersionIncrementResult,
 } from './TokenVersionService';
 import type { RecoveryTokenService } from './RecoveryTokenService';
 import type { TokenSecurityAuditService } from './TokenSecurityAuditService';

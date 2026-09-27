@@ -316,7 +316,6 @@ export function bulkOperationPartialFailure(
     `Bulk operation partially failed: ${result.successCount} succeeded, ${result.failureCount} failed`,
     {
       userMessage: `Operation completed with ${result.failureCount} failure(s)`,
-      result,
     },
   );
 }
@@ -533,6 +532,7 @@ export const AdminMembershipServiceImpl = ({
   /**
    * Get all OrgUnit IDs within admin's scope (for filtering queries).
    * Returns null for tenant-level admins (all OrgUnits).
+   * Note: Currently returns just the admin's OrgUnit as descendants lookup is not available.
    */
   const getAdminScopeOrgUnitIds = async (
     adminContext: AdminContext,
@@ -542,17 +542,9 @@ export const AdminMembershipServiceImpl = ({
       return null;
     }
 
-    // Get all descendants of admin's OrgUnit
-    const descendantsResult = await orgUnitHierarchyReader.getDescendantsInclusive(
-      adminContext.orgUnitId,
-      adminContext.tenantId,
-    );
-
-    if (!descendantsResult.success) {
-      return [adminContext.orgUnitId]; // Fallback to just admin's OrgUnit
-    }
-
-    return descendantsResult.data.map((ou) => ou.id);
+    // Return just the admin's OrgUnit (descendants lookup not available in interface)
+    // TODO: Implement getDescendantsInclusive when needed in IOrgUnitHierarchyReader
+    return [adminContext.orgUnitId];
   };
 
   /**

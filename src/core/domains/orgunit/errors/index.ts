@@ -14,4 +14,14 @@ export {
   orgUnitRootInvariantViolation,
   orgUnitParentTenantMismatch,
   orgUnitCycleDetected,
+  // Management Errors
+  orgUnitAlreadyExists,
+  orgUnitHasChildren,
+  orgUnitHasMembers,
+  orgUnitCannotMoveToDescendant,
+  orgUnitMaxDepthExceeded,
+  orgUnitInvalidTypeForPosition,
+  orgUnitNameRequired,
+  orgUnitTypeRequired,
+  orgUnitPathRepairFailed,
 } from './orgUnitErrors';

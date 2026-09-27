@@ -21,12 +21,23 @@ import type { ImportResidentCsvUseCase } from '@core/domains/resident/usecases';
 // Response Types
 // ---------------------------------------------------------------------------
 
-interface ImportResponse {
-  data: {
-    createdCount: number;
-    skippedRows: Array<{ row: number; reason: string }>;
-  };
+interface ImportResponseData {
+  createdCount: number;
+  skippedRows: Array<{ row: number; reason: string }>;
 }
+
+interface ImportSuccessResponse {
+  data: ImportResponseData;
+}
+
+interface ErrorResponseBody {
+  code: string;
+  message: string;
+  correlationId: string;
+  fields?: Record<string, string>;
+}
+
+type ImportResponse = ImportSuccessResponse | ErrorResponseBody;
 
 // ---------------------------------------------------------------------------
 // POST handler — Import residents from CSV
@@ -55,7 +66,7 @@ const handleImportResidents: AuthorizedRouteHandler<ImportResponse> = async (
             code: 'COMMON_VALIDATION_FAILED',
             message: 'A CSV file is required in the "file" field',
             correlationId,
-          } as unknown as ImportResponse,
+          },
           { status: 400 },
         );
       }
@@ -71,7 +82,7 @@ const handleImportResidents: AuthorizedRouteHandler<ImportResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Failed to read request body',
         correlationId,
-      } as unknown as ImportResponse,
+      },
       { status: 400 },
     );
   }
@@ -82,7 +93,7 @@ const handleImportResidents: AuthorizedRouteHandler<ImportResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         message: 'CSV content is empty',
         correlationId,
-      } as unknown as ImportResponse,
+      },
       { status: 400 },
     );
   }
@@ -103,11 +114,17 @@ const handleImportResidents: AuthorizedRouteHandler<ImportResponse> = async (
 
   const importResult = result.data;
 
+  // Map skippedRows: errors array → single reason string
+  const skippedRows = importResult.skippedRows.map(row => ({
+    row: row.row,
+    reason: row.errors.join('; '),
+  }));
+
   return NextResponse.json(
     {
       data: {
         createdCount: importResult.createdCount,
-        skippedRows: importResult.skippedRows,
+        skippedRows,
       },
     },
     { status: 200 },

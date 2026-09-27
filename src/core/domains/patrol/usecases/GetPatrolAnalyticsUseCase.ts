@@ -9,13 +9,14 @@
  * @see Requirements 35.7
  */
 
-import type { AuthContext } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type {
   PatrolRepository,
   PatrolAnalytics,
 } from '../repositories/PatrolRepository';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Input type
@@ -32,7 +33,7 @@ export interface GetPatrolAnalyticsParams {
 
 export interface GetPatrolAnalyticsUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: GetPatrolAnalyticsParams;
   }): Promise<DomainResult<PatrolAnalytics>>;
 }
@@ -47,9 +48,11 @@ export const GetPatrolAnalyticsUseCaseImpl = ({
   patrolRepository: PatrolRepository;
 }): GetPatrolAnalyticsUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+
     // 1. Fetch analytics from repository
     const result = await patrolRepository.getPatrolAnalytics(
-      authContext.tenantId,
+      tenantId,
       data.from,
       data.to,
     );

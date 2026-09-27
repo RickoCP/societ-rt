@@ -120,7 +120,14 @@ const handleGetAnnouncement: AuthorizedRouteHandler<
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await routeContext!.params!;
+  const params = await routeContext?.params;
+  const id = params?.id;
+  if (!id) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing id parameter', correlationId },
+      { status: 400 },
+    );
+  }
 
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
@@ -187,7 +194,14 @@ const handleUpdateAnnouncement: AuthorizedRouteHandler<
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await routeContext!.params!;
+  const params = await routeContext?.params;
+  const id = params?.id;
+  if (!id) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing id parameter', correlationId },
+      { status: 400 },
+    );
+  }
 
   let body: unknown;
   try {
@@ -277,7 +291,14 @@ const handleDeleteAnnouncement: AuthorizedRouteHandler<
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await routeContext!.params!;
+  const params = await routeContext?.params;
+  const id = params?.id;
+  if (!id) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing id parameter', correlationId },
+      { status: 400 },
+    );
+  }
 
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');

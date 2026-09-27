@@ -14,7 +14,7 @@
 
 import crypto from 'crypto';
 
-import type { DomainResult, AppError } from '@core/utils';
+import type { AppError, DomainResult } from '@core/utils';
 import { ok, fail, isFail, authenticationError } from '@core/utils';
 import type { RefreshToken } from '@core/domains/auth/entities/RefreshToken';
 import type {
@@ -22,7 +22,6 @@ import type {
   TokenUsageEvent,
   LeakDetectionResult,
   GeolocationInfo,
-  AnomalyType,
   RiskLevel,
 } from './TokenLeakDetectionService';
 import type { RefreshTokenService } from './RefreshTokenService';
@@ -182,7 +181,7 @@ export interface RefreshSecurityEvent {
   /** Event timestamp */
   readonly timestamp: Date;
   /** Event severity */
-  readonly severity: SecurityEventSeverity;
+  readonly severity: RefreshSecuritySeverity;
   /** Event description */
   readonly description: string;
   /** Additional metadata */
@@ -202,7 +201,7 @@ export type RefreshSecurityEventType =
   | 'geographic_impossibility_detected'
   | 'rapid_refresh_detected';
 
-export type SecurityEventSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type RefreshSecuritySeverity = 'low' | 'medium' | 'high' | 'critical';
 
 /**
  * Configuration for RefreshTokenSecurityService.

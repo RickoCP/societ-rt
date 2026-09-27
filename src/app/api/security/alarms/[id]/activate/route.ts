@@ -9,7 +9,7 @@
  * @see Permission Mapping: POST /api/security/alarms/:id/activate → security:manage
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
@@ -42,7 +42,18 @@ const handleActivateSiren: AuthorizedRouteHandler<unknown> = async (
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
   // 1. Extract device ID from route params
-  const { id: deviceId } = await routeContext!.params!;
+  const params = await routeContext!.params!;
+  const deviceId = params.id;
+  if (!deviceId) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Device ID is required',
+        correlationId,
+      },
+      { status: 400 },
+    );
+  }
 
   // 2. Parse and validate input
   let body: unknown;

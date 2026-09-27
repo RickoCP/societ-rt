@@ -42,7 +42,6 @@ import {
   cacheInvalidationFailed,
   cachePropagationFailed,
   invalidCacheKey,
-  cacheOperationTimeout,
 } from '../errors';
 
 // ---------------------------------------------------------------------------
@@ -846,7 +845,7 @@ export const CacheInvalidationServiceImpl = ({
   /**
    * Get TTL for a cache type.
    */
-  const getTTLForType = (type: CacheKeyType): number => {
+  const _getTTLForType = (type: CacheKeyType): number => {
     switch (type) {
       case CacheKeyType.MEMBERSHIP:
         return currentTTLConfig.membershipTTLMs;
@@ -1599,7 +1598,7 @@ export const CacheInvalidationServiceImpl = ({
 
     async propagateInvalidation(
       event: InvalidationEvent,
-      primaryKeys: readonly string[],
+      _primaryKeys: readonly string[],
     ): Promise<DomainResult<InvalidationResult>> {
       const startTime = Date.now();
 

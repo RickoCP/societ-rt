@@ -27,7 +27,6 @@ import {
 import {
   createPlatformAdminSetup,
   createMockAuthContext,
-  createAuthenticatedRequest,
   serializeAuthContext,
   createTestUser,
   createTestTenant,

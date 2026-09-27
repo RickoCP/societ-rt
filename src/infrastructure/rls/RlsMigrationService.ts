@@ -15,7 +15,6 @@
  * @see Design Section 7: RLS Database Migration
  */
 
-import { RlsError } from './types';
 import { createRlsPolicyManager, type IRlsPolicyManager } from './RlsPolicyManager';
 import {
   createTableClassificationRegistry,

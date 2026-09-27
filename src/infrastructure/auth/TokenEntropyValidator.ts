@@ -12,7 +12,7 @@
 
 import crypto from 'crypto';
 
-import type { AppError, DomainResult } from '@core/utils';
+import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import { authTokenInsufficientEntropy } from '@core/domains/auth/errors/authErrors';
 

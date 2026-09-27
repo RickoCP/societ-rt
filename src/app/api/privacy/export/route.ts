@@ -11,8 +11,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { ExportPersonalDataUseCase } from '@core/domains/privacy/usecases';
 
@@ -31,10 +34,10 @@ interface ExportDataResponse {
 // GET handler — Export personal data
 // ---------------------------------------------------------------------------
 
-const handleExportPersonalData: AuthorizedRouteHandler<ExportDataResponse> = async (
+const handleExportPersonalData: AuthorizedRouteHandler<ExportDataResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<ExportDataResponse>> => {
+): Promise<NextResponse<ExportDataResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -47,7 +50,7 @@ const handleExportPersonalData: AuthorizedRouteHandler<ExportDataResponse> = asy
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<ExportDataResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(

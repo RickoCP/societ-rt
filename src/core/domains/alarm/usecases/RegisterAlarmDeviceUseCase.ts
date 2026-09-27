@@ -15,7 +15,7 @@
 import type { AuditQueueProtocol } from '@core/protocols';
 import { UserRole } from '@core/protocols';
 import type { AuthContextCompat } from '@core/domains/authorization/types';
-import { isAuthorizationContext } from '@core/domains/authorization/types';
+import { isAuthorizationContext, getTenantId, getUserId, hasAllowedUserRole } from '@core/domains/authorization/types';
 import { MembershipRole } from '@core/domains/membership/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok, authorizationError } from '@core/utils';
@@ -61,6 +61,9 @@ export const RegisterAlarmDeviceUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): RegisterAlarmDeviceUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Validate role: support both legacy and new role types
     if (isAuthorizationContext(authContext)) {
       if (!ALLOWED_MEMBERSHIP_ROLES.has(authContext.role)) {
@@ -76,7 +79,7 @@ export const RegisterAlarmDeviceUseCaseImpl = ({
         );
       }
     } else {
-      if (!ALLOWED_LEGACY_ROLES.has(authContext.role)) {
+      if (!hasAllowedUserRole(authContext, ALLOWED_LEGACY_ROLES)) {
         return fail(
           authorizationError(
             'AUTH_INSUFFICIENT_ROLE',
@@ -92,7 +95,7 @@ export const RegisterAlarmDeviceUseCaseImpl = ({
 
     // 2. Register device via repository
     const result = await alarmRepository.registerDevice(
-      authContext.tenantId,
+      tenantId,
       data,
     );
 
@@ -105,8 +108,8 @@ export const RegisterAlarmDeviceUseCaseImpl = ({
     // 3. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'alarm_device_registered',
         resourceType: 'alarm_device',
         resourceId: device.id,

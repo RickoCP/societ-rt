@@ -93,19 +93,30 @@ export function getHierarchyIndex(type: OrgUnitType): number {
 
 /**
  * Check if one OrgUnitType can be a parent of another.
- * Parent types have lower hierarchy index than child types.
+ * 
+ * STRICT HIERARCHY ENFORCEMENT:
+ * - ORGANIZATION → CLUSTER (only)
+ * - CLUSTER → RW (only)
+ * - RW → RT (only)
+ * 
+ * Child type must be exactly one level below parent type in the hierarchy.
+ * Skipping levels (e.g., RT directly under ORGANIZATION) is NOT allowed.
  *
  * @param parentType - The potential parent type
  * @param childType - The potential child type
- * @returns true if parentType can be a parent of childType
+ * @returns true if parentType can be a direct parent of childType
  *
  * @example
  * canBeParent(OrgUnitType.CLUSTER, OrgUnitType.RW) // true
- * canBeParent(OrgUnitType.RT, OrgUnitType.CLUSTER) // false
+ * canBeParent(OrgUnitType.ORGANIZATION, OrgUnitType.RT) // false (skips levels)
+ * canBeParent(OrgUnitType.RT, OrgUnitType.CLUSTER) // false (wrong direction)
  */
 export function canBeParent(
   parentType: OrgUnitType,
   childType: OrgUnitType,
 ): boolean {
-  return getHierarchyIndex(parentType) < getHierarchyIndex(childType);
+  const parentIndex = getHierarchyIndex(parentType);
+  const childIndex = getHierarchyIndex(childType);
+  // Child must be exactly one level below parent (strict adjacency)
+  return childIndex === parentIndex + 1;
 }

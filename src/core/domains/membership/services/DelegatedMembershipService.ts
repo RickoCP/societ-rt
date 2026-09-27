@@ -28,11 +28,7 @@ import type {
   IDelegationMatrixService,
   DelegationCheckInput,
 } from './DelegationMatrixService';
-import { DelegationDecisionReason } from './DelegationMatrixService';
-import type {
-  IMembershipLifecycleService,
-  CreateMembershipResult,
-} from './MembershipLifecycleService';
+import type { IMembershipLifecycleService } from './MembershipLifecycleService';
 import { authDelegationViolation, authOutOfScope } from '../errors';
 
 // ---------------------------------------------------------------------------
@@ -155,16 +151,16 @@ export const DelegatedMembershipServiceImpl = ({
     delegatorOrgUnitId: string | null,
     targetOrgUnitId: string | null,
     tenantId: string,
-  ): Promise<boolean> => {
+  ): Promise<DomainResult<boolean>> => {
     // Tenant-level delegator (TENANT_OWNER) can delegate to any OrgUnit
     if (delegatorOrgUnitId === null) {
-      return true;
+      return ok(true);
     }
 
     // Target is tenant-level (null) but delegator is org-scoped → not allowed
     // Only TENANT_OWNER can create tenant-level memberships
     if (targetOrgUnitId === null) {
-      return false;
+      return ok(false);
     }
 
     // Check if target is descendant or equal to delegator's OrgUnit
@@ -217,13 +213,17 @@ export const DelegatedMembershipServiceImpl = ({
       }
 
       // Step 4: Validate target OrgUnit is within delegator's scope (Req 25 AC 1)
-      const scopeValid = await isWithinDelegatorScope(
+      const scopeResult = await isWithinDelegatorScope(
         delegatorMembership.orgUnitId,
         targetOrgUnitId,
         tenantId,
       );
 
-      if (!scopeValid) {
+      if (!scopeResult.success) {
+        return fail(authOutOfScope());
+      }
+
+      if (!scopeResult.data) {
         return fail(authOutOfScope());
       }
 
@@ -268,13 +268,13 @@ export const DelegatedMembershipServiceImpl = ({
       }
 
       // Check scope validity
-      const scopeValid = await isWithinDelegatorScope(
+      const scopeResult = await isWithinDelegatorScope(
         delegatorOrgUnitId,
         targetOrgUnitId,
         tenantId,
       );
 
-      return scopeValid;
+      return scopeResult.success && scopeResult.data;
     },
   };
 };

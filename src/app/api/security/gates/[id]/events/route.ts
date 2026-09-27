@@ -8,17 +8,16 @@
  * @see Requirements 33.2, 33.6
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
 } from '@infrastructure/middleware/authorization';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GateRepository } from '@core/domains/gate/repositories/GateRepository';
 
 // ---------------------------------------------------------------------------
@@ -67,11 +66,11 @@ interface GateEventsResponse {
  * @param context - Route context containing params promise
  * @returns NextResponse with gate events or error
  */
-const handleGetGateEvents: AuthorizedRouteHandler<GateEventsResponse> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-  context?: { params?: Promise<Record<string, string>> },
-): Promise<NextResponse<GateEventsResponse>> => {
+const handleGetGateEvents: AuthorizedRouteHandler<GateEventsResponse | ErrorResponseBody> = async (
+  request,
+  authContext,
+  context,
+): Promise<NextResponse<GateEventsResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -90,9 +89,10 @@ const handleGetGateEvents: AuthorizedRouteHandler<GateEventsResponse> = async (
     return NextResponse.json(
       {
         code: 'COMMON_VALIDATION_FAILED',
+        message: 'Validation failed',
         fields: formatZodErrors(queryValidation.error),
         correlationId,
-      } as unknown as GateEventsResponse,
+      },
       { status: 400 },
     );
   }
@@ -112,7 +112,7 @@ const handleGetGateEvents: AuthorizedRouteHandler<GateEventsResponse> = async (
   );
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<GateEventsResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const { data: events, total } = result.data;

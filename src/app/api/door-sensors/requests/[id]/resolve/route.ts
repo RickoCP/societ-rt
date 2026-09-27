@@ -16,25 +16,55 @@ import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { ResolveDoorInstallationRequestUseCase } from '@core/domains/doorMonitoring/usecases';
 
 const bodySchema = z.object({
   decision: z.enum(['approved', 'rejected']),
 });
 
+// ---------------------------------------------------------------------------
+// Response Types
+// ---------------------------------------------------------------------------
+
+interface ResolveSuccessResponse {
+  data: {
+    id: string;
+    status: string;
+    resolvedAt: string | null;
+  };
+}
+
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type ResolveResponse = ResolveSuccessResponse | ErrorResponse;
+
 /**
  * Handler for resolving door sensor installation requests.
  * Requires device:manage permission for admin operations.
  */
-const handleResolveRequest: AuthorizedRouteHandler<void> = async (
+const handleResolveRequest: AuthorizedRouteHandler<ResolveResponse> = async (
   request: NextRequest,
-  authContext,
+  authContext: AuthorizationContext,
   context,
-): Promise<NextResponse> => {
+): Promise<NextResponse<ResolveResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await context!.params!;
+  const params = await context?.params;
+  const id = params?.id;
+  
+  if (!id) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing request id', correlationId },
+      { status: 400 },
+    );
+  }
 
   let body: unknown;
   try {

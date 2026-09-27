@@ -12,7 +12,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
@@ -46,10 +46,10 @@ interface FeatureFlagsListResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with feature flags list or error
  */
-const handleListFeatureFlags: AuthorizedRouteHandler<FeatureFlagsListResponse> = async (
+const handleListFeatureFlags: AuthorizedRouteHandler<FeatureFlagsListResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<FeatureFlagsListResponse>> => {
+): Promise<NextResponse<FeatureFlagsListResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -57,7 +57,7 @@ const handleListFeatureFlags: AuthorizedRouteHandler<FeatureFlagsListResponse> =
   const result = await featureFlagRepository.getByTenant(authContext.tenantId);
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<FeatureFlagsListResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(

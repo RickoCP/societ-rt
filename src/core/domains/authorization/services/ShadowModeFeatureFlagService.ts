@@ -31,7 +31,7 @@ import type {
   ShadowModeFeatureFlagSummary,
 } from '../types/ShadowModeFeatureFlag';
 import {
-  DEFAULT_SHADOW_MODE_ENV_CONFIG,
+  DEFAULT_SHADOW_MODE_ENV_CONFIG as _DEFAULT_SHADOW_MODE_ENV_CONFIG,
   DEFAULT_DASHBOARD_OPTIONS,
 } from '../types/ShadowModeFeatureFlag';
 import {
@@ -633,7 +633,7 @@ export const ShadowModeFeatureFlagServiceImpl = ({
         if (!config.enabled) continue;
 
         // Check if routes filter applies
-        const checkRoutes =
+        const _checkRoutes =
           config.routes.length === 0
             ? Array.from(metrics.perRouteMetrics.keys())
             : config.routes;

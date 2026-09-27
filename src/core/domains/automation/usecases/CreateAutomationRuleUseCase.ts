@@ -13,9 +13,10 @@
  * @see Requirements 39.1, 39.11, 39.12, 39.13
  */
 
-import type { AuthContext, AuditQueueProtocol, AutomationEngineProtocol } from '@core/protocols';
+import type { AuditQueueProtocol, AutomationEngineProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { AutomationRepository } from '../repositories/AutomationRepository';
 import type { AutomationRule, CreateAutomationRuleInput } from '../entities';
 import { AUTOMATION_MAX_ACTIVE_RULES_PER_TENANT } from '../entities';
@@ -30,7 +31,7 @@ import {
 
 export interface CreateAutomationRuleUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreateAutomationRuleInput;
   }): Promise<DomainResult<AutomationRule>>;
 }

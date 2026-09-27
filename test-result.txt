@@ -1,0 +1,1641 @@
+﻿
+> societ-rt@0.1.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.1 [39m[90mD:/RCP/Idea/SocieT RT/SocieT RT[39m
+
+ [31mΓ¥»[39m src/core/utils/errors/ErrorCodeRegistry.test.ts [2m([22m[2m66 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 60[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Error Code Uniqueness[2m > [22mshould have no duplicate error codes across all categories[32m 3[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Error Code Uniqueness[2m > [22mshould have all error codes as keys matching their code property[32m 3[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Error Code Format[2m > [22mshould have machine-readable codes (no spaces)[32m 3[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Error Code Format[2m > [22mshould have UPPERCASE codes with underscores[32m 3[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Error Code Format[2m > [22mshould have domain prefix in code (AUTH_, AUTHZ_, MEM_, TENANT_, VAL_, BIZ_, TECH_, COMMON_, USER_, etc.)[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Definition Completeness[2m > [22mshould have all required fields for each error code[32m 9[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Definition Completeness[2m > [22mshould have valid error types[32m 4[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Definition Completeness[2m > [22mshould have valid HTTP status codes[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Definition Completeness[2m > [22mshould have descriptive descriptions (not empty)[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö HTTP Status Mapping[2m > [22mshould map validation errors to 400[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö HTTP Status Mapping[2m > [22mshould map authentication errors to 401[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö HTTP Status Mapping[2m > [22mshould map authorization errors to 403[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö HTTP Status Mapping[2m > [22mshould map not_found errors to 404[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Retryable Flag[2m > [22mshould mark validation errors as non-retryable[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Retryable Flag[2m > [22mshould mark authentication errors as non-retryable (except credential entry)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Retryable Flag[2m > [22mshould mark authorization errors as non-retryable (except re-auth)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Retryable Flag[2m > [22mshould mark technical errors as retryable by default[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö i18n Keys[2m > [22mshould have i18n keys for most error codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö i18n Keys[2m > [22mshould have i18n keys following pattern error.{domain}.{reason}[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodeDefinition[2m > [22mshould return definition for known error code[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodeDefinition[2m > [22mshould return undefined for unknown error code[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodeDefinition[2m > [22mshould return correct definition for legacy authorization codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getHttpStatusForCode[2m > [22mshould return correct HTTP status for known code[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getHttpStatusForCode[2m > [22mshould return 500 for unknown code (fail closed)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m isRetryableCode[2m > [22mshould return true for retryable codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m isRetryableCode[2m > [22mshould return false for non-retryable codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m isRetryableCode[2m > [22mshould return false for unknown codes (fail closed)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorTypeForCode[2m > [22mshould return correct type for known codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorTypeForCode[2m > [22mshould return undefined for unknown codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getI18nKeyForCode[2m > [22mshould return i18n key for codes with i18n[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getI18nKeyForCode[2m > [22mshould return undefined for unknown codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m isKnownErrorCode[2m > [22mshould return true for known codes without warning[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m isKnownErrorCode[2m > [22mshould return false for unknown codes and log warning[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodesByType[2m > [22mshould return all authentication errors[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodesByType[2m > [22mshould return all authorization errors[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodesByType[2m > [22mshould return all validation errors[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodesByType[2m > [22mshould return all technical errors[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodesByType[2m > [22mshould return empty array for invalid type[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodesByHttpStatus[2m > [22mshould return all 400 errors[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodesByHttpStatus[2m > [22mshould return all 401 errors[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodesByHttpStatus[2m > [22mshould return all 403 errors[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodesByHttpStatus[2m > [22mshould return all 404 errors[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m getErrorCodesByHttpStatus[2m > [22mshould return empty array for unused status[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m AUTH_ERROR_CODES[2m > [22mshould contain all required authentication error codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m AUTH_ERROR_CODES[2m > [22mshould have all codes starting with AUTH_[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m AUTHZ_ERROR_CODES[2m > [22mshould contain all required authorization error codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m AUTHZ_ERROR_CODES[2m > [22mshould have all codes starting with AUTHZ_[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m LEGACY_AUTHZ_ERROR_CODES[2m > [22mshould contain backward-compatible AUTH_ authorization codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m LEGACY_AUTHZ_ERROR_CODES[2m > [22mshould have matching type/status with new AUTHZ codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m MEM_ERROR_CODES[2m > [22mshould contain membership-related error codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m MEM_ERROR_CODES[2m > [22mshould have all codes starting with MEM_[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m TENANT_ERROR_CODES[2m > [22mshould contain tenant-related error codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m TENANT_ERROR_CODES[2m > [22mshould have all codes starting with TENANT_[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m VAL_ERROR_CODES[2m > [22mshould contain validation-related error codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m VAL_ERROR_CODES[2m > [22mshould have all codes starting with VAL_[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m BIZ_ERROR_CODES[2m > [22mshould contain business rule error codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m BIZ_ERROR_CODES[2m > [22mshould have all codes starting with BIZ_[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m TECH_ERROR_CODES[2m > [22mshould contain technical error codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m TECH_ERROR_CODES[2m > [22mshould have all codes starting with TECH_[32m 0[2mms[22m[39m
+[31m   [31m├ù[31m NOT_FOUND_ERROR_CODES[2m > [22mshould contain resource not-found error codes[39m[32m 6[2mms[22m[39m
+[31m     ΓåÆ expected { COMMON_NOT_FOUND: { ΓÇª(6) }, ΓÇª(10) } to have property "TENANT_NOT_FOUND"[39m
+   [32mΓ£ô[39m UNEXPECTED_ERROR_CODES[2m > [22mshould contain unexpected error codes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m UNEXPECTED_ERROR_CODES[2m > [22mshould have all codes starting with UNEXPECTED_[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Multi-Tenant SaaS Integration[2m > [22mshould include all authorization pipeline error codes from design.md[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m ErrorCodeRegistry ΓÇö Multi-Tenant SaaS Integration[2m > [22mshould map authorization pipeline errors to correct HTTP statuses[32m 0[2mms[22m[39m
+[31m   [31m├ù[31m ErrorCodeRegistry ΓÇö Security Considerations[2m > [22mshould not expose internal details in descriptions[39m[32m 3[2mms[22m[39m
+[31m     ΓåÆ expected 'Invalid username or password' not to match /password/i[39m
+[31m   [31m├ù[31m ErrorCodeRegistry ΓÇö Security Considerations[2m > [22mshould have generic user messages (via i18n) for sensitive errors[39m[32m 3[2mms[22m[39m
+[31m     ΓåÆ expected 'Invalid username or password' not to contain 'username'[39m
+ [31mΓ¥»[39m src/infrastructure/logging/__tests__/Logger.test.ts [2m([22m[2m26 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 26[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mcreateLogger[2m > [22mshould create a logger with all methods[32m 3[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mStructured JSON Output[2m > [22mshould output valid JSON[32m 3[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mStructured JSON Output[2m > [22mshould include standard fields (timestamp, level, message)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mStructured JSON Output[2m > [22mshould include service identification fields[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mStructured JSON Output[2m > [22mshould include context fields when provided[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mStructured JSON Output[2m > [22mshould output single-line JSON in production mode[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mStructured JSON Output[2m > [22mshould output pretty-printed JSON in development mode[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mLog Level Filtering[2m > [22mshould filter logs below minimum level[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mLog Level Filtering[2m > [22mshould output logs at or above minimum level[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mLog Level Filtering[2m > [22mshould output debug logs in development mode[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mSensitive Data Sanitization[2m > [22mshould redact passwords[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mSensitive Data Sanitization[2m > [22mshould redact tokens[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mSensitive Data Sanitization[2m > [22mshould mask email addresses[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mSensitive Data Sanitization[2m > [22mshould redact sensitive patterns in values[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mLog Levels[2m > [22mshould set correct level for info[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mLog Levels[2m > [22mshould set correct level for warn[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mLog Levels[2m > [22mshould set correct level for error[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mLog Levels[2m > [22mshould set correct level for debug[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mCustom Configuration[2m > [22mshould allow custom service name[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mCustom Configuration[2m > [22mshould allow custom service version[32m 0[2mms[22m[39m
+[31m   [31m├ù[31m Logger[2m > [22mCustom Configuration[2m > [22mshould allow custom sanitizer[39m[32m 10[2mms[22m[39m
+[31m     ΓåÆ expected 'secret-value' to be '[REDACTED]' // Object.is equality[39m
+   [32mΓ£ô[39m Logger[2m > [22mTimestamp Format[2m > [22mshould output ISO 8601 timestamp[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Logger[2m > [22mTimestamp Format[2m > [22mshould output UTC timestamp (ends with Z)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m Log Aggregation Integration[2m > [22mELK Stack Compatibility[2m > [22mshould include all fields needed for ELK[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Log Aggregation Integration[2m > [22mCloudWatch Compatibility[2m > [22mshould output single-line JSON for CloudWatch ingestion[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Log Aggregation Integration[2m > [22mGeneral Aggregation Fields[2m > [22mshould use snake_case for all context fields[32m 0[2mms[22m[39m
+node.exe : [90mstderr[2m | src/core/domains/notification/services/__tests__/Notificat
+ionSecurityService.test.ts[2m > [22m[2mNotificationSecurityService[2m > 
+[22m[2mAudit Logging[2m > [22m[2mlogDelivery[2m > [22m[2mshould handle audit 
+emitter failures gracefully
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([90mstderr[2m...ures gracefully:String) 
+    [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[22m[39m[NotificationSecurityService] Audit emit failed: Error: Emitter failure
+    at Object.<anonymous> [90m(D:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\core\domains\n
+otification\services\__tests__\NotificationSecurityService.test.ts:692:19[90m)[39m
+    at Object.mockCall [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modu
+les/[4m@vitest/spy[24m/dist/index.js:89:15[90m)[39m
+    at Object.spy [as emitDeliveryAudit] [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%2
+0RT/[39mnode_modules/[4mtinyspy[24m/dist/index.js:47:80[90m)[39m
+    at Object.logDelivery [90m(D:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\core\domains\n
+otification\services\NotificationSecurityService.ts:1030:28[90m)[39m
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\core\domains\notification\services
+\__tests__\NotificationSecurityService.test.ts:702:56
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+
+ [31mΓ¥»[39m src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts [2m([22m[2m57 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 53[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceAccess[2m > [22mshould allow access when resource belongs to active tenant[32m 5[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceAccess[2m > [22mshould block access when resource belongs to different tenant[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceAccess[2m > [22mshould emit audit event when cross-tenant access is blocked[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceAccess[2m > [22mshould emit critical event for mutation attempts across tenants[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceAccess[2m > [22mshould block access when active tenant ID is missing[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceAccess[2m > [22mshould fail when resource tenant ID is empty[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceAccess[2m > [22mshould include resource details in blocked result[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceOwnership[2m > [22mshould return true when tenant IDs match[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceOwnership[2m > [22mshould fail when tenant IDs do not match[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceOwnership[2m > [22mshould fail when resource tenant ID is empty[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mResource Ownership Validation[2m > [22mvalidateResourceOwnership[2m > [22mshould fail when request tenant ID is empty[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mUser Membership Validation[2m > [22mvalidateUserMembership[2m > [22mshould allow access when user has active membership[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mUser Membership Validation[2m > [22mvalidateUserMembership[2m > [22mshould block access when user lacks membership[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mUser Membership Validation[2m > [22mvalidateUserMembership[2m > [22mshould emit audit event when membership check fails[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mUser Membership Validation[2m > [22mvalidateUserMembership[2m > [22mshould fail when user ID is empty[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mUser Membership Validation[2m > [22mvalidateUserMembership[2m > [22mshould fail when tenant ID is empty[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mUser Membership Validation[2m > [22mvalidateUserMembership[2m > [22mshould pass requireActive flag to membership checker[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateRequestContext[2m > [22mshould allow when all tenant IDs match[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateRequestContext[2m > [22mshould allow when only one tenant ID is provided[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateRequestContext[2m > [22mshould block when request and JWT tenant IDs mismatch[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateRequestContext[2m > [22mshould block when JWT and resource tenant IDs mismatch[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateRequestContext[2m > [22mshould emit critical event for context mismatch[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateRequestContext[2m > [22mshould block when no tenant context is provided[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateRequestContext[2m > [22mshould fail when user ID is empty[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateRequestContext[2m > [22mshould ignore empty string tenant IDs[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateTenantContextPresent[2m > [22mshould return true when tenant ID is present[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateTenantContextPresent[2m > [22mshould fail when tenant ID is undefined[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateTenantContextPresent[2m > [22mshould fail when tenant ID is null[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateTenantContextPresent[2m > [22mshould fail when tenant ID is empty string[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mRequest Context Validation[2m > [22mvalidateTenantContextPresent[2m > [22mshould fail when tenant ID is whitespace only[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mBatch Operation Validation[2m > [22mvalidateBatchOperation[2m > [22mshould allow when all resources belong to active tenant[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mBatch Operation Validation[2m > [22mvalidateBatchOperation[2m > [22mshould block when batch contains cross-tenant resources[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mBatch Operation Validation[2m > [22mvalidateBatchOperation[2m > [22mshould return invalid resources with details[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mBatch Operation Validation[2m > [22mvalidateBatchOperation[2m > [22mshould emit batch violation event[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mBatch Operation Validation[2m > [22mvalidateBatchOperation[2m > [22mshould allow empty batch[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mBatch Operation Validation[2m > [22mvalidateBatchOperation[2m > [22mshould fail when active tenant ID is missing[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mBatch Operation Validation[2m > [22mvalidateBatchOperation[2m > [22mshould assign suspicious severity to batch violations[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mBatch Operation Validation[2m > [22mvalidateBatchOperation[2m > [22mshould assign critical severity to batch mutation violations[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mQuery/Mutation Tenant Validation[2m > [22mvalidateQueryTenantFilter[2m > [22mshould allow when query tenant matches active tenant[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mQuery/Mutation Tenant Validation[2m > [22mvalidateQueryTenantFilter[2m > [22mshould block when query tenant differs from active tenant[32m 0[2mms[22m[39m
+[31m   [31m├ù[31m CrossTenantPreventionService[2m > [22mQuery/Mutation Tenant Validation[2m > [22mvalidateQueryTenantFilter[2m > [22mshould allow platform-wide query for platform admin[39m[32m 12[2mms[22m[39m
+[31m     ΓåÆ expected 'Platform admin authorized for platforΓÇª' to contain 'platform admin'[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mQuery/Mutation Tenant Validation[2m > [22mvalidateQueryTenantFilter[2m > [22mshould block platform-wide query for non-admin[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mQuery/Mutation Tenant Validation[2m > [22mvalidateQueryTenantFilter[2m > [22mshould fail when active tenant ID is missing[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mQuery/Mutation Tenant Validation[2m > [22mvalidateMutationTarget[2m > [22mshould allow when target tenant matches active tenant[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mQuery/Mutation Tenant Validation[2m > [22mvalidateMutationTarget[2m > [22mshould block when target tenant differs from active tenant[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mQuery/Mutation Tenant Validation[2m > [22mvalidateMutationTarget[2m > [22mshould fail when active tenant ID is missing[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mQuery/Mutation Tenant Validation[2m > [22mvalidateMutationTarget[2m > [22mshould fail when target tenant ID is empty[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mUtility Methods[2m > [22mcreateViolationEvent[2m > [22mshould create violation event with all fields[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mUtility Methods[2m > [22mcreateViolationEvent[2m > [22mshould sanitize sensitive data in additional context[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mUtility Methods[2m > [22mcreateViolationEvent[2m > [22mshould generate unique event IDs[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mSeverity Determination[2m > [22mshould assign CRITICAL severity to DELETE operations[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mSeverity Determination[2m > [22mshould assign CRITICAL severity to CREATE operations[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mSeverity Determination[2m > [22mshould assign CRITICAL severity to UPDATE operations[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mSeverity Determination[2m > [22mshould assign NORMAL severity to READ operations[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mIntegration Scenarios[2m > [22mshould handle full resource access validation flow[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mIntegration Scenarios[2m > [22mshould detect and block complex cross-tenant attack[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m CrossTenantPreventionService[2m > [22mIntegration Scenarios[2m > [22mshould validate batch import with mixed tenant data[32m 1[2mms[22m[39m
+ [31mΓ¥»[39m src/core/domains/notification/services/__tests__/NotificationSecurityService.test.ts [2m([22m[2m46 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 54[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateDelivery[2m > [22mshould allow delivery when all recipients are in same tenant[32m 7[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateDelivery[2m > [22mshould block cross-tenant recipients[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateDelivery[2m > [22mshould emit security violation for cross-tenant attempt[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateDelivery[2m > [22mshould block recipients without active membership[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateDelivery[2m > [22mshould fail when sender tenant context is missing[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateDelivery[2m > [22mshould validate channel authorization[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateDelivery[2m > [22mshould return all recipients invalid when none pass validation[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateRecipientTenant[2m > [22mshould return true when tenants match[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateRecipientTenant[2m > [22mshould fail when tenants do not match[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateRecipientTenant[2m > [22mshould fail when sender tenant is empty[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mTenant Isolation Validation[2m > [22mvalidateRecipientTenant[2m > [22mshould fail when recipient tenant is empty[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mvalidateContent[2m > [22mshould pass validation for clean content[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mvalidateContent[2m > [22mshould detect and mask email PII in PUBLIC content[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mvalidateContent[2m > [22mshould detect and mask phone number PII[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mvalidateContent[2m > [22mshould detect NIK (Indonesian ID number) and mask[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mvalidateContent[2m > [22mshould detect cross-tenant reference patterns[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mvalidateContent[2m > [22mshould detect sensitive keys in additional data[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mvalidateContent[2m > [22mshould warn about PII in SENSITIVE content without masking[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mvalidateContent[2m > [22mshould fail validation when tenant ID is missing[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mmaskPII[2m > [22mshould mask email addresses[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mmaskPII[2m > [22mshould mask Indonesian phone numbers[32m 0[2mms[22m[39m
+[31m   [31m├ù[31m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mmaskPII[2m > [22mshould mask 16-digit NIK numbers[39m[32m 12[2mms[22m[39m
+[31m     ΓåÆ expected 'NIK: 320112****89012' to contain '********'[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mmaskPII[2m > [22mshould mask credit card numbers[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mContent Security Validation[2m > [22mmaskPII[2m > [22mshould return unchanged content when no PII found[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mChannel Authorization[2m > [22misChannelAuthorized[2m > [22mshould authorize inbox for all content types[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mChannel Authorization[2m > [22misChannelAuthorized[2m > [22mshould authorize push for emergency notifications[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mChannel Authorization[2m > [22misChannelAuthorized[2m > [22mshould not authorize push for personal notifications[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mChannel Authorization[2m > [22misChannelAuthorized[2m > [22mshould not authorize email for personal notifications[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mChannel Authorization[2m > [22misChannelAuthorized[2m > [22mshould check role authorization[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mChannel Authorization[2m > [22mgetAuthorizedChannels[2m > [22mshould return all channels for announcement by admin[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mChannel Authorization[2m > [22mgetAuthorizedChannels[2m > [22mshould return only inbox for personal content[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mChannel Authorization[2m > [22mgetAuthorizedChannels[2m > [22mshould return limited channels for resident role[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mAudit Logging[2m > [22mlogDelivery[2m > [22mshould create audit record for successful delivery[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mAudit Logging[2m > [22mlogDelivery[2m > [22mshould create audit record for failed delivery[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mAudit Logging[2m > [22mlogDelivery[2m > [22mshould fail when tenant ID is missing[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mAudit Logging[2m > [22mlogDelivery[2m > [22mshould handle audit emitter failures gracefully[32m 6[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mConfiguration[2m > [22mgetChannelConfig[2m > [22mshould return current channel configuration[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mConfiguration[2m > [22mupdateChannelConfig[2m > [22mshould update channel configuration[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mConfiguration[2m > [22mupdateChannelConfig[2m > [22mshould not affect other channels when updating one[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mEdge Cases[2m > [22mshould handle empty recipient list[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mEdge Cases[2m > [22mshould handle empty channel list[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mEdge Cases[2m > [22mshould handle mixed valid and invalid recipients[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mEdge Cases[2m > [22mshould handle content with multiple PII types[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mService Creation[2m > [22mshould create service with default configuration[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mService Creation[2m > [22mshould create service with custom audit emitter[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m NotificationSecurityService[2m > [22mService Creation[2m > [22mshould create service with custom channel config[32m 0[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mcheckPermissionsBatch[2m > [22m[2mshould process multiple permission checks successfully
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukak-uyn12k'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.660Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m2[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mcheckPermissionsBatch[2m > [22m[2mshould return granted true for allowed permissions
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukat-f3a3d7'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.669Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m4[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mcheckPermissionsBatch[2m > [22m[2mshould return granted false for denied permissions
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukb5-wxbfhg'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.681Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m11[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mcheckPermissionsBatch[2m > [22m[2mshould track processing time per item when enabled
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukc0-omh9zj'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.712Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m14[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mupdateMembershipsBatch[2m > [22m[2mshould process multiple membership updates successfully
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukcw-2q4vxe'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.744Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m29[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mupdateMembershipsBatch[2m > [22m[2mshould use ATOMIC transaction mode by default
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukdb-6ssb51'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.759Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'ATOMIC'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m14[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mupdateMembershipsBatch[2m > [22m[2mshould respect specified transaction mode
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukdf-khggln'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.763Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m2[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mupdateMembershipsBatch[2m > [22m[2mshould return detailed results for each item
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikuke6-c07sw3'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.790Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'ATOMIC'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m26[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [31mΓ¥»[39m src/core/domains/authorization/services/__tests__/DisasterRecoveryTestingService.test.ts [2m([22m[2m49 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 50[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mConfiguration[2m > [22mshould use default configuration when not provided[32m 4[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mConfiguration[2m > [22mshould merge custom configuration with defaults[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mConfiguration[2m > [22mshould update configuration dynamically[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mConfiguration[2m > [22mshould return supported scenarios[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestDatabaseFailover[2m > [22mshould pass when database connection is restored and replication lag is low[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestDatabaseFailover[2m > [22mshould fail when database connection cannot be restored[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestDatabaseFailover[2m > [22mshould warn when replication lag exceeds threshold[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestDatabaseFailover[2m > [22mshould pass with mock when no validator provided[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestDataRecovery[2m > [22mshould pass when backup exists and integrity is verified[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestDataRecovery[2m > [22mshould fail when no backup found within RPO window[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestDataRecovery[2m > [22mshould fail when backup integrity verification fails[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateDataIntegrity[2m > [22mshould pass when data integrity is verified[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateDataIntegrity[2m > [22mshould fail when checksum mismatch detected[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestSessionRecovery[2m > [22mshould pass when sessions are recovered within timeout[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestSessionRecovery[2m > [22mshould return metrics with session count[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestTokenRefreshAfterRecovery[2m > [22mshould pass when token refresh succeeds[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mtestTokenRefreshAfterRecovery[2m > [22mshould fail when token refresh fails[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateCacheWarmup[2m > [22mshould pass when cache warmup succeeds[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateCacheWarmup[2m > [22mshould fail when warmup fails for any tenant[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateCacheWarmup[2m > [22mshould report cache hit rate in metrics[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateTenantIsolationDuringRecovery[2m > [22mshould pass when all RLS policies are correctly applied[32m 3[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateTenantIsolationDuringRecovery[2m > [22mshould fail when tenant isolation is compromised[32m 1[2mms[22m[39m
+[31m   [31m├ù[31m DisasterRecoveryTestingService[2m > [22mvalidateTenantIsolationDuringRecovery[2m > [22mshould report policy pass rate in metrics[39m[32m 11[2mms[22m[39m
+[31m     ΓåÆ expected +0 to be 0.5 // Object.is equality[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateRlsConsistencyAfterRecovery[2m > [22mshould pass when all expected tables have RLS policies[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateRlsConsistencyAfterRecovery[2m > [22mshould fail when some tables are missing RLS policies[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateRlsConsistencyAfterRecovery[2m > [22mshould include table-level results in details[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mverifyBackupRtoRpo[2m > [22mshould pass when backup meets RTO/RPO requirements[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mverifyBackupRtoRpo[2m > [22mshould fail when backup not found[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mverifyBackupRtoRpo[2m > [22mshould fail when RPO is exceeded[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mverifyBackupRtoRpo[2m > [22mshould warn when backup is not encrypted[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateTenantSpecificRestoration[2m > [22mshould pass when target tenant is restored and others are unaffected[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateTenantSpecificRestoration[2m > [22mshould fail when target tenant restoration fails[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mvalidateTenantSpecificRestoration[2m > [22mshould fail when other tenants are affected[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mrunFullValidation[2m > [22mshould run all scenarios and return comprehensive report[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mrunFullValidation[2m > [22mshould skip specified scenarios[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mrunFullValidation[2m > [22mshould calculate health score correctly[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mrunFullValidation[2m > [22mshould report RTO/RPO compliance[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mrunFullValidation[2m > [22mshould report tenant isolation and RLS status[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mrunFullValidation[2m > [22mshould generate recommendations for failures[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mrunFullValidation[2m > [22mshould use config overrides when provided[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mrunFullValidation[2m > [22mshould set overall status based on test results[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mError Codes[2m > [22mshould have all required error codes defined[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mDR Test Scenarios[2m > [22mshould have unique scenario IDs[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mDR Test Scenarios[2m > [22mshould have all critical security scenarios marked as CRITICAL severity[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mDR Test Scenarios[2m > [22mshould have database failover scenario marked as requiring downtime[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mDR Test Scenarios[2m > [22mshould have non-destructive scenarios marked as not affecting production[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mDefault Configuration[2m > [22mshould have RTO of 4 hours (240 minutes) per Req 32[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mDefault Configuration[2m > [22mshould have RPO of 1 hour (60 minutes) per Req 32[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m DisasterRecoveryTestingService[2m > [22mDefault Configuration[2m > [22mshould have minimum backup frequency of 1 hour per Req 32[32m 0[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mqueryAuthorizationBatch[2m > [22m[2mshould process multiple authorization queries successfully
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukf1-jpsv76'[39m,
+  operationType: [32m'AUTHORIZATION_QUERY'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.821Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'system'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m26[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [31mΓ¥»[39m src/core/domains/authorization/services/__tests__/SecurityTestingSuite.test.ts [2m([22m[2m49 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 76[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgetPenetrationTestScenarios[2m > [22mshould return all predefined penetration test scenarios[32m 5[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgetPenetrationTestScenarios[2m > [22mshould include scenarios for critical attack vectors[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgetPenetrationTestScenarios[2m > [22mshould include environment separation scenarios (Req 37)[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgetPenetrationTestScenarios[2m > [22mshould have risk level and expected outcome for all scenarios[32m 3[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgetRegressionTests[2m > [22mshould return all security regression tests[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgetRegressionTests[2m > [22mshould include tests for all critical invariants[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgetRegressionTests[2m > [22mshould have expected behavior documented for all tests[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgetDefaultCiConfig[2m > [22mshould return default CI configuration[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunSecurityTestSuite[2m > [22mshould run full security test suite and return comprehensive report[32m 4[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunSecurityTestSuite[2m > [22mshould include penetration tests when enabled[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunSecurityTestSuite[2m > [22mshould include regression tests when enabled[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunSecurityTestSuite[2m > [22mshould calculate correct statistics in summary[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunSecurityTestSuite[2m > [22mshould log events to audit logger when provided[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunPenetrationTest[2m > [22mshould run cross-tenant access penetration test[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunPenetrationTest[2m > [22mshould run JWT manipulation penetration test[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunPenetrationTest[2m > [22mshould run token replay penetration test[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunPenetrationTest[2m > [22mshould fail for unknown attack vector[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunAllPenetrationTests[2m > [22mshould run all penetration tests and return results[32m 1[2mms[22m[39m
+[31m   [31m├ù[31m SecurityTestingSuite[2m > [22mrunAllPenetrationTests[2m > [22mshould include results for all scenarios[39m[32m 12[2mms[22m[39m
+[31m     ΓåÆ expected false to be true // Object.is equality[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunRegressionTests[2m > [22mshould run all regression tests and return results[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunRegressionTests[2m > [22mshould categorize results as REGRESSION_TEST[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunRegressionTest[2m > [22mshould run token version regression test[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunRegressionTest[2m > [22mshould run refresh token reuse regression test[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunRegressionTest[2m > [22mshould run tenant isolation regression test[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mrunRegressionTest[2m > [22mshould fail for unknown regression test[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mvalidateEnvironmentSeparation[2m > [22mshould pass when environment configuration is correct[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mvalidateEnvironmentSeparation[2m > [22mshould fail when database host mismatches[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mvalidateEnvironmentSeparation[2m > [22mshould fail when signing key mismatches[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mtestDatabaseEnvironmentIsolation[2m > [22mshould block cross-environment database access[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mtestSigningKeyEnvironmentBinding[2m > [22mshould verify signing key bound to correct environment[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22msimulateCrossTenantAccess[2m > [22mshould detect and block cross-tenant access attempt[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22msimulateJwtManipulation[2m > [22mshould block role escalation via JWT manipulation[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22msimulateJwtManipulation[2m > [22mshould block tenant switch via JWT manipulation[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22msimulateJwtManipulation[2m > [22mshould block token version bypass[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22msimulateJwtManipulation[2m > [22mshould block signature strip attack[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22msimulatePrivilegeEscalation[2m > [22mshould block privilege escalation attempt[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22msimulateRlsBypassAttempt[2m > [22mshould block session variable clear bypass[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22msimulateRlsBypassAttempt[2m > [22mshould block direct query bypass[32m 8[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22msimulateTokenReplayAttack[2m > [22mshould detect token replay attack[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mperformVulnerabilityScan[2m > [22mshould perform dependency scan[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mperformVulnerabilityScan[2m > [22mshould perform SAST scan[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mparseVulnerabilityScanResults[2m > [22mshould parse valid JSON scanner output[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mparseVulnerabilityScanResults[2m > [22mshould fail for invalid JSON[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgenerateCiGateDecision[2m > [22mshould pass when no critical/high failures[32m 5[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgenerateCiGateDecision[2m > [22mshould fail when critical failures exist[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgenerateCiReport[2m > [22mshould generate JSON report[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgenerateCiReport[2m > [22mshould generate JUnit XML report[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgenerateCiReport[2m > [22mshould generate SARIF report[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m SecurityTestingSuite[2m > [22mgenerateCiReport[2m > [22mshould fail for unknown format[32m 3[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mqueryAuthorizationBatch[2m > [22m[2mshould return membership status in query result
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukfh-liukbl'[39m,
+  operationType: [32m'AUTHORIZATION_QUERY'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.837Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'system'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m15[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mqueryAuthorizationBatch[2m > [22m[2mshould check specific permission when provided
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukfw-fbeqb0'[39m,
+  operationType: [32m'AUTHORIZATION_QUERY'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.852Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'system'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m14[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2minvalidateCachesBatch[2m > [22m[2mshould process multiple cache invalidation requests successfully
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukh6-a0rjho'[39m,
+  operationType: [32m'CACHE_INVALIDATION'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.898Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'system'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m28[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [32mΓ£ô[39m src/core/domains/transfer/services/__tests__/TenantTransferService.test.ts [2m([22m[2m48 tests[22m[2m)[22m[32m 74[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mTransaction Mode[2m > [22m[2mshould indicate success=true when all items succeed in ATOMIC mode
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikuki3-ojoubo'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.931Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'ATOMIC'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m30[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mTransaction Mode[2m > [22m[2mshould indicate success=true in PARTIAL mode when at least one item succeeds
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukii-x9cbiq'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.946Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m14[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/DelegationMatrixService.test.ts [2m([22m[2m73 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mResult Aggregation[2m > [22m[2mshould correctly count successes and failures
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukju-hi2j8n'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:01:29.994Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m3[39m,
+  successCount: [33m3[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m47[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mResult Aggregation[2m > [22m[2mshould include processing time in results
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukk9-kcfkbd'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:01:30.009Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m14[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [32mΓ£ô[39m src/infrastructure/legacy-removal/__tests__/CodePathAnalyzer.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 696[2mms[22m[39m
+   [33m[2mΓ£ô[22m[39m CodePathAnalyzer[2m > [22mCodePathAnalyzerImpl[2m > [22manalyzeCodePaths[2m > [22mshould use default options when none provided [33m 684[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle single item batch
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukol-ggfjx6'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:01:30.165Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m14[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle batch at exact size limit
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukpw-hd03cu'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:01:30.212Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m3[39m,
+  successCount: [33m3[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m46[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle null orgUnitId for tenant-level queries
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukqc-d8t0b9'[39m,
+  operationType: [32m'AUTHORIZATION_QUERY'[39m,
+  timestamp: [32m'2026-09-26T16:01:30.228Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'system'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m15[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mEdge Cases[2m > [22m[2mshould maintain item order in results
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muikukr7-qard9p'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:01:30.259Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m3[39m,
+  successCount: [33m3[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m30[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 610[2mms[22m[39m
+[90mstdout[2m | src/infrastructure/middleware/authorization/__tests__/authorizationMiddleware.test.ts[2m > [22m[2mPerformance Tests[2m > [22m[2mresolution + serialization should complete under 50ms p99
+[22m[39mPerformance Test Results (100 iterations):
+  Average: 0.69ms
+  p50: 0.28ms
+  p95: 2.34ms
+  p99: 19.23ms
+
+[90mstdout[2m | src/infrastructure/middleware/authorization/__tests__/authorizationMiddleware.test.ts[2m > [22m[2mPerformance Tests[2m > [22m[2mJWT extraction should be fast (< 10ms avg)
+[22m[39mJWT Extraction Performance (50 iterations):
+  Average: 0.22ms
+
+[90mstdout[2m | src/infrastructure/middleware/authorization/__tests__/authorizationMiddleware.test.ts[2m > [22m[2mPerformance Tests[2m > [22m[2mheader serialization should be fast (< 1ms avg)
+[22m[39mHeader Serialization Performance (100 iterations):
+  Average: 0.01ms
+
+ [32mΓ£ô[39m src/infrastructure/middleware/authorization/__tests__/authorizationMiddleware.test.ts [2m([22m[2m54 tests[22m[2m)[22m[33m 379[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/AdminMembershipService.test.ts [2m([22m[2m51 tests[22m[2m)[22m[32m 79[2mms[22m[39m
+ [31mΓ¥»[39m tests/e2e/auth-flow/flows/resident.test.ts [2m([22m[2m61 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 109[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Role Characteristics (Req 13.4)[2m > [22mRESIDENT MUST have non-null orgUnitId (org-scoped)[32m 3[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Role Characteristics (Req 13.4)[2m > [22mRESIDENT has isTenantLevel = false (org-scoped, NOT tenant-level)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Role Characteristics (Req 13.4)[2m > [22mRESIDENT role is correctly set in AuthorizationContext[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Role Characteristics (Req 13.4)[2m > [22mRESIDENT has active membership status for full access[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Role Characteristics (Req 13.4)[2m > [22mRESIDENT context should include tenantId for RLS filtering[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT has all expected permissions from PermissionRegistry[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT has resident:read permission (own data only)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT has household:read permission (own household only)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT has emergency:create permission (can create for own safety)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT has emergency:read permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT has announcement:read permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT has vote:cast permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT has privacy:read permission (own data only ΓÇö GDPR rights)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT has privacy:manage permission (own data only ΓÇö GDPR rights)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have resident:write permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have finance:read permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have finance:write permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have tenant:manage permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have orgunit:manage permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have membership:delegate permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have iot:command permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have iot:manage permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have emergency:manage permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have vote:manage permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have announcement:publish permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have household:manage permission[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have platform-level permissions[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Permission Validation (PermissionRegistry)[2m > [22mRESIDENT does NOT have security management permissions[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould allow RESIDENT to access routes with resident:read permission[32m 12[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould allow RESIDENT to access routes with announcement:read permission[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould allow RESIDENT to access routes with vote:cast permission[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould allow RESIDENT to access emergency:create (safety route)[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould allow RESIDENT to access privacy routes (GDPR rights)[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould deny RESIDENT access to admin routes requiring resident:write[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould deny RESIDENT access to finance routes[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould deny RESIDENT access to tenant management routes[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould deny RESIDENT access to IoT command routes[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould deny RESIDENT access to vote:manage routes[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould deny RESIDENT access to platform-level routes[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould deny when RESIDENT is missing ANY of multiple required permissions[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT withPermission Wrapper Flow Tests[2m > [22mshould allow RESIDENT for routes requiring only RESIDENT-level permissions[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT OrgUnit Scope Restrictions[2m > [22mRESIDENT context should include orgUnitId for scope filtering[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT OrgUnit Scope Restrictions[2m > [22mRESIDENT context should be passed to handler with orgUnitId[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT OrgUnit Scope Restrictions[2m > [22mRESIDENT tenantId should be set for tenant-level RLS filtering[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Legacy Header Fallback[2m > [22mshould resolve RESIDENT context from legacy headers[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Legacy Header Fallback[2m > [22mshould correctly derive RESIDENT permissions from role in legacy headers[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Membership Status Handling[2m > [22mshould allow ACTIVE RESIDENT to access routes[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Membership Status Handling[2m > [22mshould deny REVOKED RESIDENT access to all routes[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Membership Status Handling[2m > [22mshould deny SUSPENDED RESIDENT access to non-safety routes[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Membership Status Handling[2m > [22mshould allow SUSPENDED RESIDENT access to safety routes with allowSuspended[32m 1[2mms[22m[39m
+[31m   [31m├ù[31m RESIDENT Role Flow Tests[2m > [22mRESIDENT Membership Status Handling[2m > [22mshould deny INVITED RESIDENT access to routes[39m[32m 12[2mms[22m[39m
+[31m     ΓåÆ Cannot read properties of undefined (reading 'status')[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Authorization Logging[2m > [22mshould log authorization denial with RESIDENT context[32m 9[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Authorization Logging[2m > [22mshould log authorization success when logSuccess is enabled[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT vs Other Roles Comparison[2m > [22mRESIDENT has fewer permissions than RT_ADMIN[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT vs Other Roles Comparison[2m > [22mRESIDENT has fewer permissions than TENANT_OWNER[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT vs Other Roles Comparison[2m > [22mRESIDENT has DISTINCT permissions from SECURITY role (not hierarchy)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT vs Other Roles Comparison[2m > [22mRESIDENT permission set is limited and explicit[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Property: No Inheritance, Explicit Permissions[2m > [22mRESIDENT permissions are explicitly defined (not inherited)[32m 0[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Cross-Tenant Access Prevention[2m > [22mRESIDENT context for tenant A should not access tenant B data[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Cross-Tenant Access Prevention[2m > [22mRESIDENT context should have proper AuthorizationContext for RLS[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m RESIDENT Role Flow Tests[2m > [22mRESIDENT Cross-Tenant Access Prevention[2m > [22mRESIDENT from different OrgUnit should have different orgUnitId[32m 0[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/cutover/__tests__/AuthorizationCutoverService.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 65[2mms[22m[39m
+[90mstderr[2m | 
+src/infrastructure/auth/__tests__/SessionInvalidationService.test.ts[2m > 
+[22m[2mSessionInvalidationService[2m > [22m[2minvalidateSession[2m > 
+[22m[2mshould handle revocation errors gracefully
+[22m[39mError during session invalidation: { code: [32m'REVOKE_ERROR'[39m, 
+message: [32m'Failed to revoke'[39m }
+
+[90mstderr[2m | 
+src/infrastructure/auth/__tests__/SessionInvalidationService.test.ts[2m > 
+[22m[2mSessionInvalidationService[2m > [22m[2mAudit Logger[2m > [22m[2mshould 
+not fail if audit logger throws
+[22m[39mFailed to log session invalidation audit entry
+
+ [32mΓ£ô[39m src/core/domains/orgunit/services/__tests__/OrgUnitManagementService.test.ts [2m([22m[2m39 tests[22m[2m)[22m[32m 71[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/SessionInvalidationService.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/auth/__tests__/RefreshTokenService.test.ts[2m > 
+[22m[2mRefreshTokenService[2m > [22m[2maudit logging[2m > [22m[2mshould not 
+throw if audit logger fails
+[22m[39mFailed to log refresh token audit entry
+
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/RefreshTokenService.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 66[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/__tests__/membership.property.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 178[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/MembershipInvitationService.test.ts [2m([22m[2m31 tests[22m[2m)[22m[32m 65[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/middleware/authorization/__tests__/auth-flow-rt-admin.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 62[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+[90mstderr[2m | 
+src/core/domains/audit/services/__tests__/AuditTrailService.test.ts[2m > 
+[22m[2mAuditTrailService[2m > [22m[2medge cases[2m > [22m[2mshould handle 
+emitter failures gracefully
+[22m[39m[AuditTrailService] Failed to emit event: Error: Emitter failed
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\core\domains\audit\services\__tests__\AuditTrailService.test.ts:704:42
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+
+ [32mΓ£ô[39m src/core/domains/audit/services/__tests__/AuditTrailService.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32mΓ£ô[39m tests/e2e/auth-flow/flows/platform-admin.test.ts [2m([22m[2m54 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/tenant/services/__tests__/TenantOnboardingService.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/ShadowAuthorizationService.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembership
+Repository.test.ts[2m > [22m[2mPrismaMembershipRepository[2m > 
+[22m[2mfindByUserId[2m > [22m[2mshould return empty array on error
+[22m[39m[MembershipRepository] findByUserId error: Error: DB error
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\infrastructure\repositories\member
+ship\__tests__\PrismaMembershipRepository.test.ts:242:56
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembership
+Repository.test.ts[2m > [22m[2mPrismaMembershipRepository[2m > 
+[22m[2mfindByUserAndTenant[2m > [22m[2mshould return empty array on error
+[22m[39m[MembershipRepository] findByUserAndTenant error: Error: DB connection failed
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\infrastructure\repositories\member
+ship\__tests__\PrismaMembershipRepository.test.ts:303:56
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembership
+Repository.test.ts[2m > [22m[2mPrismaMembershipRepository[2m > 
+[22m[2mfindActiveByUserAndTenant[2m > [22m[2mshould return empty array on error
+[22m[39m[MembershipRepository] findActiveByUserAndTenant error: Error: Database 
+timeout
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\infrastructure\repositories\member
+ship\__tests__\PrismaMembershipRepository.test.ts:346:56
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+
+ [32mΓ£ô[39m src/core/domains/orgunit/services/__tests__/OrgUnitCrudService.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembership
+Repository.test.ts[2m > [22m[2mPrismaMembershipRepository[2m > 
+[22m[2mfindByUserAndTenantWithStatus (TPR-04)[2m > [22m[2mshould return empty 
+array on error
+[22m[39m[MembershipRepository] findByUserAndTenantWithStatus error: Error: 
+Connection refused
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\infrastructure\repositories\member
+ship\__tests__\PrismaMembershipRepository.test.ts:410:56
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembership
+Repository.test.ts[2m > [22m[2mPrismaMembershipRepository[2m > 
+[22m[2mresolveMembership[2m > [22m[2merror handling[2m > [22m[2mshould return 
+technical error on database failure
+[22m[39m[MembershipRepository] resolveMembership error: Error: Connection failed
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\infrastructure\repositories\member
+ship\__tests__\PrismaMembershipRepository.test.ts:709:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembership
+Repository.test.ts[2m > [22m[2mPrismaMembershipRepository[2m > 
+[22m[2mhasActiveMembershipInTenant[2m > [22m[2mshould return false on error
+[22m[39m[MembershipRepository] hasActiveMembershipInTenant error: Error: DB error
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\infrastructure\repositories\member
+ship\__tests__\PrismaMembershipRepository.test.ts:792:53
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembership
+Repository.test.ts[2m > [22m[2mPrismaMembershipRepository[2m > 
+[22m[2mcountByUserAndTenant[2m > [22m[2mshould return 0 on error
+[22m[39m[MembershipRepository] countByUserAndTenant error: Error: DB error
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\infrastructure\repositories\member
+ship\__tests__\PrismaMembershipRepository.test.ts:848:53
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/PermissionSyncService.test.ts [2m([22m[2m44 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/repositories/membership/__tests__/PrismaMembershipRepository.test.ts [2m([22m[2m47 tests[22m[2m)[22m[32m 74[2mms[22m[39m
+(node:17528) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 
+11 exit listeners added to [process]. MaxListeners is 10. Use 
+emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32mΓ£ô[39m src/infrastructure/legacy-cleanup/__tests__/SchemaCleanupService.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/middleware/authorization/__tests__/requireEntitlement.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts [2m([22m[2m39 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/AuthorizationErrorHandlerService.test.ts [2m([22m[2m75 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/subscription/services/__tests__/EntitlementService.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+ [32mΓ£ô[39m tests/e2e/auth-flow/refresh-token-rotation.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 53[2mms[22m[39m
+ [31mΓ¥»[39m src/infrastructure/__tests__/e2e/auth-flow/context-switch.test.ts [2m([22m[2m30 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 57[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mMulti-Tenant User ΓÇö Tenant Context Switch[2m > [22mshould allow multi-tenant user to switch from Tenant A to Tenant B[32m 6[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mMulti-Tenant User ΓÇö Tenant Context Switch[2m > [22mshould update AuthorizationContext correctly after tenant switch[32m 3[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mMulti-Tenant User ΓÇö Tenant Context Switch[2m > [22mshould generate correct RLS context SQL after tenant switch[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mMulti-Tenant User ΓÇö Tenant Context Switch[2m > [22mshould reject tenant switch when user has no membership in target tenant[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mMulti-Tenant User ΓÇö Tenant Context Switch[2m > [22mshould list all available tenant contexts for multi-tenant user[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mOrgUnit Context Switch Within Same Tenant[2m > [22mshould allow OrgUnit switch to child OrgUnit within membership scope[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mOrgUnit Context Switch Within Same Tenant[2m > [22mshould use exact membership match when user has membership at target OrgUnit[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mOrgUnit Context Switch Within Same Tenant[2m > [22mshould allow tenant-level admin to switch to any OrgUnit in tenant[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mOrgUnit Context Switch Within Same Tenant[2m > [22mshould reject OrgUnit switch outside membership scope[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mOrgUnit Context Switch Within Same Tenant[2m > [22mshould update permissions correctly after OrgUnit switch[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mOrgUnit Context Switch Within Same Tenant[2m > [22mshould allow switch from OrgUnit scope to tenant-level (null OrgUnit)[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mOrgUnit Context Switch Within Same Tenant[2m > [22mshould reject non-admin role from using null OrgUnit[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mRLS Context Updates After Context Switch[2m > [22mshould validate RLS tenant ID format before setting context[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mRLS Context Updates After Context Switch[2m > [22mshould generate correct SET LOCAL SQL for tenant context[32m 4[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mRLS Context Updates After Context Switch[2m > [22mshould generate correct RESET SQL for clearing context[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mRLS Context Updates After Context Switch[2m > [22mshould properly wrap query with RLS context[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mRLS Context Updates After Context Switch[2m > [22mshould throw error for invalid tenant ID in RLS context[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mRLS Context Updates After Context Switch[2m > [22mshould update RLS context when switching tenants in context switch flow[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mRLS Context Updates After Context Switch[2m > [22mshould return correct session variable name[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mContext Switch with Quarantined User[2m > [22mshould reject context switch for quarantined user[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mContext Switch with Quarantined User[2m > [22mshould reject available contexts query for quarantined user[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mContext Switch with Quarantined User[2m > [22mshould check quarantine before membership lookup[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mContext Switch with Suspended Membership[2m > [22mshould reject context switch when membership is SUSPENDED[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mContext Switch with Suspended Membership[2m > [22mshould reject context switch when membership is REVOKED[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mContext Switch Validation (validateSwitch)[2m > [22mshould validate switch would succeed without performing it[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mContext Switch Validation (validateSwitch)[2m > [22mshould return error when switch validation fails[32m 1[2mms[22m[39m
+[31m   [31m├ù[31m Context Switch E2E Integration Tests[2m > [22mAvailable Contexts For Single Tenant[2m > [22mshould list all OrgUnit contexts available within a tenant[39m[32m 12[2mms[22m[39m
+[31m     ΓåÆ expected undefined to be 'ORG_ADMIN' // Object.is equality[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mAvailable Contexts For Single Tenant[2m > [22mshould return error when user has no membership in requested tenant[32m 2[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mContext Switch Audit Trail (for observability)[2m > [22mshould return sufficient data for audit logging on successful switch[32m 1[2mms[22m[39m
+   [32mΓ£ô[39m Context Switch E2E Integration Tests[2m > [22mContext Switch Audit Trail (for observability)[2m > [22mshould return sufficient error data for audit logging on failed switch[32m 2[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/PerformanceValidationService.test.ts [2m([22m[2m59 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/MembershipLifecycleService.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/auth/__tests__/PasswordChangeHandler.test.ts[2m 
+> [22m[2mPasswordChangeHandler[2m > [22m[2mcheckPasswordHistory[2m > 
+[22m[2mshould handle repository errors gracefully
+[22m[39mFailed to check password history: { code: [32m'DB_ERROR'[39m, message: 
+[32m'Database error'[39m }
+
+ [32mΓ£ô[39m src/core/domains/context/__tests__/ContextSwitchService.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/auth/__tests__/PasswordChangeHandler.test.ts[2m 
+> [22m[2mPasswordChangeHandler[2m > [22m[2mchangePassword[2m > [22m[2mshould 
+complete password change even if tokenVersion increment fails
+[22m[39mCRITICAL: Failed to increment tokenVersion during password change: { code: 
+[32m'DB_ERROR'[39m, message: [32m'Database error'[39m }
+
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/PasswordChangeHandler.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/iot/services/__tests__/IoTDeviceIsolationService.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+{"timestamp":"2026-09-26T16:01:32.850Z","level":"info","message":"Context switch successful: TENANT_SWITCH for user user-456","service_name":"societ-rt","service_version":"1.0.0-staging","environment":"staging","correlation_id":"test-correlation-123","user_id":"user-456","tenant_id":"tenant-b-012","event_type":"CONTEXT_SWITCH","switch_type":"TENANT_SWITCH","from_tenant_id":"tenant-a-789","to_tenant_id":"tenant-b-012","from_org_unit_id":null,"to_org_unit_id":null,"success":true,"result_code":"SUCCESS","trigger":"USER_INITIATED","membership_id":"membership-901"}
+ [32mΓ£ô[39m src/infrastructure/logging/__tests__/ContextSwitchAuditLogger.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould evaluate all write paths in inventory
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.967Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould track status counts correctly
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.971Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould identify paths ready for retirement
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.973Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":2,"blockedCount":2,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould identify paths blocked from retirement
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.974Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"2.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould verify quarantine is preserved
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.975Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould fail quarantine verification when count is wrong
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.976Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":false}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould provide summary message
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.977Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2minitiateRetirement[2m > [22m[2mshould retire eligible write path
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.979Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstderr[2m | 
+src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > 
+[22m[2mWritePathFinalizationService[2m > [22m[2minitiateRetirement[2m > 
+[22m[2mshould fail for ineligible write path (recent cutover)
+[22m[39m[WritePathFinalization] FAILED {"timestamp":"2026-09-26T16:01:32.980Z","type"
+:"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","su
+ccess":false,"hoursSinceCutover":"2.00","error":"Conditions not 
+met","blockers":"Stability Window, Minimum Successful Writes, Rollback Window"}
+
+[90mstderr[2m | 
+src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > 
+[22m[2mWritePathFinalizationService[2m > [22m[2minitiateRetirement[2m > 
+[22m[2mshould fail for unknown write path
+[22m[39m[WritePathFinalization] FAILED {"timestamp":"2026-09-26T16:01:32.982Z","type"
+:"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-UNKNOWN"
+,"success":false,"hoursSinceCutover":"72.00","error":"Write path not found"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2minitiateRetirement[2m > [22m[2mshould allow skipping stability check
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.983Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"1.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2minitiateRetirement[2m > [22m[2mshould create audit entry
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.983Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123","correlationId":"corr-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mrevertRetirement[2m > [22m[2mshould revert retired path to dual-write
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.984Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mrevertRetirement[2m > [22m[2mshould revert retired path to dual-write
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.984Z","type":"WRITE_PATH_FINALIZATION","operation":"REVERT_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"MEMBERSHIP_ONLY","newStatus":"DUAL_WRITE","operatorId":"admin-456"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mrevertRetirement[2m > [22m[2mshould mark rollback triggered after revert
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.985Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mrevertRetirement[2m > [22m[2mshould mark rollback triggered after revert
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.986Z","type":"WRITE_PATH_FINALIZATION","operation":"REVERT_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"MEMBERSHIP_ONLY","newStatus":"DUAL_WRITE","operatorId":"admin-456"}
+
+ [32mΓ£ô[39m src/infrastructure/utils/__tests__/jwtService.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 1151[2mms[22m[39m
+   [33m[2mΓ£ô[22m[39m JWTService[2m > [22mcreate and validate consistency[2m > [22mshould create tokens with unique iat timestamps [33m 1121[2mms[22m[39m
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould filter by writePathId
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.993Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould filter by writePathId
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.993Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-002","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould limit results
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.994Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould limit results
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.994Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-002","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould sort by timestamp descending
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.995Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould sort by timestamp descending
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.995Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-002","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2misFinalizationComplete[2m > [22m[2mshould return true when all paths retired and quarantine verified
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.998Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2misFinalizationComplete[2m > [22m[2mshould return true when all paths retired and quarantine verified
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.999Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-002","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2misFinalizationComplete[2m > [22m[2mshould return true when all paths retired and quarantine verified
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.999Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-006","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2misFinalizationComplete[2m > [22m[2mshould return true when all paths retired and quarantine verified
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:32.999Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-008","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:33.000Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:33.000Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":4,"blockedCount":0,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:33.000Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:33.001Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-002","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:33.001Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-006","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:33.001Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-008","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:33.002Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":0,"isComplete":true,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle retirement and revert cycle
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:33.002Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle retirement and revert cycle
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:01:33.003Z","type":"WRITE_PATH_FINALIZATION","operation":"REVERT_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"MEMBERSHIP_ONLY","newStatus":"DUAL_WRITE","operatorId":"admin-456"}
+
+ [32mΓ£ô[39m tests/e2e/auth-flow/suspended-membership.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/middleware/authorization/__tests__/requirePermission.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/PerformanceTargetsValidationService.test.ts [2m([22m[2m60 tests[22m[2m)[22m[32m 57[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/household/services/__tests__/HouseholdIsolationService.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/usecases/__tests__/GetDoorStateDashboardUseCase.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/remediation/__tests__/LegacyDataRemediationService.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/cutover/__tests__/CutoverExecutionService.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/subscription/services/__tests__/SubscriptionStatusService.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/orgunit/services/__tests__/MultiClusterService.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 70[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/SecurityValidationSuite.test.ts [2m([22m[2m55 tests[22m[2m)[22m[32m 61[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/billing/services/__tests__/BillingService.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/utils/__tests__/monitoringWindow.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+[90mstderr[2m | 
+src/core/domains/authorization/__tests__/AuthorizationConcurrencyService.test.ts[2m > 
+[22m[2mAuthorizationConcurrencyService[2m > [22m[2mDefault Configuration[2m > 
+[22m[2mshould work with default audit logger when none provided
+[22m[39m[SECURITY] TOCTOU Race Detected: {
+  incidentId: [32m'toctou-muikunj4-i33o5r'[39m,
+  timestamp: [32m'2026-09-26T16:01:33.856Z'[39m,
+  operationType: [32m'membership:update'[39m,
+  userId: [32m'user-a-uuid'[39m,
+  tenantId: [32m'tenant-a-uuid'[39m,
+  stateChange: [32m'Authorization revoked between check and execution'[39m,
+  context: { userId: [32m'user-a-uuid'[39m, tenantId: [32m'tenant-a-uuid'[39m }
+}
+
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/AuthorizationConcurrencyService.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/usecases/__tests__/ProcessDoorEventUseCase.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembership
+WriteRepository.test.ts[2m > [22m[2mPrismaMembershipWriteRepository[2m > 
+[22m[2mcreate[2m > [22m[2mshould return technical error for other database errors
+[22m[39m[MembershipWriteRepository] create error: Error: Database connection failed
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\infrastructure\repositories\member
+ship\__tests__\PrismaMembershipWriteRepository.test.ts:144:9
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4
+m@vitest/runner[24m/dist/chunk-hooks.js:1718:8[90m)[39m
+
+ [32mΓ£ô[39m src/infrastructure/repositories/membership/__tests__/PrismaMembershipWriteRepository.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/auth/__tests__/SecureTokenStorage.test.ts[2m > 
+[22m[2mSecureTokenStorage[2m > [22m[2mencrypt/decrypt[2m > [22m[2mshould 
+return null when no active key
+[22m[39mSecureTokenStorage: No active encryption key
+
+[90mstderr[2m | src/infrastructure/auth/__tests__/SecureTokenStorage.test.ts[2m > 
+[22m[2mSecureTokenStorage[2m > [22m[2mencrypt/decrypt[2m > [22m[2mshould fail 
+decryption with tampered ciphertext
+[22m[39mSecureTokenStorage: Decryption failed Error: Unsupported state or unable to 
+authenticate data
+[90m    at Decipheriv.final (node:internal/crypto/cipher:170:29)[39m
+    at Object.decrypt [90m(D:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\auth\SecureTokenStorage.ts:329:18[90m)[39m
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\auth\__tests__\SecureTokenStorage.test.ts:213:33
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+
+ [32mΓ£ô[39m src/infrastructure/legacy-removal/__tests__/DeprecationHelper.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/auth/__tests__/SecureTokenStorage.test.ts[2m > 
+[22m[2mSecureTokenStorage[2m > [22m[2mencrypt/decrypt[2m > [22m[2mshould fail 
+decryption with tampered auth tag
+[22m[39mSecureTokenStorage: Decryption failed Error: Unsupported state or unable to 
+authenticate data
+[90m    at Decipheriv.final (node:internal/crypto/cipher:170:29)[39m
+    at Object.decrypt [90m(D:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\auth\SecureTokenStorage.ts:329:18[90m)[39m
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\auth\__tests__\SecureTokenStorage.test.ts:229:33
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:154:11
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:751:26
+    at [90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/r
+unner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modul
+es/[4m@vitest/runner[24m/dist/chunk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m
+@vitest/runner[24m/dist/chunk-hooks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+
+[90mstderr[2m | src/infrastructure/auth/__tests__/SecureTokenStorage.test.ts[2m > 
+[22m[2mSecureTokenStorage[2m > [22m[2mreEncrypt[2m > [22m[2mshould return null 
+if decryption fails
+[22m[39mSecureTokenStorage: Key version 999 not found
+
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/SecureTokenStorage.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mcreateUserWithMembership[2m > [22m[2mshould create both User and Membership in single transaction
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:01:34.330Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr-123","operation":"create","category":"USER_CREATION","actorUserId":"admin-789","tenantId":"tenant-123","success":true,"userId":"new-user-id","membershipId":"new-membership-id","role":"Warga","membershipRole":"RESIDENT"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mcreateUserWithMembership[2m > [22m[2mshould map legacy role to MembershipRole correctly
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:01:34.334Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Warga","membershipRole":"RESIDENT"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatib
+ilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > 
+[22m[2mcreateUserWithMembership[2m > [22m[2mshould fail for invalid role mapping
+[22m[39m[DualWrite] FAILED {"timestamp":"2026-09-26T16:01:34.338Z","type":"DUAL_WRITE
+_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","act
+orUserId":"admin","tenantId":"tenant-123","success":false,"error":"Invalid role 
+mapping","legacyRole":"InvalidRole"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatib
+ilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > 
+[22m[2mcreateUserWithMembership[2m > [22m[2mshould rollback on transaction failure
+[22m[39m[DualWrite] FAILED {"timestamp":"2026-09-26T16:01:34.341Z","type":"DUAL_WRITE
+_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","act
+orUserId":"admin","tenantId":"tenant-123","success":false,"error":"Database error"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mcreateUserWithMembership[2m > [22m[2mshould include correlation ID in result
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:01:34.343Z","type":"DUAL_WRITE_OPERATION","correlationId":"test-correlation-id","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Warga","membershipRole":"RESIDENT"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mupdateRoleWithMembership[2m > [22m[2mshould update both User.role and Membership.role in single transaction
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:01:34.344Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"update","category":"ROLE_ASSIGNMENT","actorUserId":"admin","tenantId":"tenant-123","targetUserId":"user-id","success":true,"newRole":"Pengurus","membershipRole":"ORG_ADMIN"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatib
+ilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > 
+[22m[2mupdateRoleWithMembership[2m > [22m[2mshould block quarantined users 
+(INV-QUARANTINE-001)
+[22m[39m[DualWrite] FAILED {"timestamp":"2026-09-26T16:01:34.346Z","type":"DUAL_WRITE
+_OPERATION","correlationId":"corr","operation":"update","category":"ROLE_ASSIGNMENT","a
+ctorUserId":"admin","tenantId":"tenant-123","targetUserId":"quarantined-user-id","succe
+ss":false,"error":"Quarantined user blocked","reason":"INV-QUARANTINE-001"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mupdateRoleWithMembership[2m > [22m[2mshould create Membership if none exists (legacy user compatibility)
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:01:34.347Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"update","category":"ROLE_ASSIGNMENT","actorUserId":"admin","tenantId":"tenant-123","targetUserId":"user-id","success":true,"newRole":"Pengurus","membershipRole":"ORG_ADMIN"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatib
+ilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > 
+[22m[2mupdateRoleWithMembership[2m > [22m[2mshould fail for invalid role mapping
+[22m[39m[DualWrite] FAILED {"timestamp":"2026-09-26T16:01:34.348Z","type":"DUAL_WRITE
+_OPERATION","correlationId":"corr","operation":"update","category":"ROLE_ASSIGNMENT","a
+ctorUserId":"admin","tenantId":"tenant-123","targetUserId":"user-id","success":false,"e
+rror":"Invalid role mapping","legacyRole":"NonExistentRole"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatib
+ilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > 
+[22m[2mupdateRoleWithMembership[2m > [22m[2mshould rollback on transaction failure
+[22m[39m[DualWrite] FAILED {"timestamp":"2026-09-26T16:01:34.349Z","type":"DUAL_WRITE
+_OPERATION","correlationId":"corr","operation":"update","category":"ROLE_ASSIGNMENT","a
+ctorUserId":"admin","tenantId":"tenant-123","targetUserId":"user-id","success":false,"e
+rror":"Database error"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mRole Mapping Coverage[2m > [22m[2mshould map Super_Admin to PLATFORM_ADMIN
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:01:34.355Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Super_Admin","membershipRole":"PLATFORM_ADMIN"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mRole Mapping Coverage[2m > [22m[2mshould map Ketua_RT to RT_ADMIN
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:01:34.357Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Ketua_RT","membershipRole":"RT_ADMIN"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mRole Mapping Coverage[2m > [22m[2mshould map Pengurus to ORG_ADMIN
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:01:34.358Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Pengurus","membershipRole":"ORG_ADMIN"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mRole Mapping Coverage[2m > [22m[2mshould map Warga to RESIDENT
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:01:34.359Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Warga","membershipRole":"RESIDENT"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mRole Mapping Coverage[2m > [22m[2mshould map Security_Guard to SECURITY
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:01:34.359Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Security_Guard","membershipRole":"SECURITY"}
+
+ [32mΓ£ô[39m src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/emergency/services/__tests__/SafetyCriticalProtectionService.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/MembershipResolutionService.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/DelegatedMembershipService.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/logging/__tests__/AuthorizationAuditLogger.test.ts [2m([22m[2m46 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/CacheInvalidationService.test.ts [2m([22m[2m60 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/auth/__tests__/TokenVersionService.test.ts[2m > 
+[22m[2mTokenVersionService[2m > [22m[2mforceLogoutTenant[2m > [22m[2mshould 
+handle getUserIdsByTenant failure gracefully
+[22m[39mFailed to get user IDs for refresh token revocation { code: 
+[32m'DB_ERROR'[39m, message: [32m'Failed to get users'[39m }
+
+ [32mΓ£ô[39m src/core/domains/orgunit/services/__tests__/OrgUnitHierarchyReader.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/TokenVersionService.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/AuthorizationContextResolver.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+[90mstdout[2m | src/infrastructure/legacy-cleanup/__tests__/PreFlightVerificationService.test.ts[2m > [22m[2mPreFlightVerificationService[2m > [22m[2mfail-closed behavior[2m > [22m[2mshould fail closed when no services provided
+[22m[39mStarting pre-flight verification { correlationId: [32m'preflight-1790438494791-7bq2qx9qo'[39m }
+
+[90mstdout[2m | src/infrastructure/legacy-cleanup/__tests__/PreFlightVerificationService.test.ts[2m > [22m[2mPreFlightVerificationService[2m > [22m[2mfail-closed behavior[2m > [22m[2mshould fail closed when no services provided
+[22m[39mPre-flight verification FAILED {
+  correlationId: [32m'preflight-1790438494791-7bq2qx9qo'[39m,
+  verified: [33mfalse[39m,
+  blockingIssuesCount: [33m5[39m
+}
+
+ [32mΓ£ô[39m src/infrastructure/legacy-cleanup/__tests__/PreFlightVerificationService.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32mΓ£ô[39m tests/e2e/auth-flow/token-invalidation.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/OrgUnitScopeAuthorizer.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32mΓ£ô[39m src/core/utils/errors/createErrorFromCode.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-cleanup/__tests__/CleanupMigrationGenerator.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-cleanup/__tests__/BackupService.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/subscription/services/__tests__/SubscriptionPlanService.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/remediation/__tests__/QuarantineValidator.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/cutover/__tests__/CutoverMonitoringService.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/quarantine/__tests__/QuarantineManifestService.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/compatibility/__tests__/PreCutoverGateService.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/cutover/__tests__/CutoverPlan.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-cleanup/__tests__/PostDropValidationService.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/PermissionRegistry.test.ts [2m([22m[2m45 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/remediation/__tests__/RemediationReportGenerator.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/emergencyContact/usecases/__tests__/EmergencyContactUseCases.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/TokenEntropyValidator.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/rls/__tests__/RlsPolicyManager.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/compatibility/__tests__/WritePathRetirementPolicy.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/rls/__tests__/TableClassificationRegistry.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/logging/__tests__/LoggingConfiguration.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/rls/__tests__/RlsCoverageEnforcer.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/rls/__tests__/RlsSessionContext.test.ts [2m([22m[2m46 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/logging/__tests__/TokenValidationLogger.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/ShadowModeFeatureFlagService.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/compatibility/__tests__/WritePathInventory.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/remediation/__tests__/RoleMappingService.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-removal/__tests__/MigrationStatusTracker.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-removal/__tests__/types.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/utils/__tests__/correlationId.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/authorization/__tests__/LegacyAuthorizationAdapter.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-removal/__tests__/AuthPathValidator.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/usecases/__tests__/RegisterDoorSensorUseCase.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/iot/__tests__/tuyaEventMapper.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/usecases/__tests__/RequestDoorSensorInstallationUseCase.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/usecases/__tests__/SetMonitoringWindowUseCase.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 10 
+[49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m src/infrastructure/logging/__tests__/Logger.test.ts[2m > 
+[22mLogger[2m > [22mCustom Configuration[2m > [22mshould allow custom sanitizer
+[31m[1mAssertionError[22m: expected 'secret-value' to be '[REDACTED]' // Object.is 
+equality[39m
+
+Expected: [32m"[REDACTED]"[39m
+Received: [31m"secret-value"[39m
+
+[36m [2mΓ¥»[22m 
+src/infrastructure/logging/__tests__/Logger.test.ts:[2m317:37[22m[39m
+    [90m315| [39m
+    [90m316| [39m      const logEntry = JSON.parse(capturedOutput[0]!) as 
+Record<stringΓÇª
+    [90m317| [39m      [34mexpect[39m(logEntry[33m.[39mcustomSecret)[33m.[39m[
+34mtoBe[39m([32m'[REDACTED]'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m318| [39m    })[33m;[39m
+    [90m319| [39m  })[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/10]ΓÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m src/core/utils/errors/ErrorCodeRegistry.test.ts[2m > 
+[22mNOT_FOUND_ERROR_CODES[2m > [22mshould contain resource not-found error codes
+[31m[1mAssertionError[22m: expected { COMMON_NOT_FOUND: { ΓÇª(6) }, ΓÇª(10) } to 
+have property "TENANT_NOT_FOUND"[39m
+[36m [2mΓ¥»[22m src/core/utils/errors/ErrorCodeRegistry.test.ts:[2m662:37[22m[39m
+    [90m660| [39m
+    [90m661| [39m    [35mfor[39m ([35mconst[39m code [35mof[39m requiredCodes) 
+{
+    [90m662| [39m      [34mexpect[39m([33mNOT_FOUND_ERROR_CODES[39m)[33m.[39m[
+34mtoHaveProperty[39m(code)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m663| [39m    }
+    [90m664| [39m  })[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/10]ΓÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m src/core/utils/errors/ErrorCodeRegistry.test.ts[2m > 
+[22mErrorCodeRegistry ΓÇö Security Considerations[2m > [22mshould not expose 
+internal details in descriptions
+[31m[1mAssertionError[22m: expected 'Invalid username or password' not to match 
+/password/i[39m
+
+[32m- Expected:[39m 
+/password/i
+
+[31m+ Received:[39m 
+"Invalid username or password"
+
+[36m [2mΓ¥»[22m src/core/utils/errors/ErrorCodeRegistry.test.ts:[2m761:44[22m[39m
+    [90m759| [39m    [35mfor[39m ([35mconst[39m [[33m,[39m definition] 
+[35mof[39m [33mObject[39m[33m.[39m[34mentries[39m([33mERROR_CODES[39m)) {
+    [90m760| [39m      [35mfor[39m ([35mconst[39m pattern [35mof[39m 
+sensitivePatterns) {
+    [90m761| [39m        [34mexpect[39m(definition[33m.[39mdescription)[33m.[39
+mnot[33m.[39m[34mtoMatch[39m(pattern)[33m;[39m
+    [90m   | [39m                                           [31m^[39m
+    [90m762| [39m      }
+    [90m763| [39m    }
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/10]ΓÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m src/core/utils/errors/ErrorCodeRegistry.test.ts[2m > 
+[22mErrorCodeRegistry ΓÇö Security Considerations[2m > [22mshould have generic user 
+messages (via i18n) for sensitive errors
+[31m[1mAssertionError[22m: expected 'Invalid username or password' not to contain 
+'username'[39m
+
+Expected: [32m"username"[39m
+Received: [31m"Invalid username or password"[39m
+
+[36m [2mΓ¥»[22m src/core/utils/errors/ErrorCodeRegistry.test.ts:[2m769:38[22m[39m
+    [90m767| [39m    [90m// Authentication failures should not reveal specifics[39m
+    [90m768| [39m    [35mconst[39m authDef [33m=[39m 
+[34mgetErrorCodeDefinition[39m([32m'AUTH_INVALID_CREDENTIALS'[39m)[33m;[39m
+    [90m769| [39m    [34mexpect[39m(authDef[33m?.[39mdescription)[33m.[39mnot[
+33m.[39m[34mtoContain[39m([32m'username'[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m770| [39m    [34mexpect[39m(authDef[33m?.[39mdescription)[33m.[39mnot[
+33m.[39m[34mtoContain[39m([32m'email'[39m)[33m;[39m
+    [90m771| [39m  })[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[4/10]ΓÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m tests/e2e/auth-flow/flows/resident.test.ts[2m > 
+[22mRESIDENT Role Flow Tests[2m > [22mRESIDENT Membership Status Handling[2m > 
+[22mshould deny INVITED RESIDENT access to routes
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'status')[39m
+[36m [2mΓ¥»[22m tests/e2e/auth-flow/flows/resident.test.ts:[2m916:23[22m[39m
+    [90m914| [39m      [35mconst[39m response [33m=[39m [35mawait[39m 
+[34mwrappedHandler[39m(request)[33m;[39m
+    [90m915| [39m
+    [90m916| [39m      [34mexpect[39m(response[33m.[39mstatus)[33m.[39m[34mtoB
+e[39m([34m403[39m)[33m;[39m
+    [90m   | [39m                      [31m^[39m
+    [90m917| [39m      [34mexpect[39m(handler)[33m.[39mnot[33m.[39m[34mtoHaveB
+eenCalled[39m()[33m;[39m
+    [90m918| [39m    })[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[5/10]ΓÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m 
+src/infrastructure/__tests__/e2e/auth-flow/context-switch.test.ts[2m > [22mContext 
+Switch E2E Integration Tests[2m > [22mAvailable Contexts For Single Tenant[2m > 
+[22mshould list all OrgUnit contexts available within a tenant
+[31m[1mAssertionError[22m: expected undefined to be 'ORG_ADMIN' // Object.is 
+equality[39m
+
+[32m- Expected:[39m 
+"ORG_ADMIN"
+
+[31m+ Received:[39m 
+undefined
+
+[36m [2mΓ¥»[22m 
+src/infrastructure/__tests__/e2e/auth-flow/context-switch.test.ts:[2m925:38[22m[39m
+    [90m923| [39m        )[33m;[39m
+    [90m924| [39m
+    [90m925| [39m        [34mexpect[39m(rootMembership[33m?.[39mrole)[33m.[39m
+[34mtoBe[39m([33mMembershipRole[39m[33m.[39m[33mORG_ADMIN[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m926| [39m        [34mexpect[39m(childMembership[33m?.[39mrole)[33m.[39m
+[34mtoBe[39m([33mMembershipRole[39m[33m.[39m[33mRT_ADMIN[39m)[33m;[39m
+    [90m927| [39m      }
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[6/10]ΓÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m src/core/domains/authorization/services/__tests__/CrossTenant
+PreventionService.test.ts[2m > [22mCrossTenantPreventionService[2m > 
+[22mQuery/Mutation Tenant Validation[2m > [22mvalidateQueryTenantFilter[2m > 
+[22mshould allow platform-wide query for platform admin
+[31m[1mAssertionError[22m: expected 'Platform admin authorized for platforΓÇª' to 
+contain 'platform admin'[39m
+
+Expected: [32m"[7mp[27mlatform admin"[39m
+Received: [31m"[7mP[27mlatform admin[7m authorized for platform-wide 
+query[27m"[39m
+
+[36m [2mΓ¥»[22m src/core/domains/authorization/services/__tests__/CrossTenantPrevent
+ionService.test.ts:[2m730:37[22m[39m
+    [90m728| [39m        [34mexpect[39m(result[33m.[39msuccess)[33m.[39m[34mto
+Be[39m([35mtrue[39m)[33m;[39m
+    [90m729| [39m        
+expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWEDΓÇª
+    [90m730| [39m        [34mexpect[39m(result[33m.[39mdata[33m?.[39mreason)[3
+3m.[39m[34mtoContain[39m([32m'platform admin'[39m)[33m;[39m
+    [90m   | [39m                                    [31m^[39m
+    [90m731| [39m      })[33m;[39m
+    [90m732| [39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[7/10]ΓÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m src/core/domains/authorization/services/__tests__/DisasterRec
+overyTestingService.test.ts[2m > [22mDisasterRecoveryTestingService[2m > 
+[22mvalidateTenantIsolationDuringRecovery[2m > [22mshould report policy pass rate 
+in metrics
+[31m[1mAssertionError[22m: expected +0 to be 0.5 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0.5[39m
+[31m+ 0[39m
+
+[36m [2mΓ¥»[22m src/core/domains/authorization/services/__tests__/DisasterRecoveryTe
+stingService.test.ts:[2m702:56[22m[39m
+    [90m700| [39m      [34mexpect[39m(result[33m.[39msuccess)[33m.[39m[34mtoBe
+[39m([35mtrue[39m)[33m;[39m
+    [90m701| [39m      [35mif[39m (result[33m.[39msuccess) {
+    [90m702| [39m        [34mexpect[39m(result[33m.[39mdata[33m.[39mmetrics[33
+m?.[39mrlsPolicyPassRate)[33m.[39m[34mtoBe[39m([34m0.5[39m)[33m;[39m
+    [90m   | [39m                                                       [31m^[39m
+    [90m703| [39m      }
+    [90m704| [39m    })[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[8/10]ΓÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m 
+src/core/domains/authorization/services/__tests__/SecurityTestingSuite.test.ts[2m > 
+[22mSecurityTestingSuite[2m > [22mrunAllPenetrationTests[2m > [22mshould include 
+results for all scenarios
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2mΓ¥»[22m src/core/domains/authorization/services/__tests__/SecurityTestingSui
+te.test.ts:[2m334:127[22m[39m
+    [90m332| [39m        [35mfor[39m ([35mconst[39m scenario [35mof[39m 
+[33mPENETRATION_TEST_SCENARIOS[39m) {
+    [90m333| [39m          // Each scenario should have a result (either exact match 
+orΓÇª
+    [90m334| [39m          expect(result.data.some((r) => 
+r.testId.includes(scenario.atΓÇª
+    [90m   | [39m                                                                    
+                                                          [31m^[39m
+    [90m335| [39m        }
+    [90m336| [39m      }
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[9/10]ΓÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m src/core/domains/notification/services/__tests__/Notification
+SecurityService.test.ts[2m > [22mNotificationSecurityService[2m > [22mContent 
+Security Validation[2m > [22mmaskPII[2m > [22mshould mask 16-digit NIK numbers
+[31m[1mAssertionError[22m: expected 'NIK: 320112****89012' to contain 
+'********'[39m
+
+Expected: [32m"********"[39m
+Received: [31m"NIK: 320112****89012"[39m
+
+[36m [2mΓ¥»[22m src/core/domains/notification/services/__tests__/NotificationSecurit
+yService.test.ts:[2m528:24[22m[39m
+    [90m526| [39m
+    [90m527| [39m        [34mexpect[39m(masked)[33m.[39mnot[33m.[39m[34mtoCont
+ain[39m([32m'3201123456789012'[39m)[33m;[39m
+    [90m528| [39m        
+[34mexpect[39m(masked)[33m.[39m[34mtoContain[39m([32m'********'[39m)[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m529| [39m      })[33m;[39m
+    [90m530| [39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[10/10]ΓÄ»[
+22m[39m
+
+
+[2m Test Files [22m [1m[31m8 failed[39m[22m[2m | [22m[1m[32m98 passed[39m[22m[90m (106)[39m
+[2m      Tests [22m [1m[31m10 failed[39m[22m[2m | [22m[1m[32m3481 passed[39m[22m[90m (3491)[39m
+[2m   Start at [22m 23:01:27
+[2m   Duration [22m 9.37s[2m (transform 23.08s, setup 0ms, collect 47.56s, tests 6.67s, environment 33ms, prepare 23.00s)[22m
+

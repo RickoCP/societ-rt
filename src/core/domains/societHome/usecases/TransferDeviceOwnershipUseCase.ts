@@ -12,11 +12,13 @@
  * @see Requirements 37.8, 37.11, 37.12, 41.10
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getMembershipRole } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import { authorizationError, notFoundError } from '@core/utils';
-import { UserRole } from '@core/protocols';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { HomeRepository } from '../repositories/HomeRepository';
 import type { TransferDeviceOwnershipInput } from '../entities';
 
@@ -26,7 +28,7 @@ import type { TransferDeviceOwnershipInput } from '../entities';
 
 export interface TransferDeviceOwnershipUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     input: TransferDeviceOwnershipInput;
   }): Promise<DomainResult<void>>;
 }
@@ -44,9 +46,11 @@ export const TransferDeviceOwnershipUseCaseImpl = ({
 }): TransferDeviceOwnershipUseCase => ({
   execute: async ({ authContext, input }) => {
     // 1. Validate role — only Warga or Ketua_RT can transfer ownership
+    // Use getMembershipRole for AuthContextCompat compatibility
+    const role = getMembershipRole(authContext);
     if (
-      authContext.role !== UserRole.Warga &&
-      authContext.role !== UserRole.Ketua_RT
+      role !== MembershipRole.RESIDENT &&
+      role !== MembershipRole.RT_ADMIN
     ) {
       return fail(
         authorizationError(

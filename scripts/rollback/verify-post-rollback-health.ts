@@ -122,7 +122,7 @@ function parseArgs(): CommandLineArgs {
   // Check for --api-base flag
   const apiBaseIndex = args.indexOf('--api-base');
   if (apiBaseIndex !== -1 && args[apiBaseIndex + 1]) {
-    apiBase = args[apiBaseIndex + 1];
+    apiBase = args[apiBaseIndex + 1] ?? DEFAULT_API_BASE;
   }
 
   return {
@@ -158,11 +158,11 @@ async function runPostRollbackHealthCheck(): Promise<{
     let stdout = '';
     let stderr = '';
 
-    child.stdout.on('data', (data) => {
+    child.stdout?.on('data', (data) => {
       stdout += data.toString();
     });
 
-    child.stderr.on('data', (data) => {
+    child.stderr?.on('data', (data) => {
       stderr += data.toString();
     });
 

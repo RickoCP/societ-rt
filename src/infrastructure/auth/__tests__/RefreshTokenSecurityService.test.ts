@@ -26,7 +26,6 @@ import {
 import type { RefreshToken } from '@core/domains/auth/entities/RefreshToken';
 import type {
   TokenLeakDetectionService,
-  TokenUsageEvent,
   LeakDetectionResult,
   GeolocationInfo,
 } from '../TokenLeakDetectionService';
@@ -47,7 +46,7 @@ function createMockRefreshToken(overrides?: Partial<RefreshToken>): RefreshToken
     tokenHash: 'hash-abc',
     familyId: 'family-xyz',
     generation: 1,
-    issuedAt: new Date('2024-01-01'),
+    createdAt: new Date('2024-01-01'),
     expiresAt: new Date('2024-01-31'),
     revokedAt: null,
     replacedBy: null,
@@ -235,12 +234,15 @@ describe('RefreshTokenSecurityService', () => {
 
       const result = await service.createTokenBinding(token, fingerprint);
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.userId).toBe(token.userId);
-      expect(result.data!.tenantId).toBe(token.tenantId);
-      expect(result.data!.deviceFingerprintHash).toBe(service.createFingerprintHash(fingerprint));
-      expect(result.data!.boundAt).toBeInstanceOf(Date);
-      expect(result.data!.lastValidated).toBeInstanceOf(Date);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.userId).toBe(token.userId);
+        expect(result.data.tenantId).toBe(token.tenantId);
+        expect(result.data.deviceFingerprintHash).toBe(service.createFingerprintHash(fingerprint));
+        expect(result.data.boundAt).toBeInstanceOf(Date);
+        expect(result.data.lastValidated).toBeInstanceOf(Date);
+      }
     });
 
     it('should store the binding for later retrieval', async () => {
@@ -263,9 +265,12 @@ describe('RefreshTokenSecurityService', () => {
       await service.createTokenBinding(token, fingerprint);
       const result = await service.validateTokenBinding(token, fingerprint);
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.isValid).toBe(true);
-      expect(result.data!.reason).toBe('valid');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.isValid).toBe(true);
+        expect(result.data.reason).toBe('valid');
+      }
     });
 
     it('should fail validation when binding not found', async () => {
@@ -274,9 +279,12 @@ describe('RefreshTokenSecurityService', () => {
 
       const result = await service.validateTokenBinding(token, fingerprint);
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.isValid).toBe(false);
-      expect(result.data!.reason).toBe('binding_not_found');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.isValid).toBe(false);
+        expect(result.data.reason).toBe('binding_not_found');
+      }
     });
 
     it('should fail validation on user mismatch', async () => {
@@ -292,9 +300,12 @@ describe('RefreshTokenSecurityService', () => {
 
       const result = await service.validateTokenBinding(differentUserToken, fingerprint);
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.isValid).toBe(false);
-      expect(result.data!.reason).toBe('user_mismatch');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.isValid).toBe(false);
+        expect(result.data.reason).toBe('user_mismatch');
+      }
     });
 
     it('should fail validation on device fingerprint mismatch', async () => {
@@ -306,9 +317,12 @@ describe('RefreshTokenSecurityService', () => {
       const differentFingerprint = createMockFingerprint({ ipAddress: '10.0.0.1' });
       const result = await service.validateTokenBinding(token, differentFingerprint);
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.isValid).toBe(false);
-      expect(result.data!.reason).toBe('device_fingerprint_mismatch');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.isValid).toBe(false);
+        expect(result.data.reason).toBe('device_fingerprint_mismatch');
+      }
     });
 
     it('should fail validation on tenant mismatch', async () => {
@@ -325,9 +339,12 @@ describe('RefreshTokenSecurityService', () => {
 
       const result = await service.validateTokenBinding(differentTenantToken, fingerprint);
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.isValid).toBe(false);
-      expect(result.data!.reason).toBe('tenant_mismatch');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.isValid).toBe(false);
+        expect(result.data.reason).toBe('tenant_mismatch');
+      }
     });
   });
 
@@ -341,11 +358,14 @@ describe('RefreshTokenSecurityService', () => {
         currentData,
       );
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.anomalyDetected).toBe(false);
-      expect(result.data!.anomalyTypes).toHaveLength(0);
-      expect(result.data!.riskLevel).toBe('none');
-      expect(result.data!.recommendedAction).toBe('allow');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.anomalyDetected).toBe(false);
+        expect(result.data.anomalyTypes).toHaveLength(0);
+        expect(result.data.riskLevel).toBe('none');
+        expect(result.data.recommendedAction).toBe('allow');
+      }
     });
 
     it('should detect unusual frequency anomaly', async () => {
@@ -371,9 +391,12 @@ describe('RefreshTokenSecurityService', () => {
         baseData,
       );
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.anomalyDetected).toBe(true);
-      expect(result.data!.anomalyTypes).toContain('unusual_frequency');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.anomalyDetected).toBe(true);
+        expect(result.data.anomalyTypes).toContain('unusual_frequency');
+      }
     });
 
     it('should detect rapid refresh succession', async () => {
@@ -400,9 +423,12 @@ describe('RefreshTokenSecurityService', () => {
         },
       );
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.anomalyDetected).toBe(true);
-      expect(result.data!.anomalyTypes).toContain('rapid_refresh_succession');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.anomalyDetected).toBe(true);
+        expect(result.data.anomalyTypes).toContain('rapid_refresh_succession');
+      }
     });
 
     it('should detect IP address change', async () => {
@@ -422,9 +448,12 @@ describe('RefreshTokenSecurityService', () => {
         },
       );
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.anomalyDetected).toBe(true);
-      expect(result.data!.anomalyTypes).toContain('ip_address_change');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.anomalyDetected).toBe(true);
+        expect(result.data.anomalyTypes).toContain('ip_address_change');
+      }
     });
 
     it('should detect geographic impossibility', async () => {
@@ -461,10 +490,13 @@ describe('RefreshTokenSecurityService', () => {
         },
       );
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.anomalyDetected).toBe(true);
-      expect(result.data!.anomalyTypes).toContain('geographic_impossibility');
-      expect(result.data!.riskLevel).toBe('high');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.anomalyDetected).toBe(true);
+        expect(result.data.anomalyTypes).toContain('geographic_impossibility');
+        expect(result.data.riskLevel).toBe('high');
+      }
     });
 
     it('should detect user agent change', async () => {
@@ -486,9 +518,12 @@ describe('RefreshTokenSecurityService', () => {
         },
       );
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.anomalyDetected).toBe(true);
-      expect(result.data!.anomalyTypes).toContain('user_agent_change');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.anomalyDetected).toBe(true);
+        expect(result.data.anomalyTypes).toContain('user_agent_change');
+      }
     });
   });
 
@@ -502,11 +537,14 @@ describe('RefreshTokenSecurityService', () => {
 
       const result = await service.validateRefreshAttempt(token, fingerprint);
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.isValid).toBe(true);
-      expect(result.data!.recommendedAction).toBe('allow');
-      expect(result.data!.overallRiskLevel).toBe('none');
-      expect(result.data!.failureReasons).toHaveLength(0);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.isValid).toBe(true);
+        expect(result.data.recommendedAction).toBe('allow');
+        expect(result.data.overallRiskLevel).toBe('none');
+        expect(result.data.failureReasons).toHaveLength(0);
+      }
     });
 
     it('should fail validation when binding is invalid', async () => {
@@ -516,9 +554,12 @@ describe('RefreshTokenSecurityService', () => {
 
       const result = await service.validateRefreshAttempt(token, fingerprint);
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.isValid).toBe(false);
-      expect(result.data!.failureReasons.length).toBeGreaterThan(0);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.isValid).toBe(false);
+        expect(result.data.failureReasons.length).toBeGreaterThan(0);
+      }
     });
 
     it('should integrate with leak detection service', async () => {
@@ -589,11 +630,14 @@ describe('RefreshTokenSecurityService', () => {
       await serviceWithLeak.createTokenBinding(token, fingerprint);
       const result = await serviceWithLeak.validateRefreshAttempt(token, fingerprint);
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.isValid).toBe(false);
-      expect(result.data!.leakDetectionResult).toBeDefined();
-      expect(result.data!.leakDetectionResult!.leakDetected).toBe(true);
-      expect(result.data!.failureReasons).toContain('Potential token leak detected');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.isValid).toBe(false);
+        expect(result.data.leakDetectionResult).toBeDefined();
+        expect(result.data.leakDetectionResult!.leakDetected).toBe(true);
+        expect(result.data.failureReasons).toContain('Potential token leak detected');
+      }
     });
   });
 
@@ -612,7 +656,10 @@ describe('RefreshTokenSecurityService', () => {
 
       const result = await service.handleSecurityThreat(token, threatInfo);
 
-      expect(result.data).toBe('allow');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBe('allow');
+      }
     });
 
     it('should revoke family on high risk', async () => {
@@ -638,7 +685,10 @@ describe('RefreshTokenSecurityService', () => {
 
       const result = await serviceWithRevoke.handleSecurityThreat(token, threatInfo);
 
-      expect(result.data).toBe('revoke_family');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBe('revoke_family');
+      }
       expect(mocks.revokeFamily).toHaveBeenCalledWith(token.familyId);
     });
 
@@ -665,7 +715,10 @@ describe('RefreshTokenSecurityService', () => {
 
       const result = await serviceWithRevoke.handleSecurityThreat(token, threatInfo);
 
-      expect(result.data).toBe('revoke_all_user_tokens');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBe('revoke_all_user_tokens');
+      }
       expect(mocks.revokeAllForUser).toHaveBeenCalledWith(token.userId);
     });
 
@@ -861,8 +914,11 @@ describe('RefreshTokenSecurityService', () => {
       const differentFingerprint = createMockFingerprint({ ipAddress: '10.0.0.1' });
       const result = await customService.validateTokenBinding(token, differentFingerprint);
 
-      expect(result.data).toBeDefined();
-      expect(result.data!.isValid).toBe(true);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toBeDefined();
+        expect(result.data.isValid).toBe(true);
+      }
     });
   });
 

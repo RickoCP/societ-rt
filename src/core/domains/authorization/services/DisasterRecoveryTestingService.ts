@@ -18,7 +18,7 @@
  */
 
 import { type DomainResult, ok, fail } from '@core/utils/DomainResult';
-import { technicalError, businessError } from '@core/utils/AppError';
+import { technicalError } from '@core/utils/AppError';
 import type { MembershipRole } from '@core/domains/membership/types';
 
 // ---------------------------------------------------------------------------
@@ -912,7 +912,7 @@ export const DisasterRecoveryTestingServiceImpl = (
         ),
       );
     } catch (error) {
-      const durationMs = Date.now() - startTime;
+      // Duration tracking available via startTime if needed for logging
       return fail(
         technicalError(
           DR_ERROR_CODES.DR_DATABASE_FAILOVER_FAILED,
@@ -979,6 +979,19 @@ export const DisasterRecoveryTestingServiceImpl = (
       // Verify backup integrity if requested
       if (input.verifyIntegrity) {
         const latestBackup = backups[backups.length - 1];
+        if (!latestBackup) {
+          const durationMs = Date.now() - startTime;
+          return ok(
+            createTestResult(
+              'DR-002',
+              DisasterRecoveryCategory.POINT_IN_TIME_RECOVERY,
+              DisasterRecoveryStatus.FAILED,
+              durationMs,
+              'No backup available for integrity verification',
+              { backupCount: backups.length },
+            ),
+          );
+        }
         const integrity = await backupManager.verifyBackupIntegrity(latestBackup.backupId);
 
         if (!integrity.valid || !integrity.checksumVerified) {
@@ -1017,7 +1030,7 @@ export const DisasterRecoveryTestingServiceImpl = (
         ),
       );
     } catch (error) {
-      const durationMs = Date.now() - startTime;
+      // Duration tracking available via startTime if needed for logging
       return fail(
         technicalError(
           DR_ERROR_CODES.DR_BACKUP_RESTORE_FAILED,
@@ -1086,7 +1099,7 @@ export const DisasterRecoveryTestingServiceImpl = (
         ),
       );
     } catch (error) {
-      const durationMs = Date.now() - startTime;
+      // Duration tracking available via startTime if needed for logging
       return fail(
         technicalError(
           DR_ERROR_CODES.DR_DATA_INTEGRITY_FAILED,
@@ -1179,7 +1192,7 @@ export const DisasterRecoveryTestingServiceImpl = (
         ),
       );
     } catch (error) {
-      const durationMs = Date.now() - startTime;
+      // Duration tracking available via startTime if needed for logging
       return fail(
         technicalError(
           DR_ERROR_CODES.DR_SESSION_RECOVERY_FAILED,
@@ -1247,7 +1260,7 @@ export const DisasterRecoveryTestingServiceImpl = (
         ),
       );
     } catch (error) {
-      const durationMs = Date.now() - startTime;
+      // Duration tracking available via startTime if needed for logging
       return fail(
         technicalError(
           DR_ERROR_CODES.DR_TOKEN_REFRESH_FAILED,
@@ -1353,7 +1366,7 @@ export const DisasterRecoveryTestingServiceImpl = (
         ),
       );
     } catch (error) {
-      const durationMs = Date.now() - startTime;
+      // Duration tracking available via startTime if needed for logging
       return fail(
         technicalError(
           DR_ERROR_CODES.DR_CACHE_WARMUP_FAILED,
@@ -1472,7 +1485,7 @@ export const DisasterRecoveryTestingServiceImpl = (
         ),
       );
     } catch (error) {
-      const durationMs = Date.now() - startTime;
+      // Duration tracking available via startTime if needed for logging
       return fail(
         technicalError(
           DR_ERROR_CODES.DR_TENANT_ISOLATION_FAILED,
@@ -1583,7 +1596,7 @@ export const DisasterRecoveryTestingServiceImpl = (
         ),
       );
     } catch (error) {
-      const durationMs = Date.now() - startTime;
+      // Duration tracking available via startTime if needed for logging
       return fail(
         technicalError(
           DR_ERROR_CODES.DR_RLS_CONSISTENCY_FAILED,
@@ -1719,7 +1732,7 @@ export const DisasterRecoveryTestingServiceImpl = (
         ),
       );
     } catch (error) {
-      const durationMs = Date.now() - startTime;
+      // Duration tracking available via startTime if needed for logging
       return fail(
         technicalError(
           DR_ERROR_CODES.DR_RPO_EXCEEDED,
@@ -1837,7 +1850,7 @@ export const DisasterRecoveryTestingServiceImpl = (
         ),
       );
     } catch (error) {
-      const durationMs = Date.now() - startTime;
+      // Duration tracking available via startTime if needed for logging
       return fail(
         technicalError(
           DR_ERROR_CODES.DR_DATA_INTEGRITY_FAILED,

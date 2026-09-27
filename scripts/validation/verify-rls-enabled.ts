@@ -638,8 +638,11 @@ async function main(): Promise<void> {
   }
 }
 
-// Run
-main().catch((err) => {
-  console.error(`[${SCRIPT_NAME}] Fatal error:`, err instanceof Error ? err.message : String(err));
-  process.exit(2);
-});
+// Run if executed directly (not when imported as a module)
+const isMainModule = process.argv[1]?.includes('verify-rls-enabled');
+if (isMainModule) {
+  main().catch((err) => {
+    console.error(`[${SCRIPT_NAME}] Fatal error:`, err instanceof Error ? err.message : String(err));
+    process.exit(2);
+  });
+}

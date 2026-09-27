@@ -8,15 +8,14 @@
  * @see Requirements 33.1, 33.2
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
 } from '@infrastructure/middleware/authorization';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GateRepository } from '@core/domains/gate/repositories/GateRepository';
 
 // ---------------------------------------------------------------------------
@@ -58,11 +57,11 @@ interface GateDetailResponse {
  * @param context - Route context containing params promise
  * @returns NextResponse with gate detail or error
  */
-const handleGetGateDetail: AuthorizedRouteHandler<GateDetailResponse> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-  context?: { params?: Promise<Record<string, string>> },
-): Promise<NextResponse<GateDetailResponse>> => {
+const handleGetGateDetail: AuthorizedRouteHandler<GateDetailResponse | ErrorResponseBody> = async (
+  request,
+  authContext,
+  context,
+): Promise<NextResponse<GateDetailResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -76,7 +75,7 @@ const handleGetGateDetail: AuthorizedRouteHandler<GateDetailResponse> = async (
   const gatesResult = await gateRepository.findByTenant(authContext.tenantId);
 
   if (!gatesResult.success) {
-    return mapAppErrorToHttpResponse(gatesResult.error, correlationId) as NextResponse<GateDetailResponse>;
+    return mapAppErrorToHttpResponse(gatesResult.error, correlationId);
   }
 
   const gate = gatesResult.data.find(g => g.id === gateId);
@@ -87,7 +86,7 @@ const handleGetGateDetail: AuthorizedRouteHandler<GateDetailResponse> = async (
         code: 'GATE_NOT_FOUND',
         message: 'The requested resource was not found.',
         correlationId,
-      } as unknown as GateDetailResponse,
+      },
       { status: 404 },
     );
   }

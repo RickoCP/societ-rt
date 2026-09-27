@@ -12,23 +12,25 @@
  * @see Requirements 31.1, 31.2, 31.9
  */
 
-import type { AuthContext, CacheProtocol } from '@core/protocols';
+import type { CacheProtocol } from '@core/protocols';
 import { UserRole } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, authorizationError } from '@core/utils';
 import type { SecurityDashboardMetrics } from '../entities';
 import type { SecurityCenterRepository } from '../repositories/SecurityCenterRepository';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, hasAllowedUserRole } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const CACHE_TTL_SECONDS = 10;
-const ALLOWED_ROLES: readonly UserRole[] = [
+const ALLOWED_ROLES: ReadonlySet<UserRole> = new Set([
   UserRole.Ketua_RT,
   UserRole.Pengurus,
   UserRole.Security_Guard,
-];
+]);
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -36,7 +38,7 @@ const ALLOWED_ROLES: readonly UserRole[] = [
 
 export interface GetSecurityDashboardUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
   }): Promise<DomainResult<SecurityDashboardMetrics>>;
 }
 
@@ -53,16 +55,17 @@ export const GetSecurityDashboardUseCaseImpl = ({
 }): GetSecurityDashboardUseCase => ({
   execute: async ({ authContext }) => {
     // Role check
-    if (!ALLOWED_ROLES.includes(authContext.role)) {
+    if (!hasAllowedUserRole(authContext, ALLOWED_ROLES)) {
       return fail(
         authorizationError(
           'AUTH_INSUFFICIENT_ROLE',
-          `Role ${authContext.role} is not allowed to access Security Center dashboard`,
+          `User role is not allowed to access Security Center dashboard`,
         ),
       );
     }
 
-    const cacheKey = `security_dashboard:${authContext.tenantId}`;
+    const tenantId = getTenantId(authContext);
+    const cacheKey = `security_dashboard:${tenantId}`;
 
     // Try cache first
     const cached = await cacheProtocol.get<SecurityDashboardMetrics>(cacheKey);
@@ -72,7 +75,7 @@ export const GetSecurityDashboardUseCaseImpl = ({
 
     // Fetch from repository
     const result = await securityCenterRepository.getDashboardMetrics(
-      authContext.tenantId,
+      tenantId,
     );
 
     // Cache on success

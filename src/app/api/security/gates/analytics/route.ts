@@ -8,17 +8,16 @@
  * @see Requirements 33.6, 33.8
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
 } from '@infrastructure/middleware/authorization';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GetGateAnalyticsUseCase } from '@core/domains/gate/usecases';
 
 // ---------------------------------------------------------------------------
@@ -63,10 +62,10 @@ interface GateAnalyticsResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with gate analytics or error
  */
-const handleGetGateAnalytics: AuthorizedRouteHandler<GateAnalyticsResponse> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-): Promise<NextResponse<GateAnalyticsResponse>> => {
+const handleGetGateAnalytics: AuthorizedRouteHandler<GateAnalyticsResponse | ErrorResponseBody> = async (
+  request,
+  authContext,
+): Promise<NextResponse<GateAnalyticsResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -82,9 +81,10 @@ const handleGetGateAnalytics: AuthorizedRouteHandler<GateAnalyticsResponse> = as
     return NextResponse.json(
       {
         code: 'COMMON_VALIDATION_FAILED',
+        message: 'Validation failed',
         fields: formatZodErrors(queryValidation.error),
         correlationId,
-      } as unknown as GateAnalyticsResponse,
+      },
       { status: 400 },
     );
   }
@@ -102,7 +102,7 @@ const handleGetGateAnalytics: AuthorizedRouteHandler<GateAnalyticsResponse> = as
 
   // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<GateAnalyticsResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const analytics = result.data;

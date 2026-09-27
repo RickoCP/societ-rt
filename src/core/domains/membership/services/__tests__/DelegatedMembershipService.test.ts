@@ -32,6 +32,7 @@ import { MembershipEventType } from '../MembershipLifecycleService';
 import type { IOrgUnitHierarchyReader } from '@core/domains/orgunit/services';
 import type { Membership } from '../../entities';
 import { MembershipRole, MembershipStatus } from '../../types';
+import { ok, fail, type DomainResult } from '@core/utils';
 
 // ---------------------------------------------------------------------------
 // Mock Type Helper
@@ -66,12 +67,15 @@ const createMockMembershipLifecycleService = (): Mocked<IMembershipLifecycleServ
 
 const createMockOrgUnitHierarchyReader = (): Mocked<IOrgUnitHierarchyReader> => ({
   isDescendantOrEqual: vi.fn(),
-  getPath: vi.fn(),
-  getDepth: vi.fn(),
-  validatePathInvariant: vi.fn(),
-  validateRootInvariant: vi.fn(),
-  findAncestors: vi.fn(),
-  findDescendants: vi.fn(),
+  isDescendantOf: vi.fn(),
+  isRoot: vi.fn(),
+  getOrgUnitPath: vi.fn(),
+  getOrgUnitDepth: vi.fn(),
+  getOrgUnit: vi.fn(),
+  validatePathDepthInvariant: vi.fn().mockReturnValue({ isValid: true }),
+  validateRootInvariant: vi.fn().mockReturnValue({ isValid: true }),
+  validateOrgUnitInvariants: vi.fn().mockReturnValue(ok(undefined)),
+  getAncestors: vi.fn(),
 });
 
 const createTestMembership = (overrides?: Partial<Membership>): Membership => ({
@@ -158,7 +162,7 @@ describe('DelegatedMembershipService', () => {
           success: true,
           data: validationResult,
         });
-        mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(true);
+        mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(ok(true));
         mockMembershipLifecycleService.create.mockResolvedValue({
           success: true,
           data: { membership, event },
@@ -194,7 +198,7 @@ describe('DelegatedMembershipService', () => {
             explanation: 'Delegation allowed',
           },
         });
-        mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(true);
+        mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(ok(true));
         mockMembershipLifecycleService.create.mockResolvedValue({
           success: true,
           data: { membership: createTestMembership(), event: createTestEvent() },
@@ -322,7 +326,7 @@ describe('DelegatedMembershipService', () => {
             explanation: 'Delegation allowed',
           },
         });
-        mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(false);
+        mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(ok(false));
 
         // Act
         const result = await service.createThroughDelegation(input);
@@ -411,7 +415,7 @@ describe('DelegatedMembershipService', () => {
             explanation: 'Delegation allowed',
           },
         });
-        mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(true);
+        mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(ok(true));
         mockMembershipLifecycleService.create.mockResolvedValue({
           success: false,
           error: {
@@ -448,7 +452,7 @@ describe('DelegatedMembershipService', () => {
           explanation: 'Delegation allowed',
         },
       });
-      mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(true);
+      mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(ok(true));
 
       // Act
       const result = await service.canCreateThroughDelegation(
@@ -499,7 +503,8 @@ describe('DelegatedMembershipService', () => {
           explanation: 'Delegation allowed',
         },
       });
-      mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(false);
+      // Must return DomainResult<boolean>, not just boolean
+      mockOrgUnitHierarchyReader.isDescendantOrEqual.mockResolvedValue(ok(false));
 
       // Act
       const result = await service.canCreateThroughDelegation(
@@ -564,7 +569,7 @@ describe('DelegatedMembershipService', () => {
 
       mockOrgUnitHierarchyReader.isDescendantOrEqual.mockImplementation(async () => {
         callOrder.push('scopeValidation');
-        return true;
+        return ok(true);
       });
 
       // Act
@@ -594,7 +599,7 @@ describe('DelegatedMembershipService', () => {
 
       mockOrgUnitHierarchyReader.isDescendantOrEqual.mockImplementation(async () => {
         callOrder.push('scopeValidation');
-        return false; // Scope validation fails
+        return ok(false); // Scope validation fails
       });
 
       mockMembershipLifecycleService.create.mockImplementation(async () => {

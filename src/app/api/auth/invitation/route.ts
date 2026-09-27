@@ -99,26 +99,18 @@ const handleCreateInvitation: AuthorizedRouteHandler<InvitationResponse> = async
   const { email, role } = validation.data;
 
   // 2. Execute use case via DI
-  // Note: We pass the full AuthorizationContext for compatibility
-  // The use case can use authContext.userId, authContext.tenantId, etc.
+  // Pass the full AuthorizationContext which is compatible with AuthContextCompat
   const createInvitationUseCase =
     container.resolve<CreateInvitationUseCase>('createInvitationUseCase');
   const result = await createInvitationUseCase.execute({
-    authContext: {
-      userId: authContext.userId,
-      tenantId: authContext.tenantId,
-      role: authContext.role,
-    },
+    authContext,
     email,
     role,
   });
 
   // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(
-      result.error,
-      correlationId,
-    ) as NextResponse<InvitationResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const invitation = result.data;

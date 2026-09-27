@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
@@ -53,10 +53,10 @@ interface UpdateCoordinatesResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with success status or error
  */
-const handleUpdateCoordinates: AuthorizedRouteHandler<UpdateCoordinatesResponse> = async (
+const handleUpdateCoordinates: AuthorizedRouteHandler<UpdateCoordinatesResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<UpdateCoordinatesResponse>> => {
+): Promise<NextResponse<UpdateCoordinatesResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -70,7 +70,7 @@ const handleUpdateCoordinates: AuthorizedRouteHandler<UpdateCoordinatesResponse>
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      } as unknown as UpdateCoordinatesResponse,
+      },
       { status: 400 },
     );
   }
@@ -80,9 +80,10 @@ const handleUpdateCoordinates: AuthorizedRouteHandler<UpdateCoordinatesResponse>
     return NextResponse.json(
       {
         code: 'COMMON_VALIDATION_FAILED',
+        message: 'Validation failed',
         fields: formatZodErrors(validation.error),
         correlationId,
-      } as unknown as UpdateCoordinatesResponse,
+      },
       { status: 400 },
     );
   }
@@ -100,7 +101,7 @@ const handleUpdateCoordinates: AuthorizedRouteHandler<UpdateCoordinatesResponse>
 
   // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<UpdateCoordinatesResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(

@@ -18,7 +18,7 @@ import type { RefreshToken } from '../entities/RefreshToken';
  * Input for creating a new refresh token record.
  * The tokenHash is pre-computed by the caller using SHA-256.
  */
-export interface CreateRefreshTokenInput {
+export interface RepoCreateRefreshTokenInput {
   readonly userId: string;
   /** Pre-computed SHA-256 hash of the actual token */
   readonly tokenHash: string;
@@ -73,7 +73,7 @@ export interface RefreshTokenRepository {
    * Create a new refresh token record.
    * @see Requirement 14 AC 1-4: Token creation with hash, familyId, generation
    */
-  create(input: CreateRefreshTokenInput): Promise<DomainResult<RefreshToken>>;
+  create(input: RepoCreateRefreshTokenInput): Promise<DomainResult<RefreshToken>>;
 
   /**
    * Find a refresh token by its hash.

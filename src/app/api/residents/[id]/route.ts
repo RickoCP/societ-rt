@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { UpdateResidentStatusUseCase } from '@core/domains/resident/usecases';
@@ -79,11 +79,11 @@ interface UpdateResidentResponse {
 // PATCH handler — Update resident status
 // ---------------------------------------------------------------------------
 
-const handlePatchStatus: AuthorizedRouteHandler<UpdateStatusResponse> = async (
+const handlePatchStatus: AuthorizedRouteHandler<UpdateStatusResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
   routeContext?: { params?: Promise<Record<string, string>> },
-): Promise<NextResponse<UpdateStatusResponse>> => {
+): Promise<NextResponse<UpdateStatusResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -97,7 +97,7 @@ const handlePatchStatus: AuthorizedRouteHandler<UpdateStatusResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Resident ID is required',
         correlationId,
-      } as unknown as UpdateStatusResponse,
+      },
       { status: 400 },
     );
   }
@@ -112,7 +112,7 @@ const handlePatchStatus: AuthorizedRouteHandler<UpdateStatusResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      } as unknown as UpdateStatusResponse,
+      },
       { status: 400 },
     );
   }
@@ -122,9 +122,10 @@ const handlePatchStatus: AuthorizedRouteHandler<UpdateStatusResponse> = async (
     return NextResponse.json(
       {
         code: 'COMMON_VALIDATION_FAILED',
+        message: 'Validation failed',
         fields: formatZodErrors(validation.error),
         correlationId,
-      } as unknown as UpdateStatusResponse,
+      },
       { status: 400 },
     );
   }
@@ -141,7 +142,7 @@ const handlePatchStatus: AuthorizedRouteHandler<UpdateStatusResponse> = async (
 
   // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<UpdateStatusResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const resident = result.data;
@@ -163,11 +164,11 @@ const handlePatchStatus: AuthorizedRouteHandler<UpdateStatusResponse> = async (
 // DELETE handler — Remove a resident
 // ---------------------------------------------------------------------------
 
-const handleDeleteResident: AuthorizedRouteHandler<DeleteResponse> = async (
+const handleDeleteResident: AuthorizedRouteHandler<DeleteResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
   routeContext?: { params?: Promise<Record<string, string>> },
-): Promise<NextResponse<DeleteResponse>> => {
+): Promise<NextResponse<DeleteResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -181,7 +182,7 @@ const handleDeleteResident: AuthorizedRouteHandler<DeleteResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Resident ID is required',
         correlationId,
-      } as unknown as DeleteResponse,
+      },
       { status: 400 },
     );
   }
@@ -204,7 +205,7 @@ const handleDeleteResident: AuthorizedRouteHandler<DeleteResponse> = async (
           code: 'COMMON_NOT_FOUND',
           message: 'Resident not found',
           correlationId,
-        } as unknown as DeleteResponse,
+        },
         { status: 404 },
       );
     }
@@ -221,7 +222,7 @@ const handleDeleteResident: AuthorizedRouteHandler<DeleteResponse> = async (
         code: 'COMMON_UNEXPECTED_ERROR',
         message: 'Internal server error',
         correlationId,
-      } as unknown as DeleteResponse,
+      },
       { status: 500 },
     );
   }
@@ -231,11 +232,11 @@ const handleDeleteResident: AuthorizedRouteHandler<DeleteResponse> = async (
 // PUT handler — Edit resident data
 // ---------------------------------------------------------------------------
 
-const handlePutResident: AuthorizedRouteHandler<UpdateResidentResponse> = async (
+const handlePutResident: AuthorizedRouteHandler<UpdateResidentResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
   routeContext?: { params?: Promise<Record<string, string>> },
-): Promise<NextResponse<UpdateResidentResponse>> => {
+): Promise<NextResponse<UpdateResidentResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -249,7 +250,7 @@ const handlePutResident: AuthorizedRouteHandler<UpdateResidentResponse> = async 
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Resident ID is required',
         correlationId,
-      } as unknown as UpdateResidentResponse,
+      },
       { status: 400 },
     );
   }
@@ -259,7 +260,7 @@ const handlePutResident: AuthorizedRouteHandler<UpdateResidentResponse> = async 
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId } as unknown as UpdateResidentResponse,
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
       { status: 400 },
     );
   }
@@ -267,7 +268,7 @@ const handlePutResident: AuthorizedRouteHandler<UpdateResidentResponse> = async 
   const validation = updateResidentSchema.safeParse(body);
   if (!validation.success) {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId } as unknown as UpdateResidentResponse,
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Validation failed', fields: formatZodErrors(validation.error), correlationId },
       { status: 400 },
     );
   }
@@ -283,7 +284,7 @@ const handlePutResident: AuthorizedRouteHandler<UpdateResidentResponse> = async 
 
     if (!resident) {
       return NextResponse.json(
-        { code: 'COMMON_NOT_FOUND', message: 'Resident not found', correlationId } as unknown as UpdateResidentResponse,
+        { code: 'COMMON_NOT_FOUND', message: 'Resident not found', correlationId },
         { status: 404 },
       );
     }
@@ -321,7 +322,7 @@ const handlePutResident: AuthorizedRouteHandler<UpdateResidentResponse> = async 
     });
   } catch {
     return NextResponse.json(
-      { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId } as unknown as UpdateResidentResponse,
+      { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
     );
   }

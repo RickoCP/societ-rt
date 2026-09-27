@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
@@ -59,10 +59,10 @@ interface FeatureFlagOverrideResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with created override or error
  */
-const handleOverrideFeatureFlag: AuthorizedRouteHandler<FeatureFlagOverrideResponse> = async (
+const handleOverrideFeatureFlag: AuthorizedRouteHandler<FeatureFlagOverrideResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<FeatureFlagOverrideResponse>> => {
+): Promise<NextResponse<FeatureFlagOverrideResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -71,7 +71,7 @@ const handleOverrideFeatureFlag: AuthorizedRouteHandler<FeatureFlagOverrideRespo
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId } as unknown as FeatureFlagOverrideResponse,
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
       { status: 400 },
     );
   }
@@ -79,7 +79,7 @@ const handleOverrideFeatureFlag: AuthorizedRouteHandler<FeatureFlagOverrideRespo
   const validation = overrideSchema.safeParse(body);
   if (!validation.success) {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId } as unknown as FeatureFlagOverrideResponse,
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Validation failed', fields: formatZodErrors(validation.error), correlationId },
       { status: 400 },
     );
   }
@@ -92,7 +92,7 @@ const handleOverrideFeatureFlag: AuthorizedRouteHandler<FeatureFlagOverrideRespo
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<FeatureFlagOverrideResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const override = result.data;

@@ -13,7 +13,7 @@
 
 import type { PrismaClient, Prisma, SubscriptionStatusEnum } from '@/generated/prisma/client';
 import type { DomainResult } from '@core/utils';
-import { ok, fail, technicalError, notFoundError } from '@core/utils';
+import { ok, fail, technicalError } from '@core/utils';
 import type {
   ISubscriptionRepository,
   SubscriptionQueryOptions,
@@ -210,11 +210,18 @@ export const PrismaSubscriptionRepositoryImpl = ({
 
     async findAll(options?: SubscriptionQueryOptions): Promise<DomainResult<Subscription[]>> {
       try {
-        const statusFilter = options?.status
-          ? Array.isArray(options.status)
-            ? { in: options.status.map(domainStatusToPrisma) }
-            : domainStatusToPrisma(options.status)
-          : undefined;
+        let statusFilter: SubscriptionStatusEnum | { in: SubscriptionStatusEnum[] } | undefined;
+        
+        if (options?.status) {
+          const statusValue = options.status;
+          if (Array.isArray(statusValue)) {
+            // Type assertion needed because TypeScript doesn't narrow readonly arrays well
+            const statusArray = statusValue as readonly SubscriptionStatus[];
+            statusFilter = { in: statusArray.map((s) => domainStatusToPrisma(s)) };
+          } else {
+            statusFilter = domainStatusToPrisma(statusValue as SubscriptionStatus);
+          }
+        }
 
         const records = await prismaClient.subscription.findMany({
           where: {

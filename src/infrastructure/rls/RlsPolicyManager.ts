@@ -20,7 +20,6 @@ import {
   RLS_SESSION_VARIABLE,
   type RlsPolicyDefinition,
   type RlsPolicySql,
-  type RlsPolicyVerification,
   RlsError,
 } from './types';
 import {
@@ -36,12 +35,6 @@ import {
  * Standard policy name suffix for tenant isolation policies.
  */
 const TENANT_ISOLATION_POLICY_SUFFIX = '_tenant_isolation';
-
-/**
- * UUID validation regex for tenant IDs.
- */
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ---------------------------------------------------------------------------
 // Policy Manager Interface

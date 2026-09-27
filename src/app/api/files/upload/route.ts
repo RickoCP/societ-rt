@@ -26,7 +26,9 @@ import type { UploadFileUseCase } from '@core/domains/fileStorage/usecases';
 interface UploadFileSuccessResponse {
   data: {
     key: string;
-    url: string;
+    filename: string;
+    mimeType: string;
+    sizeBytes: number;
   };
 }
 

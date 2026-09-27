@@ -407,9 +407,12 @@ export const createLogSanitizer = (config?: Partial<SanitizationConfig>): LogSan
     ...config,
   };
 
-  // Merge custom sensitive keys if provided
+  // Merge custom sensitive keys if provided (normalize to lowercase for matching)
   const sensitiveKeys = config?.additionalSensitiveKeys
-    ? new Set([...SENSITIVE_KEYS, ...config.additionalSensitiveKeys])
+    ? new Set([
+        ...SENSITIVE_KEYS,
+        ...Array.from(config.additionalSensitiveKeys).map(k => k.toLowerCase()),
+      ])
     : SENSITIVE_KEYS;
 
   // Merge custom PII keys if provided

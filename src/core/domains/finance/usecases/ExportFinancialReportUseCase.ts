@@ -11,11 +11,12 @@
  * @see Requirements 7.7, 7.10
  */
 
-import type { AuthContext } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { FinanceRepository } from '../repositories/FinanceRepository';
 import type { DateRange, FinancialReport } from '../entities';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -23,7 +24,7 @@ import type { DateRange, FinancialReport } from '../entities';
 
 export interface ExportFinancialReportUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     dateRange: DateRange;
   }): Promise<DomainResult<string>>;
 }
@@ -73,9 +74,11 @@ export const ExportFinancialReportUseCaseImpl = ({
   financeRepository: FinanceRepository;
 }): ExportFinancialReportUseCase => ({
   execute: async ({ authContext, dateRange }) => {
+    const tenantId = getTenantId(authContext);
+
     // 1. Get report via repository
     const result = await financeRepository.getReport(
-      authContext.tenantId,
+      tenantId,
       dateRange,
     );
 

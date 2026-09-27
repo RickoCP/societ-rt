@@ -305,7 +305,7 @@ export const OrgUnitCrudServiceImpl = ({
   orgUnitManagementService,
   orgUnitScopeAuthorizer,
   orgUnitRepository,
-  hierarchyReader,
+  hierarchyReader: _hierarchyReader, // Reserved for future use
 }: {
   orgUnitManagementService: IOrgUnitManagementService;
   orgUnitScopeAuthorizer: IOrgUnitScopeAuthorizer;

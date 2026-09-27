@@ -19,7 +19,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { OrgUnit } from '../../entities';
+import type { OrgUnit, PathValidationResult } from '../../entities';
 import type { IOrgUnitRepository } from '../../repositories';
 import type { OrgUnitWriteRepository } from '../../repositories/OrgUnitWriteRepository';
 import type { IOrgUnitHierarchyReader } from '../OrgUnitHierarchyReader';
@@ -157,8 +157,11 @@ function createMockOrgUnitRepository(
       if (!ou || ou.tenantId !== tenantId) return [];
       const ancestors: OrgUnit[] = [];
       for (let i = 0; i < ou.path.length - 1; i++) {
-        const ancestor = hierarchy.get(ou.path[i]);
-        if (ancestor) ancestors.push(ancestor);
+        const pathSegment = ou.path[i];
+        if (pathSegment) {
+          const ancestor = hierarchy.get(pathSegment);
+          if (ancestor) ancestors.push(ancestor);
+        }
       }
       return ancestors;
     }),
@@ -351,14 +354,14 @@ function createMockHierarchyReader(
       }
       return ok(ou);
     }),
-    validatePathDepthInvariant: vi.fn((orgUnit) => {
+    validatePathDepthInvariant: vi.fn((orgUnit): PathValidationResult => {
       const expectedDepth = orgUnit.path.length - 1;
       if (orgUnit.depth !== expectedDepth) {
         return { isValid: false, failedInvariant: 'INV-ORG-003', errorMessage: 'Mismatch' };
       }
       return { isValid: true };
     }),
-    validateRootInvariant: vi.fn((orgUnit) => {
+    validateRootInvariant: vi.fn((orgUnit): PathValidationResult => {
       if (orgUnit.parentId === null) {
         if (orgUnit.depth !== 0 || orgUnit.path.length !== 1) {
           return { isValid: false, failedInvariant: 'INV-ORG-004', errorMessage: 'Invalid root' };
@@ -380,8 +383,11 @@ function createMockHierarchyReader(
       }
       const ancestors: OrgUnit[] = [];
       for (let i = 0; i < ou.path.length - 1; i++) {
-        const ancestor = hierarchy.get(ou.path[i]);
-        if (ancestor) ancestors.push(ancestor);
+        const pathSegment = ou.path[i];
+        if (pathSegment) {
+          const ancestor = hierarchy.get(pathSegment);
+          if (ancestor) ancestors.push(ancestor);
+        }
       }
       return ok(ancestors);
     }),
@@ -517,7 +523,7 @@ describe('OrgUnitManagementService', () => {
       });
 
       expect(eventEmitter.emit).toHaveBeenCalled();
-      const emittedEvent = (eventEmitter.emit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const emittedEvent = (eventEmitter.emit as ReturnType<typeof vi.fn>).mock.calls[0]![0];
       expect(emittedEvent.type).toBe('ORGUNIT_CREATED');
       expect(emittedEvent.performedBy).toBe('admin-user');
     });
@@ -577,7 +583,7 @@ describe('OrgUnitManagementService', () => {
       });
 
       expect(eventEmitter.emit).toHaveBeenCalled();
-      const emittedEvent = (eventEmitter.emit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const emittedEvent = (eventEmitter.emit as ReturnType<typeof vi.fn>).mock.calls[0]![0];
       expect(emittedEvent.type).toBe('ORGUNIT_UPDATED');
       expect(emittedEvent.oldName).toBe('Housing Complex');
       expect(emittedEvent.newName).toBe('New Name');
@@ -716,7 +722,7 @@ describe('OrgUnitManagementService', () => {
       });
 
       expect(eventEmitter.emit).toHaveBeenCalled();
-      const emittedEvent = (eventEmitter.emit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const emittedEvent = (eventEmitter.emit as ReturnType<typeof vi.fn>).mock.calls[0]![0];
       expect(emittedEvent.type).toBe('ORGUNIT_MOVED');
       expect(emittedEvent.oldParentId).toBe(CLUSTER_01_ID);
       expect(emittedEvent.newParentId).toBe(cluster02Id);
@@ -805,7 +811,7 @@ describe('OrgUnitManagementService', () => {
       });
 
       expect(eventEmitter.emit).toHaveBeenCalled();
-      const emittedEvent = (eventEmitter.emit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const emittedEvent = (eventEmitter.emit as ReturnType<typeof vi.fn>).mock.calls[0]![0];
       expect(emittedEvent.type).toBe('ORGUNIT_DELETED');
       expect(emittedEvent.reason).toBe('Testing deletion');
     });

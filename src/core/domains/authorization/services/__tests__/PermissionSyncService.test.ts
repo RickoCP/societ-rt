@@ -464,9 +464,9 @@ describe('PermissionSyncService', () => {
         );
 
         expect(mockLogger.syncEntries.length).toBe(1);
-        expect(mockLogger.syncEntries[0].operationType).toBe(SyncOperationType.INITIAL);
-        expect(mockLogger.syncEntries[0].targetId).toBe(TEST_TARGET_ID);
-        expect(mockLogger.syncEntries[0].correlationId).toBe(TEST_CORRELATION_ID);
+        expect(mockLogger.syncEntries[0]!.operationType).toBe(SyncOperationType.INITIAL);
+        expect(mockLogger.syncEntries[0]!.targetId).toBe(TEST_TARGET_ID);
+        expect(mockLogger.syncEntries[0]!.correlationId).toBe(TEST_CORRELATION_ID);
       });
 
       it('should include source version in audit log', async () => {
@@ -480,8 +480,8 @@ describe('PermissionSyncService', () => {
           targetState,
         );
 
-        expect(mockLogger.syncEntries[0].sourceVersion).toBeDefined();
-        expect(mockLogger.syncEntries[0].sourceVersion).not.toBe('');
+        expect(mockLogger.syncEntries[0]!.sourceVersion).toBeDefined();
+        expect(mockLogger.syncEntries[0]!.sourceVersion).not.toBe('');
       });
     });
   });
@@ -623,8 +623,8 @@ describe('PermissionSyncService', () => {
       );
 
       expect(mockLogger.consistencyChecks.length).toBe(1);
-      expect(mockLogger.consistencyChecks[0].targetId).toBe(TEST_TARGET_ID);
-      expect(mockLogger.consistencyChecks[0].correlationId).toBe(TEST_CORRELATION_ID);
+      expect(mockLogger.consistencyChecks[0]!.targetId).toBe(TEST_TARGET_ID);
+      expect(mockLogger.consistencyChecks[0]!.correlationId).toBe(TEST_CORRELATION_ID);
     });
 
     it('should include all roles in check', async () => {

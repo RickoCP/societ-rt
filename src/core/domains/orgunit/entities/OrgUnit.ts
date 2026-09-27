@@ -115,8 +115,8 @@ export interface CreateOrgUnitInput {
  * Only name and type can be updated; hierarchy changes require move operation.
  */
 export interface UpdateOrgUnitInput {
-  readonly name?: string;
-  readonly type?: OrgUnitType;
+  name?: string;
+  type?: OrgUnitType;
 }
 
 /**

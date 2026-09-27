@@ -19,7 +19,7 @@
  */
 
 import type { DomainResult } from '@core/utils';
-import { ok, fail, businessError, technicalError } from '@core/utils';
+import { ok, fail, businessError } from '@core/utils';
 import type {
   IAuthorizationCutoverService,
   CutoverOperationResult,
@@ -522,7 +522,7 @@ export const createCutoverExecutionService = ({
    */
   const waitForStability = async (
     routeId: string,
-    stabilityWindowMinutes: number,
+    _stabilityWindowMinutes: number,
   ): Promise<StabilityCheckResult> => {
     // In a real implementation, this would wait and poll
     // For now, just perform a stability check
@@ -655,7 +655,8 @@ export const createCutoverExecutionService = ({
         }
 
         // Check if paused (for manual mode)
-        if (executionStatus === ExecutionStatus.PAUSED) {
+        // Note: executionStatus can be changed by pauseExecution() called externally
+        if ((executionStatus as ExecutionStatus) === ExecutionStatus.PAUSED) {
           break;
         }
 
@@ -985,7 +986,7 @@ export const createCutoverExecutionService = ({
       const cutoverSet = getCutoverRouteIds();
 
       // Rollback in reverse order (most recently cut over first)
-      const orderedRoutes = planService.getRoutesInOrder().reverse();
+      const orderedRoutes = [...planService.getRoutesInOrder()].reverse();
 
       for (const route of orderedRoutes) {
         if (!cutoverSet.has(route.routeId)) continue;

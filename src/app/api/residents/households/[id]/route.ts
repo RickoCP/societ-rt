@@ -17,26 +17,38 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { withPermission } from '@infrastructure/middleware/authorization';
+import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
-import { UserRole } from '@core/protocols';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { PrismaClient } from '@/generated/prisma/client';
 
-const EDIT_ROLES = [UserRole.Super_Admin, UserRole.Ketua_RT, UserRole.Pengurus];
+const EDIT_ROLES: readonly MembershipRole[] = [
+  MembershipRole.PLATFORM_ADMIN,
+  MembershipRole.TENANT_OWNER,
+  MembershipRole.RT_ADMIN,
+];
 
 // ---------------------------------------------------------------------------
 // GET — Household detail with residents
 // ---------------------------------------------------------------------------
 
-async function handleGetHousehold(
+const handleGetHousehold: AuthorizedRouteHandler = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-  context?: { params?: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  routeContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id: householdId } = await context!.params!;
+  const params = await routeContext?.params;
+  const householdId = params?.id;
+
+  if (!householdId) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing household ID', correlationId },
+      { status: 400 },
+    );
+  }
 
   try {
     const prisma = container.resolve<PrismaClient>('prismaClient');
@@ -91,7 +103,7 @@ async function handleGetHousehold(
       { status: 500 },
     );
   }
-}
+};
 
 export const GET = withPermission(
   { permissions: ['household:read'] },
@@ -110,15 +122,23 @@ const updateHouseholdSchema = z.object({
   longitude: z.number().optional().nullable(),
 });
 
-async function handleUpdateHousehold(
+const handleUpdateHousehold: AuthorizedRouteHandler = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-  context?: { params?: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  routeContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id: householdId } = await context!.params!;
+  const params = await routeContext?.params;
+  const householdId = params?.id;
+
+  if (!householdId) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing household ID', correlationId },
+      { status: 400 },
+    );
+  }
 
   let body: unknown;
   try {
@@ -153,7 +173,7 @@ async function handleUpdateHousehold(
     }
 
     // Check permission: admin roles OR warga in this household
-    const isAdminRole = EDIT_ROLES.includes(authContext.role as UserRole);
+    const isAdminRole = EDIT_ROLES.includes(authContext.role);
     const isHouseholdMember = await prisma.resident.findFirst({
       where: { householdId, tenantId: authContext.tenantId },
       select: { id: true },
@@ -185,7 +205,7 @@ async function handleUpdateHousehold(
       { status: 500 },
     );
   }
-}
+};
 
 export const PATCH = withPermission(
   { permissions: ['household:manage'] },
@@ -196,16 +216,24 @@ export const PATCH = withPermission(
 // DELETE — Remove household
 // ---------------------------------------------------------------------------
 
-async function handleDeleteHousehold(
+const handleDeleteHousehold: AuthorizedRouteHandler = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-  context?: { params?: Promise<{ id: string }> },
-): Promise<NextResponse> {
+  routeContext,
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
   // 1. Extract route param
-  const { id: householdId } = await context!.params!;
+  const params = await routeContext?.params;
+  const householdId = params?.id;
+
+  if (!householdId) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing household ID', correlationId },
+      { status: 400 },
+    );
+  }
 
   // 2. Delete household (cascade deletes residents via DB constraint)
   try {
@@ -237,7 +265,7 @@ async function handleDeleteHousehold(
       { status: 500 },
     );
   }
-}
+};
 
 export const DELETE = withPermission(
   { permissions: ['household:manage'] },

@@ -270,8 +270,10 @@ describe('CutoverExecutionService', () => {
       const result = await executionService.verifyPrerequisites();
 
       expect(result.success).toBe(true);
-      expect(result.data!.verified).toBe(true);
-      expect(result.data!.issues).toHaveLength(0);
+      if (result.success) {
+        expect(result.data.verified).toBe(true);
+        expect(result.data.issues).toHaveLength(0);
+      }
     });
 
     it('should fail when cutover prerequisites not met', async () => {
@@ -296,8 +298,10 @@ describe('CutoverExecutionService', () => {
       const result = await service.verifyPrerequisites();
 
       expect(result.success).toBe(true);
-      expect(result.data!.verified).toBe(false);
-      expect(result.data!.issues.length).toBeGreaterThan(0);
+      if (result.success) {
+        expect(result.data.verified).toBe(false);
+        expect(result.data.issues.length).toBeGreaterThan(0);
+      }
     });
   });
 
@@ -309,8 +313,10 @@ describe('CutoverExecutionService', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(result.data!.routeId).toBe('route-a');
-      expect(result.data!.success).toBe(true);
+      if (result.success) {
+        expect(result.data.routeId).toBe('route-a');
+        expect(result.data.success).toBe(true);
+      }
       expect(cutoverService.initiateRouteCutover).toHaveBeenCalledWith(
         expect.objectContaining({
           routeId: 'route-a',
@@ -326,7 +332,9 @@ describe('CutoverExecutionService', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe(ExecutionErrorCodes.DEPENDENCIES_NOT_SATISFIED);
+      if (!result.success) {
+        expect(result.error.code).toBe(ExecutionErrorCodes.DEPENDENCIES_NOT_SATISFIED);
+      }
     });
 
     it('should succeed if dependencies are satisfied', async () => {
@@ -340,7 +348,9 @@ describe('CutoverExecutionService', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(result.data!.success).toBe(true);
+      if (result.success) {
+        expect(result.data.success).toBe(true);
+      }
     });
 
     it('should fail for non-existent route', async () => {
@@ -350,7 +360,9 @@ describe('CutoverExecutionService', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe(ExecutionErrorCodes.ROUTE_NOT_FOUND);
+      if (!result.success) {
+        expect(result.error.code).toBe(ExecutionErrorCodes.ROUTE_NOT_FOUND);
+      }
     });
   });
 
@@ -362,9 +374,11 @@ describe('CutoverExecutionService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data!.status).toBe(ExecutionStatus.COMPLETED);
-      expect(result.data!.cutoverRoutes).toHaveLength(0); // No actual cutover
-      expect(result.data!.remainingRoutes.length).toBeGreaterThan(0);
+      if (result.success) {
+        expect(result.data.status).toBe(ExecutionStatus.COMPLETED);
+        expect(result.data.cutoverRoutes).toHaveLength(0); // No actual cutover
+        expect(result.data.remainingRoutes.length).toBeGreaterThan(0);
+      }
     });
 
     it('should execute cutover in AUTOMATIC mode', async () => {
@@ -376,7 +390,9 @@ describe('CutoverExecutionService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data!.cutoverRoutes).toContain('route-a');
+      if (result.success) {
+        expect(result.data.cutoverRoutes).toContain('route-a');
+      }
     });
 
     it('should execute cutover in MANUAL mode and pause', async () => {
@@ -388,8 +404,10 @@ describe('CutoverExecutionService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data!.status).toBe(ExecutionStatus.PAUSED);
-      expect(result.data!.cutoverRoutes).toHaveLength(1); // Only first route
+      if (result.success) {
+        expect(result.data.status).toBe(ExecutionStatus.PAUSED);
+        expect(result.data.cutoverRoutes).toHaveLength(1); // Only first route
+      }
     });
 
     it('should respect maxRoutes option', async () => {
@@ -402,7 +420,9 @@ describe('CutoverExecutionService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data!.cutoverRoutes.length).toBeLessThanOrEqual(1);
+      if (result.success) {
+        expect(result.data.cutoverRoutes.length).toBeLessThanOrEqual(1);
+      }
     });
 
     it('should handle specific routes option', async () => {
@@ -415,8 +435,10 @@ describe('CutoverExecutionService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data!.cutoverRoutes).toContain('route-a');
-      expect(result.data!.cutoverRoutes).not.toContain('route-b');
+      if (result.success) {
+        expect(result.data.cutoverRoutes).toContain('route-a');
+        expect(result.data.cutoverRoutes).not.toContain('route-b');
+      }
     });
 
     it('should fail when prerequisites not met', async () => {
@@ -444,7 +466,9 @@ describe('CutoverExecutionService', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe(ExecutionErrorCodes.PREREQUISITES_NOT_MET);
+      if (!result.success) {
+        expect(result.error.code).toBe(ExecutionErrorCodes.PREREQUISITES_NOT_MET);
+      }
     });
   });
 
@@ -470,7 +494,9 @@ describe('CutoverExecutionService', () => {
       const result = await executionService.resumeExecution();
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe(ExecutionErrorCodes.EXECUTION_PAUSED);
+      if (!result.success) {
+        expect(result.error.code).toBe(ExecutionErrorCodes.EXECUTION_PAUSED);
+      }
     });
   });
 
@@ -483,8 +509,10 @@ describe('CutoverExecutionService', () => {
       const result = await executionService.testRollback('route-a', 'admin-1');
 
       expect(result.success).toBe(true);
-      expect(result.data!.passed).toBe(true);
-      expect(result.data!.stateRestored).toBe(true);
+      if (result.success) {
+        expect(result.data.passed).toBe(true);
+        expect(result.data.stateRestored).toBe(true);
+      }
       expect(cutoverService.rollbackRouteCutover).toHaveBeenCalled();
       expect(cutoverService.initiateRouteCutover).toHaveBeenCalledTimes(2); // Original + restore
     });
@@ -493,7 +521,9 @@ describe('CutoverExecutionService', () => {
       const result = await executionService.testRollback('route-a', 'admin-1');
 
       expect(result.success).toBe(false);
-      expect(result.error!.code).toBe(ExecutionErrorCodes.ROLLBACK_TEST_FAILED);
+      if (!result.success) {
+        expect(result.error.code).toBe(ExecutionErrorCodes.ROLLBACK_TEST_FAILED);
+      }
     });
   });
 
@@ -510,7 +540,9 @@ describe('CutoverExecutionService', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(result.data!.success).toBe(true);
+      if (result.success) {
+        expect(result.data.success).toBe(true);
+      }
       expect(cutoverService.rollbackRouteCutover).toHaveBeenCalledWith(
         expect.objectContaining({
           routeId: 'route-a',
@@ -533,7 +565,9 @@ describe('CutoverExecutionService', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(result.data!.rolledBackRoutes).toContain('route-a');
+      if (result.success) {
+        expect(result.data.rolledBackRoutes).toContain('route-a');
+      }
     });
   });
 
@@ -542,7 +576,9 @@ describe('CutoverExecutionService', () => {
       const result = executionService.canProceedWithNextRoute();
 
       expect(result.success).toBe(true);
-      expect(result.data!.canProceed).toBe(true);
+      if (result.success) {
+        expect(result.data.canProceed).toBe(true);
+      }
     });
 
     it('should return cannot proceed when no eligible routes', async () => {
@@ -554,7 +590,9 @@ describe('CutoverExecutionService', () => {
       const result = executionService.canProceedWithNextRoute();
 
       expect(result.success).toBe(true);
-      expect(result.data!.canProceed).toBe(false);
+      if (result.success) {
+        expect(result.data.canProceed).toBe(false);
+      }
     });
   });
 
@@ -628,8 +666,10 @@ describe('CutoverExecutionService', () => {
       const result = await service.executeSingleRoute('route-a', 'admin-1');
 
       expect(result.success).toBe(true);
-      expect(result.data!.success).toBe(false);
-      expect(result.data!.errorMessage).toBe('Cutover failed');
+      if (result.success) {
+        expect(result.data.success).toBe(false);
+        expect(result.data.errorMessage).toBe('Cutover failed');
+      }
     });
 
     it('should stop on failure in AUTOMATIC mode', async () => {
@@ -665,8 +705,10 @@ describe('CutoverExecutionService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data!.status).toBe(ExecutionStatus.FAILED);
-      expect(result.data!.failedRoutes).toContain('route-a');
+      if (result.success) {
+        expect(result.data.status).toBe(ExecutionStatus.FAILED);
+        expect(result.data.failedRoutes).toContain('route-a');
+      }
     });
   });
 });

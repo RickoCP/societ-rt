@@ -134,7 +134,7 @@ describe('IoTDeviceIsolationService', () => {
     mockAuditEmitter = createMockAuditEmitter();
     service = IoTDeviceIsolationServiceImpl({
       iotDeviceIsolationRepository: mockRepository,
-      auditEmitter: mockAuditEmitter,
+      iotDeviceIsolationAuditEmitter: mockAuditEmitter,
     });
   });
 
@@ -155,7 +155,7 @@ describe('IoTDeviceIsolationService', () => {
       }
       expect(mockRepository.findById).toHaveBeenCalledWith(TEST_DEVICE_ID, TEST_TENANT_ID);
       expect(mockAuditEmitter.emittedEvents).toHaveLength(1);
-      expect(mockAuditEmitter.emittedEvents[0].type).toBe(
+      expect(mockAuditEmitter.emittedEvents[0]!.type).toBe(
         IoTDeviceIsolationAuditEventType.TENANT_OWNERSHIP_VALIDATED,
       );
     });
@@ -170,7 +170,7 @@ describe('IoTDeviceIsolationService', () => {
         expect(result.error.code).toBe('IOT_DEVICE_NOT_FOUND_IN_TENANT');
       }
       expect(mockAuditEmitter.emittedEvents).toHaveLength(1);
-      expect(mockAuditEmitter.emittedEvents[0].type).toBe(
+      expect(mockAuditEmitter.emittedEvents[0]!.type).toBe(
         IoTDeviceIsolationAuditEventType.TENANT_OWNERSHIP_FAILED,
       );
     });
@@ -586,7 +586,7 @@ describe('IoTDeviceIsolationService', () => {
       const result = await service.getUserAccessibleDevices(TEST_USER_ID, TEST_TENANT_ID);
 
       expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(TEST_DEVICE_ID);
+      expect(result[0]!.id).toBe(TEST_DEVICE_ID);
     });
 
     it('should return empty array when user has no devices', async () => {

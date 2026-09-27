@@ -9,7 +9,7 @@
  * @see Permission Mapping: POST /api/security/alarms/zones/:zone/activate → security:manage
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
@@ -42,7 +42,18 @@ const handleActivateZone: AuthorizedRouteHandler<unknown> = async (
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
   // 1. Extract zone from route params
-  const { zone } = await routeContext!.params!;
+  const params = await routeContext!.params!;
+  const zone = params.zone;
+  if (!zone) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Zone parameter is required',
+        correlationId,
+      },
+      { status: 400 },
+    );
+  }
 
   // 2. Parse and validate input
   let body: unknown;

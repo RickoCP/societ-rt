@@ -12,11 +12,13 @@
  * @see Requirements 37.7, 37.9, 41.10
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getMembershipRole } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import { authorizationError, validationError } from '@core/utils';
-import { UserRole } from '@core/protocols';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { HomeRepository } from '../repositories/HomeRepository';
 import type {
   ConfigureDeviceAlertsInput,
@@ -29,7 +31,7 @@ import type {
 
 export interface ConfigureDeviceAlertsUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     input: ConfigureDeviceAlertsInput;
   }): Promise<DomainResult<DeviceAlertPreferences>>;
 }
@@ -47,9 +49,11 @@ export const ConfigureDeviceAlertsUseCaseImpl = ({
 }): ConfigureDeviceAlertsUseCase => ({
   execute: async ({ authContext, input }) => {
     // 1. Validate role — only Warga or Ketua_RT can configure alerts
+    // Use getMembershipRole for AuthContextCompat compatibility
+    const role = getMembershipRole(authContext);
     if (
-      authContext.role !== UserRole.Warga &&
-      authContext.role !== UserRole.Ketua_RT
+      role !== MembershipRole.RESIDENT &&
+      role !== MembershipRole.RT_ADMIN
     ) {
       return fail(
         authorizationError(

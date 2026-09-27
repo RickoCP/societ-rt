@@ -14,14 +14,12 @@
 
 import type { DomainResult } from '@core/utils';
 import { fail, isFail, ok } from '@core/utils';
-import { authUserNotFound, authSessionNotFound } from '@core/domains/auth/errors/authErrors';
+import { authUserNotFound } from '@core/domains/auth/errors/authErrors';
 import type {
   RefreshTokenService,
-  ValidatedToken,
 } from './RefreshTokenService';
 import type {
   TokenVersionService,
-  TokenVersionIncrementResult,
 } from './TokenVersionService';
 
 // ---------------------------------------------------------------------------
@@ -426,14 +424,11 @@ export function SessionInvalidationServiceImpl({
 
     // If preserving current session, we need special handling:
     // 1. First, get current token info if provided
-    let currentTokenData: ValidatedToken | null = null;
     if (excludeCurrentSession && options?.currentRefreshToken) {
-      const validateResult = await refreshTokenService.validateToken(
+      // Validate token but don't need the result - just checking validity
+      await refreshTokenService.validateToken(
         options.currentRefreshToken,
       );
-      if (!isFail(validateResult)) {
-        currentTokenData = validateResult.data;
-      }
     }
 
     // Force logout user (increments tokenVersion + revokes all refresh tokens)

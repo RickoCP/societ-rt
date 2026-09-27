@@ -119,11 +119,13 @@ export const createLoggingHandler = (): MembershipEventHandler => {
  * For now, this is a placeholder that logs the event would be stored.
  */
 export const createOutboxHandler = ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _prismaClient,
 }: {
   _prismaClient: unknown; // Replace with actual PrismaClient when outbox is implemented
 }): MembershipEventHandler => {
+  // Suppress unused variable warning until outbox is implemented
+  void _prismaClient;
+  
   return async (event: MembershipLifecycleEvent): Promise<void> => {
     // TODO: Implement event outbox storage (FASE 1.20, Task 33)
     // For now, just log that the event would be stored

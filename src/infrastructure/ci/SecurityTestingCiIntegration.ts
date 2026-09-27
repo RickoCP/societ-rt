@@ -25,9 +25,10 @@ import type {
   SecurityTestingConfig,
   RiskLevel,
   SecurityTestResult,
-  SecurityTestCategory,
-  SecurityTestStatus,
   VulnerabilityScanResult,
+} from '@core/domains/authorization/services/SecurityTestingSuite';
+import {
+  SecurityTestStatus,
 } from '@core/domains/authorization/services/SecurityTestingSuite';
 
 // ---------------------------------------------------------------------------
@@ -786,7 +787,7 @@ export function generateGitHubActionsAnnotations(report: SecurityTestSuiteReport
  */
 export function generateGitHubActionsSummary(
   report: SecurityTestSuiteReport,
-  context: CiExecutionContext,
+  _context: CiExecutionContext,
 ): string {
   return `## Security Test Results
 

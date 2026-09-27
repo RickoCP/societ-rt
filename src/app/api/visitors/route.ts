@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
@@ -77,10 +77,10 @@ interface VisitorListResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with created visitor log or error
  */
-const handleLogVisitor: AuthorizedRouteHandler<VisitorLogResponse> = async (
+const handleLogVisitor: AuthorizedRouteHandler<VisitorLogResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<VisitorLogResponse>> => {
+): Promise<NextResponse<VisitorLogResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -89,7 +89,7 @@ const handleLogVisitor: AuthorizedRouteHandler<VisitorLogResponse> = async (
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId } as unknown as VisitorLogResponse,
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
       { status: 400 },
     );
   }
@@ -97,7 +97,7 @@ const handleLogVisitor: AuthorizedRouteHandler<VisitorLogResponse> = async (
   const validation = logVisitorSchema.safeParse(body);
   if (!validation.success) {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId } as unknown as VisitorLogResponse,
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Validation failed', fields: formatZodErrors(validation.error), correlationId },
       { status: 400 },
     );
   }
@@ -106,7 +106,7 @@ const handleLogVisitor: AuthorizedRouteHandler<VisitorLogResponse> = async (
   const result = await useCase.execute({ authContext, data: validation.data });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<VisitorLogResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const log = result.data;
@@ -142,10 +142,10 @@ const handleLogVisitor: AuthorizedRouteHandler<VisitorLogResponse> = async (
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with visitor logs list or error
  */
-const handleListVisitors: AuthorizedRouteHandler<VisitorListResponse> = async (
+const handleListVisitors: AuthorizedRouteHandler<VisitorListResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<VisitorListResponse>> => {
+): Promise<NextResponse<VisitorListResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -153,7 +153,7 @@ const handleListVisitors: AuthorizedRouteHandler<VisitorListResponse> = async (
   const result = await visitorRepository.findByTenant(authContext.tenantId);
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<VisitorListResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(

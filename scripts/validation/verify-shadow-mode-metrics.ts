@@ -231,10 +231,6 @@ function logSuccess(message: string): void {
   console.log(`[${SCRIPT_NAME}] ✅ ${message}`);
 }
 
-function logWarning(message: string): void {
-  console.log(`[${SCRIPT_NAME}] ⚠️ ${message}`);
-}
-
 // ---------------------------------------------------------------------------
 // Metrics Loading
 // ---------------------------------------------------------------------------
@@ -722,7 +718,7 @@ function generateSampleMetricsFile(outputPath: string): void {
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = date.toISOString().split('T')[0] ?? '';
 
     // Sample data with 0 mismatches (ready for cutover)
     dailyMetrics.push({
@@ -823,5 +819,8 @@ async function main(): Promise<void> {
   }
 }
 
-// Run main function
-main();
+// Run if executed directly (not when imported as a module)
+const isMainModule = process.argv[1]?.includes('verify-shadow-mode-metrics');
+if (isMainModule) {
+  main();
+}

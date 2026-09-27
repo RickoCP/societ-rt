@@ -7,9 +7,11 @@
  * 3. Return ok(undefined)
  *
  * @see Requirements 11.4
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { MapRepository } from '../repositories/MapRepository';
@@ -20,7 +22,7 @@ import type { MapRepository } from '../repositories/MapRepository';
 
 export interface UpdateHouseholdCoordinatesUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     householdId: string;
     latitude: number;
     longitude: number;

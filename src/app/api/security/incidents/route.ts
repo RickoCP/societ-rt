@@ -11,14 +11,14 @@
  * @see Requirements 32.1, 32.2, 32.4, 32.7, 32.8
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { CreateIncidentUseCase } from '@core/domains/incident/usecases';
 import type { IncidentRepository } from '@core/domains/incident/repositories/IncidentRepository';
 
@@ -73,10 +73,10 @@ const listQuerySchema = z.object({
 // POST handler — Create incident
 // ---------------------------------------------------------------------------
 
-async function handleCreateIncident(
-  request: NextRequest,
-  authContext: AuthorizationContext,
-): Promise<NextResponse> {
+const handleCreateIncident: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -152,7 +152,7 @@ async function handleCreateIncident(
     },
     { status: 201 },
   );
-}
+};
 
 export const POST = withPermission(
   { permissions: ['security:manage'] },
@@ -163,10 +163,10 @@ export const POST = withPermission(
 // GET handler — List incidents (paginated)
 // ---------------------------------------------------------------------------
 
-async function handleListIncidents(
-  request: NextRequest,
-  authContext: AuthorizationContext,
-): Promise<NextResponse> {
+const handleListIncidents: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -238,7 +238,7 @@ async function handleListIncidents(
     },
     { status: 200 },
   );
-}
+};
 
 export const GET = withPermission(
   { permissions: ['security:read'] },

@@ -41,7 +41,18 @@ const handleDisableRule: AuthorizedRouteHandler<void> = async (
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await context!.params!;
+  const params = await context?.params;
+  const id = params?.id;
+  if (!id) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Missing id parameter',
+        correlationId,
+      },
+      { status: 400 },
+    ) as NextResponse<void>;
+  }
 
   const useCase = container.resolve<EnableDisableRuleUseCase>(
     'enableDisableRuleUseCase',

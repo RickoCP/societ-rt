@@ -24,16 +24,13 @@ import type {
   InitiateTransferInput,
   AcceptTransferInput,
   CancelTransferInput,
-  TransferAuditRecord,
   OwnershipStateSnapshot,
 } from '../entities';
 import { DEFAULT_TRANSFER_EXPIRY_MS } from '../entities';
 import type { ITenantTransferRepository } from '../repositories';
 import {
   TenantTransferStatus,
-  isTerminalTransferStatus,
   isCancellableStatus,
-  isValidTransferStatusTransition,
 } from '../types';
 import {
   transferNotInitiatedByOwner,
@@ -45,12 +42,10 @@ import {
   transferExpired,
   transferAlreadyCompleted,
   transferCancelled,
-  reAuthenticationRequired,
   transferNotTargetUser,
   transferNotInitiator,
   transferCannotBeCancelled,
   transferNotFound,
-  invalidTransferStatusTransition,
   transferToSelfNotAllowed,
   invalidReauthToken,
 } from '../errors';
@@ -619,7 +614,7 @@ export const TenantTransferServiceImpl = ({
 
     async getPendingTransfer(tenantId: string): Promise<TenantTransfer | null> {
       const pending = await transferRepository.findPendingByTenant(tenantId);
-      return pending.length > 0 ? pending[0] : null;
+      return pending.length > 0 ? (pending[0] ?? null) : null;
     },
 
     async expirePendingTransfers(): Promise<number> {

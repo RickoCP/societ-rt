@@ -11,7 +11,9 @@
  * @see Requirements 7.1, 7.2, 7.3, 7.9
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { FinanceRepository } from '../repositories/FinanceRepository';
@@ -24,7 +26,7 @@ import { financeInvalidAmount } from '../errors/financeErrors';
 
 export interface RecordTransactionUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreateTransactionInput;
   }): Promise<DomainResult<FinancialTransaction>>;
 }
@@ -46,11 +48,14 @@ export const RecordTransactionUseCaseImpl = ({
       return fail(financeInvalidAmount());
     }
 
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 2. Record transaction via repository
     const result = await financeRepository.recordTransaction(
-      authContext.tenantId,
+      tenantId,
       data,
-      authContext.userId,
+      userId,
     );
 
     if (!result.success) {
@@ -62,8 +67,8 @@ export const RecordTransactionUseCaseImpl = ({
     // 3. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'transaction_recorded',
         resourceType: 'financial_transaction',
         resourceId: transaction.id,

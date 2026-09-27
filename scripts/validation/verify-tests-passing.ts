@@ -286,7 +286,7 @@ function parseTestResults(stdout: string, exitCode: number): TestResults {
   // Parse duration
   const durationMatch = stdout.match(/Duration\s+([\d.]+)s/i);
   if (durationMatch) {
-    results.duration = parseFloat(durationMatch[1]) * 1000;
+    results.duration = parseFloat(durationMatch[1] ?? '0') * 1000;
   }
 
   // If we couldn't parse results but tests passed, assume success
@@ -509,7 +509,7 @@ function generateSummary(results: TestResults, coverage?: CoverageResults): stri
 function generateReport(
   tests: TestResults,
   coverage: CoverageResults | undefined,
-  exitCode: number,
+  _exitCode: number,
 ): VerificationReport {
   const testsPassed = tests.failed === 0;
   const coverageMet = checkCoverageMet(coverage);
@@ -544,7 +544,7 @@ async function main(): Promise<void> {
   try {
     // Run the test suite
     log('Running test suite...');
-    const { stdout, stderr, exitCode } = await runTestSuite(args.coverage, args.verbose);
+    const { stdout, exitCode } = await runTestSuite(args.coverage, args.verbose);
 
     // Parse test results
     log('Parsing test results...');
@@ -598,11 +598,14 @@ async function main(): Promise<void> {
   }
 }
 
-// Run if executed directly
-main().catch(error => {
-  logError(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
-  process.exit(2);
-});
+// Run if executed directly (not when imported as a module)
+const isMainModule = process.argv[1]?.includes('verify-tests-passing');
+if (isMainModule) {
+  main().catch(error => {
+    logError(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(2);
+  });
+}
 
 export {
   runTestSuite,

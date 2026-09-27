@@ -19,7 +19,6 @@
 import type {
   IOrgUnitEventEmitter,
   OrgUnitLifecycleEvent,
-  OrgUnitEventType,
 } from '@core/domains/orgunit/services/OrgUnitEventEmitter';
 
 /**
@@ -174,11 +173,13 @@ export const createOrgUnitLoggingHandler = (): OrgUnitEventHandler => {
  * For now, this is a placeholder that logs the event would be stored.
  */
 export const createOrgUnitOutboxHandler = ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _prismaClient,
 }: {
   _prismaClient: unknown; // Replace with actual PrismaClient when outbox is implemented
 }): OrgUnitEventHandler => {
+  // Suppress unused variable warning until outbox is implemented
+  void _prismaClient;
+  
   return async (event: OrgUnitLifecycleEvent): Promise<void> => {
     // TODO: Implement event outbox storage (FASE 1.20)
     // For now, just log that the event would be stored

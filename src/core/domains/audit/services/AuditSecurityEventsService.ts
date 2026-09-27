@@ -21,7 +21,7 @@
 
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
-import { businessError, technicalError, validationError } from '@core/utils';
+import { validationError } from '@core/utils';
 import type { AuditEvent, AuditEventType, CreateAuditEventInput, IAuditTrailRepository } from './AuditTrailService';
 
 // ---------------------------------------------------------------------------

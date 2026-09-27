@@ -11,8 +11,10 @@
  *  3. Audit (fire-and-forget).
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
-import { UserRole } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types/AuthContextCompat';
+import { getMembershipRole, getTenantId, getUserId } from '@core/domains/authorization/types/AuthContextCompat';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import { authInsufficientRole } from '@core/domains/auth/errors/authErrors';
@@ -28,7 +30,7 @@ import type {
 
 export interface RequestDoorSensorInstallationUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     input: CreateDoorInstallationRequestInput;
   }): Promise<DomainResult<DoorInstallationRequest>>;
 }
@@ -37,9 +39,10 @@ export interface RequestDoorSensorInstallationUseCase {
 // Allowed roles
 // ---------------------------------------------------------------------------
 
-const ALLOWED_ROLES: ReadonlySet<UserRole> = new Set([
-  UserRole.Ketua_RT,
-  UserRole.Pengurus,
+const ALLOWED_ROLES: ReadonlySet<MembershipRole> = new Set([
+  MembershipRole.RT_ADMIN,
+  MembershipRole.ORG_ADMIN, // Pengurus maps to ORG_ADMIN
+  MembershipRole.TENANT_OWNER,
 ]);
 
 // ---------------------------------------------------------------------------
@@ -54,8 +57,12 @@ export const RequestDoorSensorInstallationUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): RequestDoorSensorInstallationUseCase => ({
   execute: async ({ authContext, input }) => {
+    const role = getMembershipRole(authContext);
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+    
     // 1. Role gate — RT roles only.
-    if (!ALLOWED_ROLES.has(authContext.role)) {
+    if (!ALLOWED_ROLES.has(role)) {
       return fail(authInsufficientRole());
     }
 
@@ -63,9 +70,9 @@ export const RequestDoorSensorInstallationUseCaseImpl = ({
 
     // 2. Create the request.
     const result = await doorMonitoringRepository.createInstallationRequest(
-      authContext.tenantId,
+      tenantId,
       input.householdId,
-      authContext.userId,
+      userId,
       note.length > 0 ? note : null,
     );
     if (!result.success) {
@@ -75,8 +82,8 @@ export const RequestDoorSensorInstallationUseCaseImpl = ({
     // 3. Audit (fire-and-forget).
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'door_installation_requested',
         resourceType: 'door_installation_request',
         resourceId: result.data.id,

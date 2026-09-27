@@ -8,17 +8,16 @@
  * @see Requirements 12.2
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
 } from '@infrastructure/middleware/authorization';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RecordPatrolAttendanceUseCase } from '@core/domains/security/usecases';
 
 // ---------------------------------------------------------------------------
@@ -58,10 +57,10 @@ interface AttendanceResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with recorded attendance or error
  */
-const handleRecordAttendance: AuthorizedRouteHandler<AttendanceResponse> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-): Promise<NextResponse<AttendanceResponse>> => {
+const handleRecordAttendance: AuthorizedRouteHandler<AttendanceResponse | ErrorResponseBody> = async (
+  request,
+  authContext,
+): Promise<NextResponse<AttendanceResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -75,7 +74,7 @@ const handleRecordAttendance: AuthorizedRouteHandler<AttendanceResponse> = async
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      } as unknown as AttendanceResponse,
+      },
       { status: 400 },
     );
   }
@@ -85,9 +84,10 @@ const handleRecordAttendance: AuthorizedRouteHandler<AttendanceResponse> = async
     return NextResponse.json(
       {
         code: 'COMMON_VALIDATION_FAILED',
+        message: 'Validation failed',
         fields: formatZodErrors(validation.error),
         correlationId,
-      } as unknown as AttendanceResponse,
+      },
       { status: 400 },
     );
   }
@@ -106,7 +106,7 @@ const handleRecordAttendance: AuthorizedRouteHandler<AttendanceResponse> = async
 
   // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<AttendanceResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const attendance = result.data;

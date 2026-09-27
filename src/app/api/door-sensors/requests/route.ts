@@ -17,6 +17,7 @@ import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RequestDoorSensorInstallationUseCase } from '@core/domains/doorMonitoring/usecases';
 import type { DoorMonitoringRepository } from '@core/domains/doorMonitoring/repositories';
 import type { DoorInstallationStatus } from '@core/domains/doorMonitoring/entities';
@@ -29,6 +30,48 @@ const createSchema = z.object({
 const STATUSES = ['pending', 'approved', 'rejected'] as const;
 
 // ---------------------------------------------------------------------------
+// Response Types
+// ---------------------------------------------------------------------------
+
+interface RequestSuccessResponse {
+  data: {
+    id: string;
+    householdId: string;
+    status: string;
+    note: string | null;
+    createdAt: string;
+  };
+}
+
+interface RequestListItem {
+  id: string;
+  householdId: string;
+  householdNumber: string;
+  householdAddress: string;
+  householdBlock: string | null;
+  requestedBy: string;
+  status: string;
+  note: string | null;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+}
+
+interface RequestListSuccessResponse {
+  data: RequestListItem[];
+}
+
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type RequestCreateResponse = RequestSuccessResponse | ErrorResponse;
+type RequestListResponse = RequestListSuccessResponse | ErrorResponse;
+
+// ---------------------------------------------------------------------------
 // POST — create request
 // ---------------------------------------------------------------------------
 
@@ -36,10 +79,10 @@ const STATUSES = ['pending', 'approved', 'rejected'] as const;
  * Handler for creating door sensor installation requests.
  * Requires device:write permission for RT admins to request installations.
  */
-const handleCreateRequest: AuthorizedRouteHandler<void> = async (
+const handleCreateRequest: AuthorizedRouteHandler<RequestCreateResponse> = async (
   request: NextRequest,
-  authContext,
-): Promise<NextResponse> => {
+  authContext: AuthorizationContext,
+): Promise<NextResponse<RequestCreateResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -103,10 +146,10 @@ const handleCreateRequest: AuthorizedRouteHandler<void> = async (
  * Handler for listing door sensor installation requests.
  * Requires device:read permission to view installation requests.
  */
-const handleListRequests: AuthorizedRouteHandler<void> = async (
+const handleListRequests: AuthorizedRouteHandler<RequestListResponse> = async (
   request: NextRequest,
-  authContext,
-): Promise<NextResponse> => {
+  authContext: AuthorizationContext,
+): Promise<NextResponse<RequestListResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 

@@ -19,4 +19,5 @@
 
 export * from './verify-tests-passing';
 export * from './verify-cross-tenant-security';
+export * from './verify-performance';
 export * from './generate-completion-report';

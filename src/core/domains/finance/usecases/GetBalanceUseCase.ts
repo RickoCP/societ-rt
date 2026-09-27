@@ -8,7 +8,8 @@
  * @see Requirements 7.2, 7.3
  */
 
-import type { AuthContext } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import type { FinanceRepository } from '../repositories/FinanceRepository';
 
@@ -18,7 +19,7 @@ import type { FinanceRepository } from '../repositories/FinanceRepository';
 
 export interface GetBalanceUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
   }): Promise<DomainResult<number>>;
 }
 
@@ -33,6 +34,6 @@ export const GetBalanceUseCaseImpl = ({
 }): GetBalanceUseCase => ({
   execute: async ({ authContext }) => {
     // 1. Get balance via repository
-    return financeRepository.getBalance(authContext.tenantId);
+    return financeRepository.getBalance(getTenantId(authContext));
   },
 });

@@ -8,8 +8,10 @@
  * Authorization: Super_Admin only.
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
-import { UserRole } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types/AuthContextCompat';
+import { getMembershipRole, getTenantId, getUserId, isAuthorizationContext } from '@core/domains/authorization/types/AuthContextCompat';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import { authInsufficientRole } from '@core/domains/auth/errors/authErrors';
@@ -32,10 +34,18 @@ export interface ResolveDoorInstallationRequestInput {
 
 export interface ResolveDoorInstallationRequestUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     input: ResolveDoorInstallationRequestInput;
   }): Promise<DomainResult<DoorInstallationRequest>>;
 }
+
+// ---------------------------------------------------------------------------
+// Allowed roles
+// ---------------------------------------------------------------------------
+
+const ADMIN_ROLES: ReadonlySet<MembershipRole> = new Set([
+  MembershipRole.PLATFORM_ADMIN,
+]);
 
 // ---------------------------------------------------------------------------
 // Factory implementation
@@ -49,14 +59,18 @@ export const ResolveDoorInstallationRequestUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): ResolveDoorInstallationRequestUseCase => ({
   execute: async ({ authContext, input }) => {
+    const role = getMembershipRole(authContext);
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+    
     // 1. Role gate — platform admin only.
-    if (authContext.role !== UserRole.Super_Admin) {
+    if (!ADMIN_ROLES.has(role)) {
       return fail(authInsufficientRole());
     }
 
     // 2. Ensure the request exists within the tenant.
     const found = await doorMonitoringRepository.findInstallationRequest(
-      authContext.tenantId,
+      tenantId,
       input.requestId,
     );
     if (!found.success) {
@@ -68,25 +82,29 @@ export const ResolveDoorInstallationRequestUseCaseImpl = ({
 
     // 3. Resolve.
     const result = await doorMonitoringRepository.resolveInstallationRequest(
-      authContext.tenantId,
+      tenantId,
       input.requestId,
       input.decision,
-      authContext.userId,
+      userId,
     );
     if (!result.success) {
       return fail(result.error);
     }
 
     // 4. Audit (fire-and-forget).
+    const impersonatorId = isAuthorizationContext(authContext) 
+      ? undefined  // AuthorizationContext doesn't have impersonatorId
+      : (authContext as { impersonatorId?: string }).impersonatorId;
+    
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'door_installation_resolved',
         resourceType: 'door_installation_request',
         resourceId: input.requestId,
         details: { decision: input.decision },
-        impersonatorId: authContext.impersonatorId,
+        impersonatorId,
       })
       .catch(() => {
         /* audit must not block the response */

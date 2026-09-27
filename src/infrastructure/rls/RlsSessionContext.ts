@@ -16,7 +16,6 @@
 
 import {
   RLS_SESSION_VARIABLE,
-  type RlsSessionContext,
   RlsError,
 } from './types';
 

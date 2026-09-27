@@ -9,7 +9,7 @@
  * @see Requirements 2.1, 2.2, 2.3 (Multi-Tenant Integration Cutover)
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';

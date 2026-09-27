@@ -25,6 +25,7 @@ import {
 import type { IMembershipInvitationRepository } from '../../repositories';
 import type { IMembershipLifecycleService } from '../MembershipLifecycleService';
 import type { IDelegationMatrixService } from '../DelegationMatrixService';
+import { DelegationDecisionReason } from '../DelegationMatrixService';
 import type { IOrgUnitHierarchyReader } from '@core/domains/orgunit/services';
 import type { Membership, MembershipInvitation } from '../../entities';
 import { MembershipInvitationStatus } from '../../entities';
@@ -52,7 +53,7 @@ const createMockInvitationRepository = (): Mocked<IMembershipInvitationRepositor
   findExpiredPending: vi.fn().mockResolvedValue([]),
   bulkUpdateStatus: vi.fn().mockResolvedValue(0),
   findByTenant: vi.fn(),
-  findByMembership: vi.fn(),
+  findByMembershipId: vi.fn(),
   delete: vi.fn(),
 });
 
@@ -73,15 +74,22 @@ const createMockDelegationMatrixService = (): Mocked<IDelegationMatrixService> =
     data: { allowed: true, reason: 'Delegation allowed' },
   }),
   canDelegateRole: vi.fn().mockReturnValue(true),
-  getAssignableRoles: vi.fn(),
+  getDelegatableRoles: vi.fn().mockReturnValue([]),
+  validateAndAudit: vi.fn(),
+  isRoleDelegatable: vi.fn().mockReturnValue(true),
 });
 
 const createMockOrgUnitHierarchyReader = (): Mocked<IOrgUnitHierarchyReader> => ({
   isDescendantOrEqual: vi.fn().mockResolvedValue({ success: true, data: true }),
-  getPath: vi.fn(),
-  getDepth: vi.fn(),
-  findAncestors: vi.fn(),
-  findDescendants: vi.fn(),
+  isDescendantOf: vi.fn(),
+  isRoot: vi.fn(),
+  getOrgUnitPath: vi.fn(),
+  getOrgUnitDepth: vi.fn(),
+  getOrgUnit: vi.fn(),
+  validatePathDepthInvariant: vi.fn().mockReturnValue({ isValid: true }),
+  validateRootInvariant: vi.fn().mockReturnValue({ isValid: true }),
+  validateOrgUnitInvariants: vi.fn().mockReturnValue({ success: true, data: undefined }),
+  getAncestors: vi.fn(),
 });
 
 const createMockEventEmitter = (): Mocked<IInvitationEventEmitter> => ({
@@ -172,7 +180,7 @@ describe('MembershipInvitationService', () => {
         id: 'inviter-membership-001',
         userId: 'inviter-001',
         status: MembershipStatus.ACTIVE,
-        role: MembershipRole.KETUA_RT,
+        role: MembershipRole.RT_ADMIN,
         orgUnitId: 'orgunit-001',
       });
       const createdMembership = createTestMembership({
@@ -220,7 +228,7 @@ describe('MembershipInvitationService', () => {
         id: 'inviter-membership-001',
         userId: 'inviter-001',
         status: MembershipStatus.ACTIVE,
-        role: MembershipRole.KETUA_RT,
+        role: MembershipRole.RT_ADMIN,
         orgUnitId: 'orgunit-001',
       });
       const createdMembership = createTestMembership({ status: MembershipStatus.INVITED });
@@ -307,7 +315,7 @@ describe('MembershipInvitationService', () => {
       mockMembershipWriteRepository.findById.mockResolvedValue(inviterMembership);
       mockDelegationMatrixService.validateDelegation.mockReturnValue({
         success: true,
-        data: { allowed: false, reason: 'RESIDENT cannot delegate roles' },
+        data: { allowed: false, reason: DelegationDecisionReason.NO_DELEGATION_RIGHTS },
       });
 
       // Act
@@ -316,7 +324,7 @@ describe('MembershipInvitationService', () => {
         inviterMembershipId: 'inviter-membership-001',
         tenantId: 'tenant-001',
         invitedEmail: 'invited@example.com',
-        role: MembershipRole.KETUA_RT,
+        role: MembershipRole.RT_ADMIN,
         orgUnitId: 'orgunit-001',
       });
 
@@ -333,7 +341,7 @@ describe('MembershipInvitationService', () => {
         id: 'inviter-membership-001',
         userId: 'inviter-001',
         status: MembershipStatus.ACTIVE,
-        role: MembershipRole.KETUA_RT,
+        role: MembershipRole.RT_ADMIN,
         orgUnitId: 'orgunit-001', // Inviter's scope
       });
       mockMembershipWriteRepository.findById.mockResolvedValue(inviterMembership);
@@ -365,7 +373,7 @@ describe('MembershipInvitationService', () => {
         id: 'inviter-membership-001',
         userId: 'inviter-001',
         status: MembershipStatus.ACTIVE,
-        role: MembershipRole.KETUA_RT,
+        role: MembershipRole.RT_ADMIN,
         orgUnitId: 'orgunit-001',
       });
       mockMembershipWriteRepository.findById.mockResolvedValue(inviterMembership);
@@ -431,7 +439,7 @@ describe('MembershipInvitationService', () => {
         id: 'inviter-membership-001',
         userId: 'inviter-001',
         status: MembershipStatus.ACTIVE,
-        role: MembershipRole.KETUA_RT,
+        role: MembershipRole.RT_ADMIN,
         orgUnitId: 'orgunit-001', // Org-scoped
       });
       mockMembershipWriteRepository.findById.mockResolvedValue(inviterMembership);

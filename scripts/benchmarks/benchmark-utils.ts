@@ -13,6 +13,8 @@
  * @see Requirement 12: Authorization Performance Benchmarks
  */
 
+import * as os from 'os';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -193,12 +195,15 @@ export function calculatePercentile(
     return 0;
   }
 
+  const firstValue = sortedValues[0];
+  const lastValue = sortedValues[sortedValues.length - 1];
+
   if (percentile <= 0) {
-    return sortedValues[0];
+    return firstValue ?? 0;
   }
 
   if (percentile >= 100) {
-    return sortedValues[sortedValues.length - 1];
+    return lastValue ?? 0;
   }
 
   // Linear interpolation for percentile
@@ -206,12 +211,15 @@ export function calculatePercentile(
   const lower = Math.floor(index);
   const upper = Math.ceil(index);
 
+  const lowerValue = sortedValues[lower] ?? 0;
+  const upperValue = sortedValues[upper] ?? 0;
+
   if (lower === upper) {
-    return sortedValues[lower];
+    return lowerValue;
   }
 
   const fraction = index - lower;
-  return sortedValues[lower] * (1 - fraction) + sortedValues[upper] * fraction;
+  return lowerValue * (1 - fraction) + upperValue * fraction;
 }
 
 /**
@@ -289,8 +297,8 @@ export function calculateStatistics(
 
   return {
     sampleCount: samples.length,
-    min: sorted[0],
-    max: sorted[sorted.length - 1],
+    min: sorted[0] ?? 0,
+    max: sorted[sorted.length - 1] ?? 0,
     mean,
     stdDev,
     p50: calculatePercentile(sorted, 50),
@@ -611,8 +619,6 @@ export function compareRlsOverhead(
  * Get current environment information for benchmark reports.
  */
 export function getEnvironmentInfo(): EnvironmentInfo {
-  const os = require('os');
-
   const totalMemoryGb = (os.totalmem() / (1024 * 1024 * 1024)).toFixed(2);
 
   return {

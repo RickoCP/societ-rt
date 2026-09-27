@@ -11,11 +11,13 @@
  * @see Requirements 29.2, 29.3
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { BillingRepository } from '../repositories/BillingRepository';
 import type { Invoice, InvoiceStatus } from '../entities';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -28,7 +30,7 @@ export interface ProcessPaymentInput {
 
 export interface ProcessPaymentUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: ProcessPaymentInput;
   }): Promise<DomainResult<Invoice>>;
 }
@@ -45,6 +47,9 @@ export const ProcessPaymentUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): ProcessPaymentUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // Placeholder: In production, this would call the payment gateway
     // (Midtrans/Xendit) with the idempotency key from the invoice.
     // For now, we simulate a successful payment.
@@ -54,7 +59,7 @@ export const ProcessPaymentUseCaseImpl = ({
 
     // Update invoice status
     const result = await billingRepository.updateInvoiceStatus(
-      authContext.tenantId,
+      tenantId,
       data.invoiceId,
       status,
       data.gatewayTransactionId,
@@ -70,8 +75,8 @@ export const ProcessPaymentUseCaseImpl = ({
     // Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'payment_processed',
         resourceType: 'invoice',
         resourceId: invoice.id,

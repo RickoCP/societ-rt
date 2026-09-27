@@ -9,7 +9,7 @@
  * @see Requirements 2.1 — withPermission pattern
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
@@ -58,7 +58,15 @@ const handleUpdateContact: AuthorizedRouteHandler = async (
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await routeContext!.params!;
+  const params = await routeContext!.params!;
+  const id = params.id;
+
+  if (!id) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing id parameter', correlationId },
+      { status: 400 },
+    );
+  }
 
   let body: unknown;
   try {
@@ -75,6 +83,7 @@ const handleUpdateContact: AuthorizedRouteHandler = async (
     return NextResponse.json(
       {
         code: 'COMMON_VALIDATION_FAILED',
+        message: 'Validation failed',
         fields: formatZodErrors(validation.error),
         correlationId,
       },
@@ -136,7 +145,15 @@ const handleDeleteContact: AuthorizedRouteHandler = async (
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await routeContext!.params!;
+  const params = await routeContext!.params!;
+  const id = params.id;
+
+  if (!id) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing id parameter', correlationId },
+      { status: 400 },
+    );
+  }
 
   const useCase = container.resolve<DeleteEmergencyContactUseCase>(
     'deleteEmergencyContactUseCase',

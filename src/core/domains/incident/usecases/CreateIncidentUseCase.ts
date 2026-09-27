@@ -14,11 +14,11 @@
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
   RealtimeBusProtocol,
 } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { IncidentRepository } from '../repositories/IncidentRepository';
@@ -31,7 +31,7 @@ import { EVENT_CHANNELS } from '@core/domains/realtimeBus/entities';
 
 export interface CreateIncidentUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreateIncidentInput;
   }): Promise<DomainResult<Incident>>;
 }

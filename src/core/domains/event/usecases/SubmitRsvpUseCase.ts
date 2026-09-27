@@ -10,7 +10,9 @@
  * @see Requirements 14.3, 14.4
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { EventRepository } from '../repositories/EventRepository';
@@ -22,7 +24,7 @@ import type { EventRsvp, RsvpResponse } from '../entities';
 
 export interface SubmitRsvpUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     eventId: string;
     response: RsvpResponse;
   }): Promise<DomainResult<EventRsvp>>;
@@ -40,10 +42,13 @@ export const SubmitRsvpUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): SubmitRsvpUseCase => ({
   execute: async ({ authContext, eventId, response }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+    
     // 1. Submit RSVP via repository (duplicate check via unique constraint)
     const result = await eventRepository.submitRsvp(
       eventId,
-      authContext.userId,
+      userId,
       response,
     );
 
@@ -56,8 +61,8 @@ export const SubmitRsvpUseCaseImpl = ({
     // 2. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'event_rsvp_submitted',
         resourceType: 'event_rsvp',
         resourceId: rsvp.id,

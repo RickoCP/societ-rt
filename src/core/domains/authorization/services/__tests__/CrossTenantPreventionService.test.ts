@@ -162,9 +162,11 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWED);
-        expect(result.data?.allowed).toBe(true);
-        expect(result.data?.checkType).toBe(CrossTenantCheckType.RESOURCE_OWNERSHIP);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.ALLOWED);
+          expect(result.data.allowed).toBe(true);
+          expect(result.data.checkType).toBe(CrossTenantCheckType.RESOURCE_OWNERSHIP);
+        }
       });
 
       it('should block access when resource belongs to different tenant', async () => {
@@ -178,10 +180,12 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.TENANT_MISMATCH);
-        expect(result.data?.allowed).toBe(false);
-        expect(result.data?.reason).toContain('tenant-A');
-        expect(result.data?.reason).toContain('tenant-B');
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.TENANT_MISMATCH);
+          expect(result.data.allowed).toBe(false);
+          expect(result.data.reason).toContain('tenant-A');
+          expect(result.data.reason).toContain('tenant-B');
+        }
       });
 
       it('should emit audit event when cross-tenant access is blocked', async () => {
@@ -195,8 +199,8 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(mockAuditEmitter.violationEvents).toHaveLength(1);
-        expect(mockAuditEmitter.violationEvents[0].activeTenantId).toBe('tenant-A');
-        expect(mockAuditEmitter.violationEvents[0].checkType).toBe(CrossTenantCheckType.RESOURCE_OWNERSHIP);
+        expect(mockAuditEmitter.violationEvents[0]!.activeTenantId).toBe('tenant-A');
+        expect(mockAuditEmitter.violationEvents[0]!.checkType).toBe(CrossTenantCheckType.RESOURCE_OWNERSHIP);
       });
 
       it('should emit critical event for mutation attempts across tenants', async () => {
@@ -210,7 +214,7 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(mockAuditEmitter.criticalEvents).toHaveLength(1);
-        expect(mockAuditEmitter.criticalEvents[0].severity).toBe(PreventionEventSeverity.CRITICAL);
+        expect(mockAuditEmitter.criticalEvents[0]!.severity).toBe(PreventionEventSeverity.CRITICAL);
       });
 
       it('should block access when active tenant ID is missing', async () => {
@@ -224,8 +228,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.MISSING_CONTEXT);
-        expect(result.data?.allowed).toBe(false);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.MISSING_CONTEXT);
+          expect(result.data.allowed).toBe(false);
+        }
       });
 
       it('should fail when resource tenant ID is empty', async () => {
@@ -239,7 +245,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_RESOURCE_TENANT_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_RESOURCE_TENANT_REQUIRED');
+        }
       });
 
       it('should include resource details in blocked result', async () => {
@@ -257,8 +265,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.details).toHaveProperty('resourceId', 'household-789');
-        expect(result.data?.details).toHaveProperty('resourceType', ResourceType.HOUSEHOLD);
+        if (result.success) {
+          expect(result.data.details).toHaveProperty('resourceId', 'household-789');
+          expect(result.data.details).toHaveProperty('resourceType', ResourceType.HOUSEHOLD);
+        }
       });
     });
 
@@ -273,7 +283,9 @@ describe('CrossTenantPreventionService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(result.data).toBe(true);
+        if (result.success) {
+          expect(result.data).toBe(true);
+        }
       });
 
       it('should fail when tenant IDs do not match', () => {
@@ -286,9 +298,11 @@ describe('CrossTenantPreventionService', () => {
         );
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_ACCESS_BLOCKED');
-        expect(result.error?.message).toContain('tenant-A');
-        expect(result.error?.message).toContain('tenant-B');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_ACCESS_BLOCKED');
+          expect(result.error.message).toContain('tenant-A');
+          expect(result.error.message).toContain('tenant-B');
+        }
       });
 
       it('should fail when resource tenant ID is empty', () => {
@@ -300,7 +314,9 @@ describe('CrossTenantPreventionService', () => {
         );
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_RESOURCE_TENANT_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_RESOURCE_TENANT_REQUIRED');
+        }
       });
 
       it('should fail when request tenant ID is empty', () => {
@@ -312,7 +328,9 @@ describe('CrossTenantPreventionService', () => {
         );
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_CONTEXT_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_CONTEXT_REQUIRED');
+        }
       });
     });
   });
@@ -333,8 +351,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWED);
-        expect(result.data?.allowed).toBe(true);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.ALLOWED);
+          expect(result.data.allowed).toBe(true);
+        }
         expect(mockMembershipChecker.calls).toHaveLength(1);
         expect(mockMembershipChecker.calls[0]).toEqual({
           userId: 'user-123',
@@ -352,8 +372,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.NOT_MEMBER);
-        expect(result.data?.allowed).toBe(false);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.NOT_MEMBER);
+          expect(result.data.allowed).toBe(false);
+        }
       });
 
       it('should emit audit event when membership check fails', async () => {
@@ -366,8 +388,8 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(mockAuditEmitter.violationEvents).toHaveLength(1);
-        expect(mockAuditEmitter.violationEvents[0].userId).toBe('user-123');
-        expect(mockAuditEmitter.violationEvents[0].checkType).toBe(CrossTenantCheckType.USER_MEMBERSHIP);
+        expect(mockAuditEmitter.violationEvents[0]!.userId).toBe('user-123');
+        expect(mockAuditEmitter.violationEvents[0]!.checkType).toBe(CrossTenantCheckType.USER_MEMBERSHIP);
       });
 
       it('should fail when user ID is empty', async () => {
@@ -377,7 +399,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_USER_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_USER_REQUIRED');
+        }
       });
 
       it('should fail when tenant ID is empty', async () => {
@@ -387,7 +411,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_TENANT_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_TENANT_REQUIRED');
+        }
       });
 
       it('should pass requireActive flag to membership checker', async () => {
@@ -397,7 +423,7 @@ describe('CrossTenantPreventionService', () => {
           requireActive: false,
         });
 
-        expect(mockMembershipChecker.calls[0].requireActive).toBe(false);
+        expect(mockMembershipChecker.calls[0]!.requireActive).toBe(false);
       });
     });
   });
@@ -417,8 +443,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWED);
-        expect(result.data?.allowed).toBe(true);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.ALLOWED);
+          expect(result.data.allowed).toBe(true);
+        }
       });
 
       it('should allow when only one tenant ID is provided', async () => {
@@ -428,7 +456,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWED);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.ALLOWED);
+        }
       });
 
       it('should block when request and JWT tenant IDs mismatch', async () => {
@@ -439,10 +469,12 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.TENANT_MISMATCH);
-        expect(result.data?.allowed).toBe(false);
-        expect(result.data?.reason).toContain('request');
-        expect(result.data?.reason).toContain('jwt');
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.TENANT_MISMATCH);
+          expect(result.data.allowed).toBe(false);
+          expect(result.data.reason).toContain('request');
+          expect(result.data.reason).toContain('jwt');
+        }
       });
 
       it('should block when JWT and resource tenant IDs mismatch', async () => {
@@ -453,8 +485,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.TENANT_MISMATCH);
-        expect(result.data?.allowed).toBe(false);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.TENANT_MISMATCH);
+          expect(result.data.allowed).toBe(false);
+        }
       });
 
       it('should emit critical event for context mismatch', async () => {
@@ -465,7 +499,7 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(mockAuditEmitter.criticalEvents).toHaveLength(1);
-        expect(mockAuditEmitter.criticalEvents[0].severity).toBe(PreventionEventSeverity.CRITICAL);
+        expect(mockAuditEmitter.criticalEvents[0]!.severity).toBe(PreventionEventSeverity.CRITICAL);
       });
 
       it('should block when no tenant context is provided', async () => {
@@ -474,8 +508,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.MISSING_CONTEXT);
-        expect(result.data?.allowed).toBe(false);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.MISSING_CONTEXT);
+          expect(result.data.allowed).toBe(false);
+        }
       });
 
       it('should fail when user ID is empty', async () => {
@@ -485,7 +521,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_USER_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_USER_REQUIRED');
+        }
       });
 
       it('should ignore empty string tenant IDs', async () => {
@@ -496,7 +534,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWED);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.ALLOWED);
+        }
       });
     });
 
@@ -505,29 +545,37 @@ describe('CrossTenantPreventionService', () => {
         const result = service.validateTenantContextPresent('tenant-A', 'request');
 
         expect(result.success).toBe(true);
-        expect(result.data).toBe(true);
+        if (result.success) {
+          expect(result.data).toBe(true);
+        }
       });
 
       it('should fail when tenant ID is undefined', () => {
         const result = service.validateTenantContextPresent(undefined, 'request');
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_CONTEXT_MISSING');
-        expect(result.error?.message).toContain('request');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_CONTEXT_MISSING');
+          expect(result.error.message).toContain('request');
+        }
       });
 
       it('should fail when tenant ID is null', () => {
         const result = service.validateTenantContextPresent(null, 'jwt');
 
         expect(result.success).toBe(false);
-        expect(result.error?.message).toContain('jwt');
+        if (!result.success) {
+          expect(result.error.message).toContain('jwt');
+        }
       });
 
       it('should fail when tenant ID is empty string', () => {
         const result = service.validateTenantContextPresent('', 'resource');
 
         expect(result.success).toBe(false);
-        expect(result.error?.message).toContain('resource');
+        if (!result.success) {
+          expect(result.error.message).toContain('resource');
+        }
       });
 
       it('should fail when tenant ID is whitespace only', () => {
@@ -559,10 +607,12 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWED);
-        expect(result.data?.allValid).toBe(true);
-        expect(result.data?.validCount).toBe(3);
-        expect(result.data?.invalidCount).toBe(0);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.ALLOWED);
+          expect(result.data.allValid).toBe(true);
+          expect(result.data.validCount).toBe(3);
+          expect(result.data.invalidCount).toBe(0);
+        }
       });
 
       it('should block when batch contains cross-tenant resources', async () => {
@@ -580,10 +630,12 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.BATCH_CROSS_TENANT);
-        expect(result.data?.allValid).toBe(false);
-        expect(result.data?.validCount).toBe(1);
-        expect(result.data?.invalidCount).toBe(2);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.BATCH_CROSS_TENANT);
+          expect(result.data.allValid).toBe(false);
+          expect(result.data.validCount).toBe(1);
+          expect(result.data.invalidCount).toBe(2);
+        }
       });
 
       it('should return invalid resources with details', async () => {
@@ -598,14 +650,17 @@ describe('CrossTenantPreventionService', () => {
           operation: OperationType.UPDATE,
         });
 
-        expect(result.data?.invalidResources).toHaveLength(1);
-        expect(result.data?.invalidResources[0]).toEqual({
-          resourceId: 'res-1',
-          resourceType: ResourceType.HOUSEHOLD,
-          expectedTenantId: 'tenant-A',
-          actualTenantId: 'tenant-B',
-          reason: 'Resource belongs to different tenant',
-        });
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.invalidResources).toHaveLength(1);
+          expect(result.data.invalidResources[0]).toEqual({
+            resourceId: 'res-1',
+            resourceType: ResourceType.HOUSEHOLD,
+            expectedTenantId: 'tenant-A',
+            actualTenantId: 'tenant-B',
+            reason: 'Resource belongs to different tenant',
+          });
+        }
       });
 
       it('should emit batch violation event', async () => {
@@ -621,8 +676,8 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(mockAuditEmitter.batchViolationEvents).toHaveLength(1);
-        expect(mockAuditEmitter.batchViolationEvents[0].context).toEqual(context);
-        expect(mockAuditEmitter.batchViolationEvents[0].operation).toBe(OperationType.DELETE);
+        expect(mockAuditEmitter.batchViolationEvents[0]!.context).toEqual(context);
+        expect(mockAuditEmitter.batchViolationEvents[0]!.operation).toBe(OperationType.DELETE);
       });
 
       it('should allow empty batch', async () => {
@@ -635,8 +690,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.allValid).toBe(true);
-        expect(result.data?.validCount).toBe(0);
+        if (result.success) {
+          expect(result.data.allValid).toBe(true);
+          expect(result.data.validCount).toBe(0);
+        }
       });
 
       it('should fail when active tenant ID is missing', async () => {
@@ -649,7 +706,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_CONTEXT_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_CONTEXT_REQUIRED');
+        }
       });
 
       it('should assign suspicious severity to batch violations', async () => {
@@ -664,7 +723,10 @@ describe('CrossTenantPreventionService', () => {
           operation: OperationType.READ,
         });
 
-        expect(result.data?.severity).toBe(PreventionEventSeverity.SUSPICIOUS);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.severity).toBe(PreventionEventSeverity.SUSPICIOUS);
+        }
       });
 
       it('should assign critical severity to batch mutation violations', async () => {
@@ -679,7 +741,10 @@ describe('CrossTenantPreventionService', () => {
           operation: OperationType.DELETE,
         });
 
-        expect(result.data?.severity).toBe(PreventionEventSeverity.CRITICAL);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.severity).toBe(PreventionEventSeverity.CRITICAL);
+        }
       });
     });
   });
@@ -699,8 +764,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWED);
-        expect(result.data?.checkType).toBe(CrossTenantCheckType.QUERY_TENANT_FILTER);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.ALLOWED);
+          expect(result.data.checkType).toBe(CrossTenantCheckType.QUERY_TENANT_FILTER);
+        }
       });
 
       it('should block when query tenant differs from active tenant', () => {
@@ -712,7 +779,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_QUERY_BLOCKED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_QUERY_BLOCKED');
+        }
       });
 
       it('should allow platform-wide query for platform admin', () => {
@@ -726,8 +795,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWED);
-        expect(result.data?.reason).toContain('platform admin');
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.ALLOWED);
+          expect(result.data.reason).toContain('Platform admin');
+        }
       });
 
       it('should block platform-wide query for non-admin', () => {
@@ -741,7 +812,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_QUERY_UNAUTHORIZED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_QUERY_UNAUTHORIZED');
+        }
       });
 
       it('should fail when active tenant ID is missing', () => {
@@ -753,7 +826,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_CONTEXT_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_CONTEXT_REQUIRED');
+        }
       });
     });
 
@@ -769,8 +844,10 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWED);
-        expect(result.data?.checkType).toBe(CrossTenantCheckType.MUTATION_TENANT_TARGET);
+        if (result.success) {
+          expect(result.data.status).toBe(PreventionCheckStatus.ALLOWED);
+          expect(result.data.checkType).toBe(CrossTenantCheckType.MUTATION_TENANT_TARGET);
+        }
       });
 
       it('should block when target tenant differs from active tenant', () => {
@@ -784,11 +861,13 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_MUTATION_BLOCKED');
-        expect(result.error?.message).toContain('tenant-A');
-        expect(result.error?.message).toContain('tenant-B');
-        expect(result.error?.message).toContain('UPDATE');
-        expect(result.error?.message).toContain('RESIDENT');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_MUTATION_BLOCKED');
+          expect(result.error.message).toContain('tenant-A');
+          expect(result.error.message).toContain('tenant-B');
+          expect(result.error.message).toContain('UPDATE');
+          expect(result.error.message).toContain('RESIDENT');
+        }
       });
 
       it('should fail when active tenant ID is missing', () => {
@@ -802,7 +881,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_CONTEXT_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_CONTEXT_REQUIRED');
+        }
       });
 
       it('should fail when target tenant ID is empty', () => {
@@ -816,7 +897,9 @@ describe('CrossTenantPreventionService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('CROSS_TENANT_PREVENTION_TARGET_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('CROSS_TENANT_PREVENTION_TARGET_REQUIRED');
+        }
       });
     });
   });
@@ -959,7 +1042,10 @@ describe('CrossTenantPreventionService', () => {
         operation: OperationType.READ,
       });
 
-      expect(result.data?.severity).toBe(PreventionEventSeverity.NORMAL);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.severity).toBe(PreventionEventSeverity.NORMAL);
+      }
       expect(mockAuditEmitter.violationEvents).toHaveLength(1);
       expect(mockAuditEmitter.criticalEvents).toHaveLength(0);
     });
@@ -993,8 +1079,10 @@ describe('CrossTenantPreventionService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.allowed).toBe(true);
-      expect(result.data?.status).toBe(PreventionCheckStatus.ALLOWED);
+      if (result.success) {
+        expect(result.data.allowed).toBe(true);
+        expect(result.data.status).toBe(PreventionCheckStatus.ALLOWED);
+      }
     });
 
     it('should detect and block complex cross-tenant attack', async () => {
@@ -1019,8 +1107,10 @@ describe('CrossTenantPreventionService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.allowed).toBe(false);
-      expect(result.data?.status).toBe(PreventionCheckStatus.TENANT_MISMATCH);
+      if (result.success) {
+        expect(result.data.allowed).toBe(false);
+        expect(result.data.status).toBe(PreventionCheckStatus.TENANT_MISMATCH);
+      }
 
       // Verify audit trail
       expect(mockAuditEmitter.violationEvents.length + mockAuditEmitter.criticalEvents.length).toBeGreaterThan(0);
@@ -1044,11 +1134,12 @@ describe('CrossTenantPreventionService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.allValid).toBe(false);
-      expect(result.data?.validCount).toBe(3);
-      expect(result.data?.invalidCount).toBe(1);
-      expect(result.data?.invalidResources[0].resourceId).toBe('record-3');
+      if (result.success) {
+        expect(result.data.allValid).toBe(false);
+        expect(result.data.validCount).toBe(3);
+        expect(result.data.invalidCount).toBe(1);
+        expect(result.data.invalidResources[0]!.resourceId).toBe('record-3');
+      }
     });
   });
 });
-

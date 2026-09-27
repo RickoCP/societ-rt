@@ -528,8 +528,11 @@ async function main(): Promise<void> {
   process.exit(exitCode);
 }
 
-// Run the verification
-main().catch(err => {
-  error(`Fatal error: ${err instanceof Error ? err.message : String(err)}`);
-  process.exit(2);
-});
+// Run if executed directly (not when imported as a module)
+const isMainModule = process.argv[1]?.includes('verify-migration-complete');
+if (isMainModule) {
+  main().catch(err => {
+    error(`Fatal error: ${err instanceof Error ? err.message : String(err)}`);
+    process.exit(2);
+  });
+}

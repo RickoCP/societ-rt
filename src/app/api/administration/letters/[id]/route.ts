@@ -48,13 +48,6 @@ interface LetterUpdateResponse {
   correlationId?: string;
 }
 
-/**
- * Route params for the letter endpoint.
- */
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
 // ---------------------------------------------------------------------------
 // PATCH handler — Edit pending letter request
 // ---------------------------------------------------------------------------
@@ -72,12 +65,12 @@ interface RouteParams {
 const handlePatchLetter: AuthorizedRouteHandler<LetterUpdateResponse> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-  routeContext?: RouteParams,
+  routeContext,
 ): Promise<NextResponse<LetterUpdateResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await routeContext!.params;
+  const { id } = await routeContext!.params!;
 
   let body: unknown;
   try {

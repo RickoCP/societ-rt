@@ -8,7 +8,7 @@
  * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
@@ -67,7 +67,16 @@ const handleGetDevice: AuthorizedRouteHandler<unknown> = async (
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await context!.params!;
+  const params = await context!.params!;
+  const id = params.id;
+
+  // Validate device ID is present
+  if (!id) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Device ID is required', correlationId },
+      { status: 400 },
+    );
+  }
 
   // 1. Query device (tenant-scoped ownership check)
   const deviceCheck = await findDeviceByIdAndTenant(authContext.tenantId, id);
@@ -135,7 +144,16 @@ const handleDeleteDevice: AuthorizedRouteHandler<unknown> = async (
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await context!.params!;
+  const params = await context!.params!;
+  const id = params.id;
+
+  // Validate device ID is present
+  if (!id) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Device ID is required', correlationId },
+      { status: 400 },
+    );
+  }
 
   // 1. Verify device exists within tenant (ownership check)
   const deviceCheck = await findDeviceByIdAndTenant(authContext.tenantId, id);

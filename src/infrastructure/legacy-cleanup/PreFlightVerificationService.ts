@@ -89,9 +89,6 @@ export function createPreFlightVerificationService(
     getFase114CompletionTimestamp,
   } = deps;
 
-  // Internal state for tracking latest verification
-  let lastVerificationResult: PreFlightVerificationResult | null = null;
-
   /**
    * Generate a correlation ID.
    */
@@ -416,7 +413,7 @@ export function createPreFlightVerificationService(
       correlationId,
     };
 
-    lastVerificationResult = result;
+    // Result is logged below, no need to store it
 
     logger.info?.(`Pre-flight verification ${verified ? 'PASSED' : 'FAILED'}`, {
       correlationId,

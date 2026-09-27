@@ -7,9 +7,11 @@
  * 3. Return ok(resident)
  *
  * @see Requirements 5.2, 5.3
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { ResidentRepository } from '../repositories/ResidentRepository';
@@ -21,7 +23,7 @@ import type { CreateResidentInput, Resident } from '../entities';
 
 export interface AddResidentUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreateResidentInput;
   }): Promise<DomainResult<Resident>>;
 }

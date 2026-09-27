@@ -11,7 +11,7 @@
  */
 
 import type { QueueProtocol, AuditQueueProtocol } from '@core/protocols';
-import type { AuthContext } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import type { NotificationRepository } from '../repositories/NotificationRepository';
@@ -41,7 +41,7 @@ export interface AcknowledgeNotificationResult {
 
 export interface AcknowledgeNotificationUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: AcknowledgeNotificationInput;
   }): Promise<DomainResult<AcknowledgeNotificationResult>>;
 }

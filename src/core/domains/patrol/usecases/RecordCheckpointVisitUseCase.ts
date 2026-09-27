@@ -12,12 +12,14 @@
  * @see Requirements 35.4, 35.5, 35.10
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { PatrolRepository } from '../repositories/PatrolRepository';
 import type { PatrolCheckpointVisit } from '../entities';
 import { patrolCheckpointTooFar } from '../errors/patrolErrors';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Haversine distance helper (pure math, no external deps)
@@ -73,7 +75,7 @@ export interface RecordCheckpointVisitParams {
 
 export interface RecordCheckpointVisitUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: RecordCheckpointVisitParams;
   }): Promise<DomainResult<PatrolCheckpointVisit>>;
 }
@@ -90,6 +92,9 @@ export const RecordCheckpointVisitUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): RecordCheckpointVisitUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Validate GPS distance <= 50m from checkpoint
     const distance = haversineDistance(
       data.latitude,
@@ -106,7 +111,7 @@ export const RecordCheckpointVisitUseCaseImpl = ({
 
     // 2. Record visit via repository
     const result = await patrolRepository.recordCheckpointVisit(
-      authContext.tenantId,
+      tenantId,
       data.sessionId,
       {
         checkpointIndex: data.checkpointIndex,
@@ -125,8 +130,8 @@ export const RecordCheckpointVisitUseCaseImpl = ({
     // 3. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'patrol_checkpoint_visited',
         resourceType: 'patrol_checkpoint_visit',
         resourceId: visit.id,

@@ -9,12 +9,13 @@
  * Role: Super_Admin only (platform-level device management).
  */
 
-import type { AuthContext } from '@core/protocols';
 import { UserRole } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { TenantRepository } from '../repositories/TenantRepository';
 import { authInsufficientRole } from '@core/domains/auth/errors/authErrors';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { hasUserRole } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // CSV column contract (shared with the import use case)
@@ -41,7 +42,7 @@ function csvCell(value: string): string {
 
 export interface ExportTenantSirenCsvUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
   }): Promise<DomainResult<string>>;
 }
 
@@ -56,7 +57,7 @@ export const ExportTenantSirenCsvUseCaseImpl = ({
 }): ExportTenantSirenCsvUseCase => ({
   execute: async ({ authContext }) => {
     // 1. Role gate — platform admin only
-    if (authContext.role !== UserRole.Super_Admin) {
+    if (!hasUserRole(authContext, UserRole.Super_Admin)) {
       return fail(authInsufficientRole());
     }
 

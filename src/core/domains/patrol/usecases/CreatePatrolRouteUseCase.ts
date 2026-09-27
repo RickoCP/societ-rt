@@ -11,12 +11,23 @@
  * @see Requirements 35.1, 35.10
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import { UserRole } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { fail, ok, authorizationError } from '@core/utils';
 import type { PatrolRepository } from '../repositories/PatrolRepository';
 import type { PatrolRoute, CreatePatrolRouteInput } from '../entities';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId, hasAllowedUserRole } from '@core/domains/authorization/types';
+
+// ---------------------------------------------------------------------------
+// Allowed roles
+// ---------------------------------------------------------------------------
+
+const ALLOWED_ROLES: ReadonlySet<UserRole> = new Set([
+  UserRole.Ketua_RT,
+  UserRole.Pengurus,
+]);
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -24,7 +35,7 @@ import type { PatrolRoute, CreatePatrolRouteInput } from '../entities';
 
 export interface CreatePatrolRouteUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreatePatrolRouteInput;
   }): Promise<DomainResult<PatrolRoute>>;
 }
@@ -41,11 +52,11 @@ export const CreatePatrolRouteUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): CreatePatrolRouteUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Validate role: only Ketua_RT or Pengurus may create patrol routes
-    if (
-      authContext.role !== UserRole.Ketua_RT &&
-      authContext.role !== UserRole.Pengurus
-    ) {
+    if (!hasAllowedUserRole(authContext, ALLOWED_ROLES)) {
       return fail(
         authorizationError(
           'AUTH_INSUFFICIENT_ROLE',
@@ -60,8 +71,8 @@ export const CreatePatrolRouteUseCaseImpl = ({
 
     // 2. Create route via repository
     const result = await patrolRepository.createRoute(
-      authContext.tenantId,
-      authContext.userId,
+      tenantId,
+      userId,
       data,
     );
 
@@ -74,8 +85,8 @@ export const CreatePatrolRouteUseCaseImpl = ({
     // 3. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'patrol_route_created',
         resourceType: 'patrol_route',
         resourceId: route.id,

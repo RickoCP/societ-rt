@@ -205,7 +205,7 @@ describe('BackupService', () => {
       const checkpoints = await service.listCheckpoints();
 
       expect(checkpoints).toHaveLength(1);
-      expect(checkpoints[0].isValid).toBe(false);
+      expect(checkpoints[0]!.isValid).toBe(false);
     });
   });
 

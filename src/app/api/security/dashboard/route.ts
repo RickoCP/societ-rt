@@ -8,16 +8,20 @@
  * @see Requirements 31.1, 31.9
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
 } from '@infrastructure/middleware/authorization';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GetSecurityDashboardUseCase } from '@core/domains/securityCenter/usecases';
+import type {
+  GateStatusSummary,
+  CctvStatusSummary,
+  PatrolStatusSummary,
+} from '@core/domains/securityCenter/entities';
 
 // ---------------------------------------------------------------------------
 // Response types
@@ -27,27 +31,15 @@ interface SecurityDashboardResponse {
   data: {
     activeIncidents: number;
     emergencyAlerts: number;
-    gateStatus: {
-      total: number;
-      open: number;
-      closed: number;
-    };
-    cctvStatus: {
-      total: number;
-      online: number;
-      offline: number;
-    };
-    patrolStatus: {
-      scheduled: number;
-      completed: number;
-      inProgress: number;
-    };
+    gateStatus: GateStatusSummary;
+    cctvStatus: CctvStatusSummary;
+    patrolStatus: PatrolStatusSummary;
     recentEvents: Array<{
       id: string;
       type: string;
       title: string;
-      severity: string;
-      category: string;
+      severity: string | null;
+      category: string | null;
       timestamp: string;
     }>;
   };
@@ -67,10 +59,10 @@ interface SecurityDashboardResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with dashboard metrics or error
  */
-const handleGetDashboard: AuthorizedRouteHandler<SecurityDashboardResponse> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-): Promise<NextResponse<SecurityDashboardResponse>> => {
+const handleGetDashboard: AuthorizedRouteHandler<SecurityDashboardResponse | ErrorResponseBody> = async (
+  request,
+  authContext,
+): Promise<NextResponse<SecurityDashboardResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -81,7 +73,7 @@ const handleGetDashboard: AuthorizedRouteHandler<SecurityDashboardResponse> = as
     const result = await useCase.execute({ authContext });
 
     if (!result.success) {
-      return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<SecurityDashboardResponse>;
+      return mapAppErrorToHttpResponse(result.error, correlationId);
     }
 
     const metrics = result.data;
@@ -112,7 +104,7 @@ const handleGetDashboard: AuthorizedRouteHandler<SecurityDashboardResponse> = as
         code: 'COMMON_UNEXPECTED_ERROR',
         message: 'Internal server error',
         correlationId,
-      } as unknown as SecurityDashboardResponse,
+      },
       { status: 500 },
     );
   }

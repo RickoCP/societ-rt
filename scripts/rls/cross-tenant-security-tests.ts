@@ -638,8 +638,8 @@ async function testCrossTenantRead(
   tableName: string,
   tenantAId: string,
   tenantBId: string,
-  recordId: string,
-  verbose: boolean,
+  _recordId: string,
+  _verbose: boolean,
 ): Promise<TestResult> {
   const startTime = Date.now();
   const tenantIdColumn = getTenantIdColumn(tableName);
@@ -691,7 +691,7 @@ async function testCrossTenantInsert(
   tableName: string,
   tenantAId: string,
   tenantBId: string,
-  verbose: boolean,
+  _verbose: boolean,
 ): Promise<TestResult> {
   const startTime = Date.now();
   const tenantIdColumn = getTenantIdColumn(tableName);
@@ -770,8 +770,8 @@ async function testCrossTenantUpdate(
   tableName: string,
   tenantAId: string,
   tenantBId: string,
-  recordId: string,
-  verbose: boolean,
+  _recordId: string,
+  _verbose: boolean,
 ): Promise<TestResult> {
   const startTime = Date.now();
   const tenantIdColumn = getTenantIdColumn(tableName);
@@ -822,8 +822,8 @@ async function testCrossTenantDelete(
   tableName: string,
   tenantAId: string,
   tenantBId: string,
-  recordId: string,
-  verbose: boolean,
+  _recordId: string,
+  _verbose: boolean,
 ): Promise<TestResult> {
   const startTime = Date.now();
   const tenantIdColumn = getTenantIdColumn(tableName);
@@ -873,7 +873,7 @@ async function testCrossTenantJoin(
   pool: pg.Pool,
   tenantAId: string,
   tenantBId: string,
-  verbose: boolean,
+  _verbose: boolean,
 ): Promise<TestResult> {
   const startTime = Date.now();
 
@@ -928,7 +928,7 @@ async function testCrossTenantSubquery(
   pool: pg.Pool,
   tenantAId: string,
   tenantBId: string,
-  verbose: boolean,
+  _verbose: boolean,
 ): Promise<TestResult> {
   const startTime = Date.now();
 
@@ -982,7 +982,7 @@ async function testCrossTenantAggregation(
   pool: pg.Pool,
   tenantAId: string,
   tenantBId: string,
-  verbose: boolean,
+  _verbose: boolean,
 ): Promise<TestResult> {
   const startTime = Date.now();
 
@@ -1170,7 +1170,8 @@ async function runTestSuite(config: TestConfig): Promise<TestSuiteResult> {
 
     // Create OrgUnits for both tenants
     const orgUnitAId = await createTestOrgUnit(client, tenantAId);
-    const orgUnitBId = await createTestOrgUnit(client, tenantBId);
+    // Create org unit for tenant B (for test data completeness, not directly referenced)
+    await createTestOrgUnit(client, tenantBId);
 
     await client.query('COMMIT');
 

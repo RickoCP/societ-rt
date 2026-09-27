@@ -12,7 +12,6 @@
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   RealtimeBusProtocol,
 } from '@core/protocols';
@@ -22,6 +21,8 @@ import type { PatrolRepository } from '../repositories/PatrolRepository';
 import type { PatrolSession, StartPatrolSessionInput } from '../entities';
 import { patrolAlreadyActive } from '../errors/patrolErrors';
 import { EVENT_CHANNELS } from '@core/domains/realtimeBus/entities';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -29,7 +30,7 @@ import { EVENT_CHANNELS } from '@core/domains/realtimeBus/entities';
 
 export interface StartPatrolUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: StartPatrolSessionInput;
   }): Promise<DomainResult<PatrolSession>>;
 }
@@ -48,27 +49,28 @@ export const StartPatrolUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): StartPatrolUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Check no active session for this guard
-    const activeResult = await patrolRepository.findActiveSessions(
-      authContext.tenantId,
-    );
+    const activeResult = await patrolRepository.findActiveSessions(tenantId);
 
     if (!activeResult.success) {
       return fail(activeResult.error);
     }
 
     const guardHasActive = activeResult.data.some(
-      session => session.guardId === authContext.userId,
+      session => session.guardId === userId,
     );
 
     if (guardHasActive) {
-      return fail(patrolAlreadyActive(authContext.userId));
+      return fail(patrolAlreadyActive(userId));
     }
 
     // 2. Create session via repository
     const result = await patrolRepository.startSession(
-      authContext.tenantId,
-      authContext.userId,
+      tenantId,
+      userId,
       data,
     );
 
@@ -79,11 +81,11 @@ export const StartPatrolUseCaseImpl = ({
     const session = result.data;
 
     // 3. Publish to Realtime Bus (fire-and-forget)
-    const channel = `${EVENT_CHANNELS.PATROL_EVENTS}:${authContext.tenantId}`;
+    const channel = `${EVENT_CHANNELS.PATROL_EVENTS}:${tenantId}`;
     realtimeBusProtocol
       .publish(channel, {
         id: session.id,
-        tenantId: authContext.tenantId,
+        tenantId,
         channel: EVENT_CHANNELS.PATROL_EVENTS,
         eventType: 'patrol_started',
         payload: {
@@ -102,8 +104,8 @@ export const StartPatrolUseCaseImpl = ({
     // 4. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'patrol_started',
         resourceType: 'patrol_session',
         resourceId: session.id,

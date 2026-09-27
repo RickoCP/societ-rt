@@ -17,7 +17,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { withPermission } from '@infrastructure/middleware/authorization';
+import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { CreateHouseholdUseCase } from '@core/domains/resident/usecases';
 import type { PrismaClient } from '@/generated/prisma/client';
@@ -38,10 +38,10 @@ const createHouseholdSchema = z.object({
 // GET handler — List households
 // ---------------------------------------------------------------------------
 
-async function handleListHouseholds(
+const handleListHouseholds: AuthorizedRouteHandler = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse> {
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -103,7 +103,7 @@ async function handleListHouseholds(
       { status: 500 },
     );
   }
-}
+};
 
 export const GET = withPermission(
   { permissions: ['household:read'] },
@@ -114,10 +114,10 @@ export const GET = withPermission(
 // POST handler — Create household
 // ---------------------------------------------------------------------------
 
-async function handleCreateHousehold(
+const handleCreateHousehold: AuthorizedRouteHandler = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse> {
+): Promise<NextResponse> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -176,7 +176,7 @@ async function handleCreateHousehold(
     },
     { status: 201 },
   );
-}
+};
 
 export const POST = withPermission(
   { permissions: ['household:manage'] },

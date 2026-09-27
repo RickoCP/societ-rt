@@ -116,11 +116,11 @@ describe('CacheInvalidationService', () => {
       expect(mockListener.events.length).toBeGreaterThan(0);
       
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.MEMBERSHIP_CREATED);
-      expect(lastEvent.event.userId).toBe(USER_A_ID);
-      expect(lastEvent.event.tenantId).toBe(TENANT_A_ID);
-      expect(lastEvent.event.orgUnitId).toBe(ORG_UNIT_ID);
-      expect(lastEvent.event.correlationId).toBe(CORRELATION_ID);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.MEMBERSHIP_CREATED);
+      expect(lastEvent!.event.userId).toBe(USER_A_ID);
+      expect(lastEvent!.event.tenantId).toBe(TENANT_A_ID);
+      expect(lastEvent!.event.orgUnitId).toBe(ORG_UNIT_ID);
+      expect(lastEvent!.event.correlationId).toBe(CORRELATION_ID);
     });
 
     it('should handle null orgUnitId for tenant-level membership', async () => {
@@ -134,7 +134,7 @@ describe('CacheInvalidationService', () => {
       expect(result.success).toBe(true);
       
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.orgUnitId).toBeNull();
+      expect(lastEvent!.event.orgUnitId).toBeNull();
     });
   });
 
@@ -170,9 +170,9 @@ describe('CacheInvalidationService', () => {
       );
 
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.MEMBERSHIP_STATUS_CHANGED);
-      expect(lastEvent.event.oldStatus).toBe(MembershipStatus.ACTIVE);
-      expect(lastEvent.event.newStatus).toBe(MembershipStatus.SUSPENDED);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.MEMBERSHIP_STATUS_CHANGED);
+      expect(lastEvent!.event.oldStatus).toBe(MembershipStatus.ACTIVE);
+      expect(lastEvent!.event.newStatus).toBe(MembershipStatus.SUSPENDED);
     });
 
     it('should handle REVOKED status transition', async () => {
@@ -221,9 +221,9 @@ describe('CacheInvalidationService', () => {
       );
 
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.MEMBERSHIP_ROLE_CHANGED);
-      expect(lastEvent.event.oldRole).toBe(MembershipRole.RESIDENT);
-      expect(lastEvent.event.newRole).toBe(MembershipRole.RT_ADMIN);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.MEMBERSHIP_ROLE_CHANGED);
+      expect(lastEvent!.event.oldRole).toBe(MembershipRole.RESIDENT);
+      expect(lastEvent!.event.newRole).toBe(MembershipRole.RT_ADMIN);
     });
   });
 
@@ -253,9 +253,9 @@ describe('CacheInvalidationService', () => {
       );
 
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.MEMBERSHIP_REVOKED);
-      expect(lastEvent.event.userId).toBe(USER_A_ID);
-      expect(lastEvent.event.tenantId).toBe(TENANT_A_ID);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.MEMBERSHIP_REVOKED);
+      expect(lastEvent!.event.userId).toBe(USER_A_ID);
+      expect(lastEvent!.event.tenantId).toBe(TENANT_A_ID);
     });
   });
 
@@ -287,7 +287,7 @@ describe('CacheInvalidationService', () => {
       );
 
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.MEMBERSHIP_SUSPENDED);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.MEMBERSHIP_SUSPENDED);
     });
   });
 
@@ -315,8 +315,8 @@ describe('CacheInvalidationService', () => {
       );
 
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.PERMISSION_CHANGED);
-      expect(lastEvent.event.role).toBe(MembershipRole.RT_ADMIN);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.PERMISSION_CHANGED);
+      expect(lastEvent!.event.role).toBe(MembershipRole.RT_ADMIN);
     });
   });
 
@@ -338,8 +338,8 @@ describe('CacheInvalidationService', () => {
       await service.invalidateAllPermissions(CORRELATION_ID);
 
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.PERMISSION_CHANGED);
-      expect(lastEvent.event.metadata?.allPermissions).toBe(true);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.PERMISSION_CHANGED);
+      expect(lastEvent!.event.metadata?.allPermissions).toBe(true);
     });
   });
 
@@ -364,8 +364,8 @@ describe('CacheInvalidationService', () => {
       await service.invalidateOnTokenVersionChanged(USER_A_ID, CORRELATION_ID);
 
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.TOKEN_VERSION_CHANGED);
-      expect(lastEvent.event.userId).toBe(USER_A_ID);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.TOKEN_VERSION_CHANGED);
+      expect(lastEvent!.event.userId).toBe(USER_A_ID);
     });
   });
 
@@ -391,9 +391,9 @@ describe('CacheInvalidationService', () => {
       await service.invalidateUserTenantCaches(USER_A_ID, TENANT_A_ID, CORRELATION_ID);
 
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.USER_CACHE_CLEAR);
-      expect(lastEvent.event.userId).toBe(USER_A_ID);
-      expect(lastEvent.event.tenantId).toBe(TENANT_A_ID);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.USER_CACHE_CLEAR);
+      expect(lastEvent!.event.userId).toBe(USER_A_ID);
+      expect(lastEvent!.event.tenantId).toBe(TENANT_A_ID);
     });
   });
 
@@ -415,8 +415,8 @@ describe('CacheInvalidationService', () => {
       await service.invalidateTenantCaches(TENANT_A_ID, CORRELATION_ID);
 
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.TENANT_CACHE_CLEAR);
-      expect(lastEvent.event.tenantId).toBe(TENANT_A_ID);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.TENANT_CACHE_CLEAR);
+      expect(lastEvent!.event.tenantId).toBe(TENANT_A_ID);
     });
   });
 
@@ -442,9 +442,9 @@ describe('CacheInvalidationService', () => {
       await service.invalidateOnOrgUnitChanged(TENANT_A_ID, ORG_UNIT_ID, CORRELATION_ID);
 
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.ORGUNIT_CHANGED);
-      expect(lastEvent.event.tenantId).toBe(TENANT_A_ID);
-      expect(lastEvent.event.orgUnitId).toBe(ORG_UNIT_ID);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.ORGUNIT_CHANGED);
+      expect(lastEvent!.event.tenantId).toBe(TENANT_A_ID);
+      expect(lastEvent!.event.orgUnitId).toBe(ORG_UNIT_ID);
     });
   });
 
@@ -752,7 +752,6 @@ describe('CacheInvalidationService', () => {
   describe('Event Listener Management', () => {
     it('should add event listener', () => {
       const newListener = createMockEventListener();
-      const initialListenerCount = mockListener.events.length;
 
       service.addInvalidationListener(newListener);
 
@@ -764,8 +763,6 @@ describe('CacheInvalidationService', () => {
     });
 
     it('should not add duplicate listener', () => {
-      const initialListenerCount = mockListener.events.length;
-
       // Try to add the same listener again
       service.addInvalidationListener(mockListener);
 
@@ -922,7 +919,7 @@ describe('CacheInvalidationService', () => {
       expect(result.success).toBe(true);
       
       const lastEvent = mockListener.events[mockListener.events.length - 1];
-      expect(lastEvent.event.type).toBe(InvalidationEventType.TOKEN_VERSION_CHANGED);
+      expect(lastEvent!.event.type).toBe(InvalidationEventType.TOKEN_VERSION_CHANGED);
     });
   });
 });

@@ -11,7 +11,6 @@
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   RealtimeBusProtocol,
 } from '@core/protocols';
@@ -20,6 +19,8 @@ import { fail, ok } from '@core/utils';
 import type { PatrolRepository } from '../repositories/PatrolRepository';
 import type { PatrolSession, CompletePatrolSessionInput } from '../entities';
 import { EVENT_CHANNELS } from '@core/domains/realtimeBus/entities';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -27,7 +28,7 @@ import { EVENT_CHANNELS } from '@core/domains/realtimeBus/entities';
 
 export interface CompletePatrolUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     sessionId: string;
     data: CompletePatrolSessionInput;
   }): Promise<DomainResult<PatrolSession>>;
@@ -47,9 +48,12 @@ export const CompletePatrolUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): CompletePatrolUseCase => ({
   execute: async ({ authContext, sessionId, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Complete session via repository (sets completedAt, status = 'completed')
     const result = await patrolRepository.completeSession(
-      authContext.tenantId,
+      tenantId,
       sessionId,
       data,
     );
@@ -61,11 +65,11 @@ export const CompletePatrolUseCaseImpl = ({
     const session = result.data;
 
     // 2. Publish to Realtime Bus (fire-and-forget)
-    const channel = `${EVENT_CHANNELS.PATROL_EVENTS}:${authContext.tenantId}`;
+    const channel = `${EVENT_CHANNELS.PATROL_EVENTS}:${tenantId}`;
     realtimeBusProtocol
       .publish(channel, {
         id: session.id,
-        tenantId: authContext.tenantId,
+        tenantId,
         channel: EVENT_CHANNELS.PATROL_EVENTS,
         eventType: 'patrol_completed',
         payload: {
@@ -87,8 +91,8 @@ export const CompletePatrolUseCaseImpl = ({
     // 3. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'patrol_completed',
         resourceType: 'patrol_session',
         resourceId: session.id,

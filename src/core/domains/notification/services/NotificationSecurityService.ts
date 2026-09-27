@@ -371,17 +371,19 @@ const PII_PATTERNS: readonly { name: string; pattern: RegExp; maskFn: (match: st
     },
   },
   {
+    name: 'nik',
+    // NIK pattern MUST come before phone pattern to prevent phone pattern from
+    // matching partial NIK numbers (NIK contains digits that could look like phone numbers)
+    pattern: /\b\d{16}\b/g,
+    maskFn: (m) => m.slice(0, 4) + '********' + m.slice(-4),
+  },
+  {
     name: 'phone',
     pattern: /(\+62|62|0)[\s-]?\d{2,4}[\s-]?\d{3,4}[\s-]?\d{3,4}/g,
     maskFn: (m) => {
       const digits = m.replace(/[\s-]/g, '');
       return digits.slice(0, 4) + '****' + digits.slice(-4);
     },
-  },
-  {
-    name: 'nik',
-    pattern: /\b\d{16}\b/g,
-    maskFn: (m) => m.slice(0, 4) + '********' + m.slice(-4),
   },
   {
     name: 'credit_card',
@@ -820,9 +822,9 @@ export const NotificationSecurityServiceImpl = ({
     },
 
     validateRecipientTenant(
-      senderId: string,
+      _senderId: string,
       senderTenantId: string,
-      recipientId: string,
+      _recipientId: string,
       recipientTenantId: string,
     ): DomainResult<boolean> {
       // Validate sender tenant

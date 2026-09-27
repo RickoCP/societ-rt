@@ -23,7 +23,6 @@ import type {
 } from './types';
 import {
   CLEANUP_SERVICE_VERSION,
-  COLUMNS_TO_REMOVE,
 } from './types';
 
 // ---------------------------------------------------------------------------

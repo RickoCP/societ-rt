@@ -8,7 +8,8 @@
  * @see Requirements 44.1, 44.4, 44.5
  */
 
-import type { AuthContext } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId } from '@core/domains/authorization/types/AuthContextCompat';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { IoTRepository } from '../repositories/IoTRepository';
@@ -43,7 +44,7 @@ export interface DeviceHealthDashboard {
 
 export interface GetDeviceHealthDashboardUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     householdId?: string;
   }): Promise<DomainResult<DeviceHealthDashboard>>;
 }
@@ -65,10 +66,12 @@ export const GetDeviceHealthDashboardUseCaseImpl = ({
   iotRepository: IoTRepository;
 }): GetDeviceHealthDashboardUseCase => ({
   execute: async ({ authContext, householdId }) => {
+    const tenantId = getTenantId(authContext);
+    
     // If householdId is not provided, return empty dashboard
     if (!householdId) {
       return ok({
-        tenantId: authContext.tenantId,
+        tenantId,
         totalDevices: 0,
         onlineCount: 0,
         offlineCount: 0,
@@ -80,7 +83,7 @@ export const GetDeviceHealthDashboardUseCaseImpl = ({
     }
 
     const devicesResult = await iotRepository.findByHousehold(
-      authContext.tenantId,
+      tenantId,
       householdId,
     );
 
@@ -114,7 +117,7 @@ export const GetDeviceHealthDashboardUseCaseImpl = ({
 
     for (const device of devices) {
       const eventsResult = await iotRepository.findEventsByDevice(
-        authContext.tenantId,
+        tenantId,
         device.id,
         50,
       );
@@ -145,7 +148,7 @@ export const GetDeviceHealthDashboardUseCaseImpl = ({
     );
 
     return ok({
-      tenantId: authContext.tenantId,
+      tenantId,
       totalDevices,
       onlineCount,
       offlineCount,

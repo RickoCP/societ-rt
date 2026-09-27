@@ -111,7 +111,18 @@ const handleGetRule: AuthorizedRouteHandler<void> = async (
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await context!.params!;
+  const params = await context?.params;
+  const id = params?.id;
+  if (!id) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Missing id parameter',
+        correlationId,
+      },
+      { status: 400 },
+    ) as NextResponse<void>;
+  }
 
   const automationRepository =
     container.resolve<AutomationRepository>('automationRepository');
@@ -180,7 +191,18 @@ const handleUpdateRule: AuthorizedRouteHandler<void> = async (
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await context!.params!;
+  const params = await context?.params;
+  const id = params?.id;
+  if (!id) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Missing id parameter',
+        correlationId,
+      },
+      { status: 400 },
+    ) as NextResponse<void>;
+  }
 
   let body: unknown;
   try {
@@ -265,7 +287,18 @@ const handleDeleteRule: AuthorizedRouteHandler<void> = async (
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await context!.params!;
+  const params = await context?.params;
+  const id = params?.id;
+  if (!id) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Missing id parameter',
+        correlationId,
+      },
+      { status: 400 },
+    ) as NextResponse<void>;
+  }
 
   const automationRepository =
     container.resolve<AutomationRepository>('automationRepository');

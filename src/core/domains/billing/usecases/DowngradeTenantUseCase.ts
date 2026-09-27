@@ -13,7 +13,6 @@
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
 } from '@core/protocols';
@@ -21,6 +20,8 @@ import type { DomainResult } from '@core/utils';
 import { ok, fail, businessError } from '@core/utils';
 import type { BillingRepository } from '../repositories/BillingRepository';
 import type { TenantRepository } from '@core/domains/tenant/repositories/TenantRepository';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -34,7 +35,7 @@ const GRACE_PERIOD_DAYS = 14;
 
 export interface DowngradeTenantUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
   }): Promise<DomainResult<void>>;
 }
 
@@ -54,9 +55,12 @@ export const DowngradeTenantUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): DowngradeTenantUseCase => ({
   execute: async ({ authContext }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Find pending/failed invoices for this tenant
     const invoicesResult = await billingRepository.findInvoicesByTenant(
-      authContext.tenantId,
+      tenantId,
     );
 
     if (!invoicesResult.success) {
@@ -84,7 +88,7 @@ export const DowngradeTenantUseCaseImpl = ({
 
     // 2. Get current plan to check if already Free
     const planResult = await billingRepository.getActivePlan(
-      authContext.tenantId,
+      tenantId,
     );
 
     if (!planResult.success) {
@@ -98,7 +102,7 @@ export const DowngradeTenantUseCaseImpl = ({
 
     // 3. Change plan to Free
     const changeResult = await billingRepository.changePlan(
-      authContext.tenantId,
+      tenantId,
       'Free',
     );
 
@@ -107,12 +111,12 @@ export const DowngradeTenantUseCaseImpl = ({
     }
 
     // 4. Notify Ketua_RT
-    const tenantResult = await tenantRepository.findById(authContext.tenantId);
+    const tenantResult = await tenantRepository.findById(tenantId);
     if (tenantResult.success && tenantResult.data) {
       notificationQueueProtocol
         .enqueueNotification({
-          tenantId: authContext.tenantId,
-          userId: authContext.userId,
+          tenantId,
+          userId,
           type: 'subscription_downgraded',
           title: 'Subscription Downgraded',
           body: `Your subscription has been downgraded to Free due to unpaid invoice past the ${GRACE_PERIOD_DAYS}-day grace period.`,
@@ -126,11 +130,11 @@ export const DowngradeTenantUseCaseImpl = ({
     // 5. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
+        tenantId,
         actorUserId: 'system',
         actionType: 'tenant_downgraded',
         resourceType: 'tenant',
-        resourceId: authContext.tenantId,
+        resourceId: tenantId,
         details: {
           previousPlan: planResult.data.name,
           newPlan: 'Free',

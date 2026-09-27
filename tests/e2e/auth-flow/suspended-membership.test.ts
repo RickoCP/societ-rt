@@ -63,7 +63,6 @@ vi.mock('@infrastructure/utils/correlationId', () => ({
 
 // Import after mocks are set up
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
-import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Helper Functions
@@ -593,8 +592,8 @@ describe('Suspended Membership Access Tests', () => {
       );
 
       // Safety route with allowSuspended: true
-      // Note: INVITED is not handled by allowSuspended - only ACTIVE and SUSPENDED
-      // INVITED should be blocked at the middleware level before reaching this check
+      // Note: INVITED is NOT handled by allowSuspended - only SUSPENDED can access safety routes
+      // INVITED memberships have NOT been activated and cannot access ANY routes
       const wrappedHandler = withPermission(
         { permissions: ['emergency:create'], allowSuspended: true },
         mockHandler,
@@ -606,13 +605,11 @@ describe('Suspended Membership Access Tests', () => {
       const response = await wrappedHandler(request);
 
       // Assert
-      // INVITED status is not explicitly checked in withPermission but
-      // should not be allowed through isAuthoritative = false
-      // The current implementation only checks REVOKED and SUSPENDED explicitly
-      // For INVITED users, authorization typically fails at middleware level
-      // But if it reaches withPermission, permission check may fail
-      expect(response.status).toBe(200); // Handler is called if status not REVOKED/SUSPENDED
-      // Note: This test reveals that INVITED status might need explicit handling
+      // INVITED status is now explicitly blocked in withPermission
+      // INVITED memberships are not active and should not have access to any routes
+      // @see MembershipStatus.INVITED — Authorization: NOT eligible for operations
+      expect(response.status).toBe(403);
+      expect(mockHandler).not.toHaveBeenCalled();
     });
   });
 

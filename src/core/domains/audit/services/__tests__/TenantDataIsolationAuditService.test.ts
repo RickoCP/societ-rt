@@ -28,8 +28,7 @@ import type {
   CreateAuditEventInput,
   AuditEventPage,
 } from '../AuditTrailService';
-import { ok, fail } from '@core/utils';
-import { technicalError } from '@core/utils';
+import { ok } from '@core/utils';
 
 // ---------------------------------------------------------------------------
 // Test Utilities
@@ -203,7 +202,7 @@ describe('TenantDataIsolationAuditService', () => {
         expect(result.success).toBe(true);
         expect(mockRepository.createCalls).toHaveLength(1);
 
-        const call = mockRepository.createCalls[0];
+        const call = mockRepository.createCalls[0]!;
         expect(call.userId).toBe('user-123');
         expect(call.tenantId).toBe('tenant-A');
         expect(call.success).toBe(false);
@@ -226,8 +225,8 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(mockAlertEmitter.highAlerts).toHaveLength(1);
-        expect(mockAlertEmitter.highAlerts[0].tenantId).toBe('tenant-A');
-        expect(mockAlertEmitter.highAlerts[0].violationType).toBe(IsolationViolationType.CROSS_TENANT_ACCESS);
+        expect(mockAlertEmitter.highAlerts[0]!.tenantId).toBe('tenant-A');
+        expect(mockAlertEmitter.highAlerts[0]!.violationType).toBe(IsolationViolationType.CROSS_TENANT_ACCESS);
       });
 
       it('should emit critical alert for cross-tenant mutation attempt', async () => {
@@ -241,7 +240,7 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(mockAlertEmitter.criticalAlerts).toHaveLength(1);
-        expect(mockAlertEmitter.criticalAlerts[0].violationType).toBe(IsolationViolationType.CROSS_TENANT_MUTATION);
+        expect(mockAlertEmitter.criticalAlerts[0]!.violationType).toBe(IsolationViolationType.CROSS_TENANT_MUTATION);
       });
 
       it('should reject empty source tenant ID', async () => {
@@ -255,7 +254,9 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('ISOLATION_AUDIT_TENANT_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('ISOLATION_AUDIT_TENANT_REQUIRED');
+        }
       });
 
       it('should sanitize sensitive data in details', async () => {
@@ -273,7 +274,7 @@ describe('TenantDataIsolationAuditService', () => {
           },
         });
 
-        const call = mockRepository.createCalls[0];
+        const call = mockRepository.createCalls[0]!;
         expect(call.details).toHaveProperty('accessToken', '[REDACTED]');
         expect(call.details).toHaveProperty('normalField', 'visible-value');
         expect(call.details).toHaveProperty('password', '[REDACTED]');
@@ -297,7 +298,9 @@ describe('TenantDataIsolationAuditService', () => {
         const result = await service.detectCrossTenantPattern('user-pattern-test', 10, 5);
 
         expect(result.success).toBe(true);
-        expect(result.data).toBe(true);
+        if (result.success) {
+          expect(result.data).toBe(true);
+        }
       });
 
       it('should not detect pattern when below threshold', async () => {
@@ -316,14 +319,18 @@ describe('TenantDataIsolationAuditService', () => {
         const result = await service.detectCrossTenantPattern('user-low-attempts', 10, 5);
 
         expect(result.success).toBe(true);
-        expect(result.data).toBe(false);
+        if (result.success) {
+          expect(result.data).toBe(false);
+        }
       });
 
       it('should reject empty user ID', async () => {
         const result = await service.detectCrossTenantPattern('', 10, 5);
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('ISOLATION_AUDIT_USER_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('ISOLATION_AUDIT_USER_REQUIRED');
+        }
       });
     });
   });
@@ -352,7 +359,7 @@ describe('TenantDataIsolationAuditService', () => {
         expect(result.success).toBe(true);
         expect(mockRepository.createCalls).toHaveLength(1);
 
-        const call = mockRepository.createCalls[0];
+        const call = mockRepository.createCalls[0]!;
         expect(call.details).toHaveProperty('description');
         expect(call.details).toHaveProperty('indicators');
       });
@@ -381,7 +388,7 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(result.success).toBe(true);
-        const call = mockRepository.createCalls[0];
+        const call = mockRepository.createCalls[0]!;
         expect(call.details).toHaveProperty('automaticActionTaken', true);
         expect(call.details).toHaveProperty('automaticAction', 'Session terminated');
       });
@@ -400,7 +407,7 @@ describe('TenantDataIsolationAuditService', () => {
         expect(result.success).toBe(true);
         expect(mockAlertEmitter.criticalAlerts).toHaveLength(1);
 
-        const call = mockRepository.createCalls[0];
+        const call = mockRepository.createCalls[0]!;
         expect(call.details).toHaveProperty('description');
         expect((call.details as Record<string, unknown>).description).toContain('users');
         expect(call.errorCode).toBe(IsolationViolationType.RLS_BYPASS_ATTEMPT);
@@ -417,7 +424,7 @@ describe('TenantDataIsolationAuditService', () => {
 
         expect(result.success).toBe(true);
 
-        const call = mockRepository.createCalls[0];
+        const call = mockRepository.createCalls[0]!;
         expect(call.tenantId).toBe('SYSTEM');
         expect(call.errorCode).toBe(IsolationViolationType.MISSING_TENANT_CONTEXT);
       });
@@ -429,7 +436,7 @@ describe('TenantDataIsolationAuditService', () => {
         );
 
         expect(result.success).toBe(true);
-        expect(mockRepository.createCalls[0].userId).toBeNull();
+        expect(mockRepository.createCalls[0]!.userId).toBeNull();
       });
     });
   });
@@ -444,34 +451,42 @@ describe('TenantDataIsolationAuditService', () => {
         const result = await service.runIsolationVerification('tenant-123', 'corr-123');
 
         expect(result.success).toBe(true);
-        expect(result.data).toHaveProperty('verificationId');
-        expect(result.data?.tenantId).toBe('tenant-123');
-        expect(result.data?.checks.length).toBeGreaterThan(0);
-        expect(result.data?.overallStatus).toBe(VerificationStatus.PASSED);
+        if (result.success) {
+          expect(result.data).toHaveProperty('verificationId');
+          expect(result.data.tenantId).toBe('tenant-123');
+          expect(result.data.checks.length).toBeGreaterThan(0);
+          expect(result.data.overallStatus).toBe(VerificationStatus.PASSED);
+        }
       });
 
       it('should run platform-wide verification when tenant is null', async () => {
         const result = await service.runIsolationVerification(null);
 
         expect(result.success).toBe(true);
-        expect(result.data?.tenantId).toBeNull();
+        if (result.success) {
+          expect(result.data.tenantId).toBeNull();
+        }
       });
 
       it('should calculate check statistics correctly', async () => {
         const result = await service.runIsolationVerification('tenant-123');
 
         expect(result.success).toBe(true);
-        expect(result.data?.totalChecks).toBe(result.data?.checks.length);
-        expect(result.data?.checksPassed).toBeLessThanOrEqual(result.data?.totalChecks ?? 0);
+        if (result.success) {
+          expect(result.data.totalChecks).toBe(result.data.checks.length);
+          expect(result.data.checksPassed).toBeLessThanOrEqual(result.data.totalChecks);
+        }
       });
 
       it('should include duration metrics', async () => {
         const result = await service.runIsolationVerification('tenant-123');
 
         expect(result.success).toBe(true);
-        expect(result.data?.durationMs).toBeGreaterThanOrEqual(0);
-        expect(result.data?.startedAt).toBeInstanceOf(Date);
-        expect(result.data?.completedAt).toBeInstanceOf(Date);
+        if (result.success) {
+          expect(result.data.durationMs).toBeGreaterThanOrEqual(0);
+          expect(result.data.startedAt).toBeInstanceOf(Date);
+          expect(result.data.completedAt).toBeInstanceOf(Date);
+        }
       });
     });
 
@@ -480,15 +495,19 @@ describe('TenantDataIsolationAuditService', () => {
         const result = await service.verifyRlsPolicies('tenant-123');
 
         expect(result.success).toBe(true);
-        expect(result.data?.checkName).toBe('RLS Policy Verification');
-        expect(result.data?.status).toBe(VerificationStatus.PASSED);
+        if (result.success) {
+          expect(result.data.checkName).toBe('RLS Policy Verification');
+          expect(result.data.status).toBe(VerificationStatus.PASSED);
+        }
       });
 
       it('should reject empty tenant ID', async () => {
         const result = await service.verifyRlsPolicies('');
 
         expect(result.success).toBe(false);
-        expect(result.error?.code).toBe('ISOLATION_AUDIT_TENANT_REQUIRED');
+        if (!result.success) {
+          expect(result.error.code).toBe('ISOLATION_AUDIT_TENANT_REQUIRED');
+        }
       });
     });
 
@@ -497,8 +516,10 @@ describe('TenantDataIsolationAuditService', () => {
         const result = await service.verifyDataIsolation('tenant-123');
 
         expect(result.success).toBe(true);
-        expect(result.data?.checkName).toBe('Data Isolation Verification');
-        expect(result.data?.status).toBe(VerificationStatus.PASSED);
+        if (result.success) {
+          expect(result.data.checkName).toBe('Data Isolation Verification');
+          expect(result.data.status).toBe(VerificationStatus.PASSED);
+        }
       });
     });
   });
@@ -517,10 +538,12 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data).toHaveProperty('reportId');
-        expect(result.data?.tenantId).toBe('tenant-123');
-        expect(result.data?.periodStart).toEqual(new Date('2024-01-01'));
-        expect(result.data?.periodEnd).toEqual(new Date('2024-01-31'));
+        if (result.success) {
+          expect(result.data).toHaveProperty('reportId');
+          expect(result.data.tenantId).toBe('tenant-123');
+          expect(result.data.periodStart).toEqual(new Date('2024-01-01'));
+          expect(result.data.periodEnd).toEqual(new Date('2024-01-31'));
+        }
       });
 
       it('should include compliance score and status', async () => {
@@ -531,9 +554,11 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.complianceScore).toBeGreaterThanOrEqual(0);
-        expect(result.data?.complianceScore).toBeLessThanOrEqual(100);
-        expect(['COMPLIANT', 'NON_COMPLIANT', 'NEEDS_REVIEW']).toContain(result.data?.complianceStatus);
+        if (result.success) {
+          expect(result.data.complianceScore).toBeGreaterThanOrEqual(0);
+          expect(result.data.complianceScore).toBeLessThanOrEqual(100);
+          expect(['COMPLIANT', 'NON_COMPLIANT', 'NEEDS_REVIEW']).toContain(result.data.complianceStatus);
+        }
       });
 
       it('should include recommendations', async () => {
@@ -544,8 +569,10 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.recommendations).toBeInstanceOf(Array);
-        expect(result.data?.recommendations.length).toBeGreaterThan(0);
+        if (result.success) {
+          expect(result.data.recommendations).toBeInstanceOf(Array);
+          expect(result.data.recommendations.length).toBeGreaterThan(0);
+        }
       });
 
       it('should include verification results when requested', async () => {
@@ -557,9 +584,11 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data).toHaveProperty('verificationsRun');
-        expect(result.data).toHaveProperty('verificationsPassed');
-        expect(result.data).toHaveProperty('verificationsFailed');
+        if (result.success) {
+          expect(result.data).toHaveProperty('verificationsRun');
+          expect(result.data).toHaveProperty('verificationsPassed');
+          expect(result.data).toHaveProperty('verificationsFailed');
+        }
       });
 
       it('should include violation details when requested', async () => {
@@ -571,8 +600,10 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data).toHaveProperty('recentViolations');
-        expect(result.data).toHaveProperty('topOffenders');
+        if (result.success) {
+          expect(result.data).toHaveProperty('recentViolations');
+          expect(result.data).toHaveProperty('topOffenders');
+        }
       });
 
       it('should generate platform-wide report when tenant is null', async () => {
@@ -583,7 +614,9 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.tenantId).toBeNull();
+        if (result.success) {
+          expect(result.data.tenantId).toBeNull();
+        }
       });
 
       it('should include breakdown by violation type', async () => {
@@ -594,11 +627,13 @@ describe('TenantDataIsolationAuditService', () => {
         });
 
         expect(result.success).toBe(true);
-        expect(result.data?.byViolationType).toBeDefined();
-        // All violation types should be present as keys
-        Object.values(IsolationViolationType).forEach(type => {
-          expect(result.data?.byViolationType).toHaveProperty(type);
-        });
+        if (result.success) {
+          expect(result.data.byViolationType).toBeDefined();
+          // All violation types should be present as keys
+          Object.values(IsolationViolationType).forEach(type => {
+            expect(result.data.byViolationType).toHaveProperty(type);
+          });
+        }
       });
     });
 
@@ -607,7 +642,9 @@ describe('TenantDataIsolationAuditService', () => {
         const result = await service.getRecentViolations('tenant-123', 10);
 
         expect(result.success).toBe(true);
-        expect(Array.isArray(result.data)).toBe(true);
+        if (result.success) {
+          expect(Array.isArray(result.data)).toBe(true);
+        }
       });
 
       it('should return platform-wide violations when tenant is null', async () => {
@@ -622,8 +659,10 @@ describe('TenantDataIsolationAuditService', () => {
         const result = await service.getComplianceScore('tenant-123', 30);
 
         expect(result.success).toBe(true);
-        expect(result.data).toBeGreaterThanOrEqual(0);
-        expect(result.data).toBeLessThanOrEqual(100);
+        if (result.success) {
+          expect(result.data).toBeGreaterThanOrEqual(0);
+          expect(result.data).toBeLessThanOrEqual(100);
+        }
       });
 
       it('should reject empty tenant ID', async () => {
@@ -715,7 +754,7 @@ describe('TenantDataIsolationAuditService', () => {
 
       // Threshold alert should have been emitted
       expect(mockAlertEmitter.thresholdAlerts.length).toBeGreaterThan(0);
-      expect(mockAlertEmitter.thresholdAlerts[0].userId).toBe('user-threshold-test');
+      expect(mockAlertEmitter.thresholdAlerts[0]!.userId).toBe('user-threshold-test');
     });
   });
 

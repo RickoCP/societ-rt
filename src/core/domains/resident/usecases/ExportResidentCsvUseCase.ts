@@ -8,7 +8,8 @@
  * @see Requirements 5.7, 6.1, 6.2
  */
 
-import type { AuthContext } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import type { ResidentRepository } from '../repositories/ResidentRepository';
 
@@ -18,7 +19,7 @@ import type { ResidentRepository } from '../repositories/ResidentRepository';
 
 export interface ExportResidentCsvUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
   }): Promise<DomainResult<string>>;
 }
 
@@ -32,7 +33,8 @@ export const ExportResidentCsvUseCaseImpl = ({
   residentRepository: ResidentRepository;
 }): ExportResidentCsvUseCase => ({
   execute: async ({ authContext }) => {
+    const tenantId = getTenantId(authContext);
     // 1. Export CSV via repository
-    return residentRepository.exportToCsv(authContext.tenantId);
+    return residentRepository.exportToCsv(tenantId);
   },
 });

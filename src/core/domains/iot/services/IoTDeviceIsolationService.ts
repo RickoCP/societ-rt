@@ -39,7 +39,6 @@ import {
   iotDeviceOutOfScope,
   iotDeviceHouseholdAccessDenied,
   crossTenantIotAccessDenied,
-  iotDeviceBelongsToDifferentTenant,
   iotDeviceInvariantViolation,
 } from '../errors';
 

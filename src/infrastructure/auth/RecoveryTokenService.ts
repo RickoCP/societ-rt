@@ -13,18 +13,16 @@
  */
 
 import crypto from 'crypto';
-import { v4 as uuidv4 } from 'uuid';
 
 import type {
   RecoveryToken,
   RecoveryTokenAuditEntry,
-  RecoveryTokenOperation,
 } from '@core/domains/auth/entities/RecoveryToken';
 import {
   DEFAULT_RECOVERY_TOKEN_CONFIG,
   getRecoveryTokenStatus,
 } from '@core/domains/auth/entities/RecoveryToken';
-import type { AppError, DomainResult } from '@core/utils';
+import type { DomainResult } from '@core/utils';
 import { fail, isFail, ok } from '@core/utils';
 import {
   authRecoveryTokenInvalid,

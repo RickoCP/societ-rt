@@ -17,6 +17,7 @@ import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { SetMonitoringWindowUseCase } from '@core/domains/doorMonitoring/usecases';
 import type { DoorMonitoringRepository } from '@core/domains/doorMonitoring/repositories';
 
@@ -29,6 +30,30 @@ const windowSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+interface WindowConfigSuccessResponse {
+  data: {
+    householdId: string;
+    monitorStart: string | null;
+    monitorEnd: string | null;
+    enabled: boolean;
+    currentState: string;
+    deviceConfigured: boolean;
+  } | null;
+}
+
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type WindowConfigResponse = WindowConfigSuccessResponse | ErrorResponse;
+
+// ---------------------------------------------------------------------------
 // PUT — set window
 // ---------------------------------------------------------------------------
 
@@ -36,15 +61,23 @@ const windowSchema = z.object({
  * Handler for setting the monitoring window for a household's door sensor.
  * Requires device:write permission. Ownership is enforced in the use case.
  */
-const handleSetWindow: AuthorizedRouteHandler<void> = async (
+const handleSetWindow: AuthorizedRouteHandler<WindowConfigResponse> = async (
   request: NextRequest,
-  authContext,
+  authContext: AuthorizationContext,
   context,
-): Promise<NextResponse> => {
+): Promise<NextResponse<WindowConfigResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { householdId } = await context!.params!;
+  const params = await context?.params;
+  const householdId = params?.householdId;
+  
+  if (!householdId) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing householdId', correlationId },
+      { status: 400 },
+    );
+  }
 
   let body: unknown;
   try {
@@ -109,15 +142,23 @@ const handleSetWindow: AuthorizedRouteHandler<void> = async (
  * Handler for fetching the current door-sensor config for a household.
  * Requires device:read permission to view sensor configuration.
  */
-const handleGetConfig: AuthorizedRouteHandler<void> = async (
+const handleGetConfig: AuthorizedRouteHandler<WindowConfigResponse> = async (
   request: NextRequest,
-  authContext,
+  authContext: AuthorizationContext,
   context,
-): Promise<NextResponse> => {
+): Promise<NextResponse<WindowConfigResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { householdId } = await context!.params!;
+  const params = await context?.params;
+  const householdId = params?.householdId;
+  
+  if (!householdId) {
+    return NextResponse.json(
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Missing householdId', correlationId },
+      { status: 400 },
+    );
+  }
 
   const repo = container.resolve<DoorMonitoringRepository>(
     'doorMonitoringRepository',

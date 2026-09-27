@@ -34,7 +34,7 @@ describe('CodePathAnalyzer', () => {
         // This will analyze the actual src folder, but should not throw
         // We're testing that the function handles default options correctly
         await expect(analyzer.analyzeCodePaths()).resolves.toBeDefined();
-      });
+      }, 30000); // Extended timeout for actual file system analysis
     });
 
     describe('getUsagesByClassification', () => {

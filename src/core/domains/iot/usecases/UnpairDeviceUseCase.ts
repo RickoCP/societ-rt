@@ -12,11 +12,12 @@
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   IoTGatewayProtocol,
 } from '@core/protocols';
-import { UserRole } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getMembershipRole, getTenantId, getUserId } from '@core/domains/authorization/types/AuthContextCompat';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import { authorizationError } from '@core/utils';
@@ -36,7 +37,7 @@ export interface UnpairDeviceInput {
 
 export interface UnpairDeviceUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: UnpairDeviceInput;
   }): Promise<DomainResult<void>>;
 }
@@ -55,10 +56,14 @@ export const UnpairDeviceUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): UnpairDeviceUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+    const role = getMembershipRole(authContext);
+
     // 1. Validate Home_Owner role (only Warga or Ketua_RT can unpair devices)
     if (
-      authContext.role !== UserRole.Warga &&
-      authContext.role !== UserRole.Ketua_RT
+      role !== MembershipRole.WARGA &&
+      role !== MembershipRole.RT_ADMIN
     ) {
       return fail(
         authorizationError(
@@ -81,7 +86,7 @@ export const UnpairDeviceUseCaseImpl = ({
 
     // 3. Remove device from local repository
     const removeResult = await iotRepository.removeDevice(
-      authContext.tenantId,
+      tenantId,
       data.deviceId,
     );
 
@@ -92,8 +97,8 @@ export const UnpairDeviceUseCaseImpl = ({
     // 4. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'iot_device_unpaired',
         resourceType: 'iot_device',
         resourceId: data.deviceId,

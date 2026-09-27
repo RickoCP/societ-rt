@@ -42,7 +42,31 @@ const createMockQuarantineService = (
   }),
 });
 
-const createMockPrismaClient = () => {
+interface MockPrismaClientMocks {
+  transaction: ReturnType<typeof vi.fn>;
+  userCreate: ReturnType<typeof vi.fn>;
+  userUpdate: ReturnType<typeof vi.fn>;
+  userFindFirst: ReturnType<typeof vi.fn>;
+  membershipCreate: ReturnType<typeof vi.fn>;
+  membershipUpdate: ReturnType<typeof vi.fn>;
+  membershipFindFirst: ReturnType<typeof vi.fn>;
+  tx: {
+    user: {
+      create: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      findFirst: ReturnType<typeof vi.fn>;
+    };
+    membership: {
+      create: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      findFirst: ReturnType<typeof vi.fn>;
+    };
+  };
+}
+
+type MockPrismaClient = PrismaClient & { _mocks: MockPrismaClientMocks };
+
+const createMockPrismaClient = (): MockPrismaClient => {
   const mockTransaction = vi.fn();
   const mockUserCreate = vi.fn();
   const mockUserUpdate = vi.fn();
@@ -64,7 +88,7 @@ const createMockPrismaClient = () => {
     },
   };
 
-  mockTransaction.mockImplementation(async (callback) => {
+  mockTransaction.mockImplementation(async (callback: (tx: typeof mockTx) => Promise<unknown>) => {
     return callback(mockTx);
   });
 
@@ -82,12 +106,12 @@ const createMockPrismaClient = () => {
       membershipFindFirst: mockMembershipFindFirst,
       tx: mockTx,
     },
-  } as unknown as PrismaClient & { _mocks: typeof mockTx };
+  } as unknown as MockPrismaClient;
 };
 
 describe('AuthorizationWriteCompatibilityService', () => {
   let quarantineService: IQuarantineManifestService;
-  let prismaClient: ReturnType<typeof createMockPrismaClient>;
+  let prismaClient: MockPrismaClient;
 
   beforeEach(() => {
     quarantineService = createMockQuarantineService();
@@ -110,7 +134,7 @@ describe('AuthorizationWriteCompatibilityService', () => {
 
   describe('createUserWithMembership', () => {
     it('should create both User and Membership in single transaction', async () => {
-      const mocks = (prismaClient as unknown as { _mocks: ReturnType<typeof createMockPrismaClient>['_mocks'] })._mocks;
+      const mocks = prismaClient._mocks;
       mocks.userCreate.mockResolvedValue({
         id: 'new-user-id',
         tenantId: 'tenant-123',
@@ -143,14 +167,16 @@ describe('AuthorizationWriteCompatibilityService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.userId).toBe('new-user-id');
-      expect(result.data?.membershipId).toBe('new-membership-id');
+      if (result.success && result.data) {
+        expect(result.data.userId).toBe('new-user-id');
+        expect(result.data.membershipId).toBe('new-membership-id');
+      }
       expect(result.rolledBack).toBe(false);
       expect(mocks.transaction).toHaveBeenCalledTimes(1);
     });
 
     it('should map legacy role to MembershipRole correctly', async () => {
-      const mocks = (prismaClient as unknown as { _mocks: ReturnType<typeof createMockPrismaClient>['_mocks'] })._mocks;
+      const mocks = prismaClient._mocks;
       mocks.userCreate.mockResolvedValue({ id: 'user-id' });
       mocks.membershipCreate.mockResolvedValue({ id: 'membership-id' });
 
@@ -171,6 +197,8 @@ describe('AuthorizationWriteCompatibilityService', () => {
         correlationId: 'corr',
       });
 
+      const createCall = mocks.membershipCreate.mock.calls[0];
+      expect(createCall).toBeDefined();
       expect(mocks.membershipCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -198,11 +226,13 @@ describe('AuthorizationWriteCompatibilityService', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe(DualWriteErrorCodes.INVALID_ROLE_MAPPING);
+      if (!result.success && result.error) {
+        expect(result.error.code).toBe(DualWriteErrorCodes.INVALID_ROLE_MAPPING);
+      }
     });
 
     it('should rollback on transaction failure', async () => {
-      const mocks = (prismaClient as unknown as { _mocks: ReturnType<typeof createMockPrismaClient>['_mocks'] })._mocks;
+      const mocks = prismaClient._mocks;
       mocks.transaction.mockRejectedValue(new Error('Database error'));
 
       const service = createAuthorizationWriteCompatibilityService({
@@ -223,11 +253,13 @@ describe('AuthorizationWriteCompatibilityService', () => {
 
       expect(result.success).toBe(false);
       expect(result.rolledBack).toBe(true);
-      expect(result.error?.code).toBe(DualWriteErrorCodes.TRANSACTION_FAILED);
+      if (!result.success && result.error) {
+        expect(result.error.code).toBe(DualWriteErrorCodes.TRANSACTION_FAILED);
+      }
     });
 
     it('should include correlation ID in result', async () => {
-      const mocks = (prismaClient as unknown as { _mocks: ReturnType<typeof createMockPrismaClient>['_mocks'] })._mocks;
+      const mocks = prismaClient._mocks;
       mocks.userCreate.mockResolvedValue({ id: 'user-id' });
       mocks.membershipCreate.mockResolvedValue({ id: 'membership-id' });
 
@@ -254,7 +286,7 @@ describe('AuthorizationWriteCompatibilityService', () => {
 
   describe('updateRoleWithMembership', () => {
     it('should update both User.role and Membership.role in single transaction', async () => {
-      const mocks = (prismaClient as unknown as { _mocks: ReturnType<typeof createMockPrismaClient>['_mocks'] })._mocks;
+      const mocks = prismaClient._mocks;
       mocks.userFindFirst.mockResolvedValue({
         id: 'user-id',
         tenantId: 'tenant-123',
@@ -304,12 +336,14 @@ describe('AuthorizationWriteCompatibilityService', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe(DualWriteErrorCodes.QUARANTINE_BLOCKED);
-      expect(result.error?.message).toContain('quarantined');
+      if (!result.success && result.error) {
+        expect(result.error.code).toBe(DualWriteErrorCodes.QUARANTINE_BLOCKED);
+        expect(result.error.message).toContain('quarantined');
+      }
     });
 
     it('should create Membership if none exists (legacy user compatibility)', async () => {
-      const mocks = (prismaClient as unknown as { _mocks: ReturnType<typeof createMockPrismaClient>['_mocks'] })._mocks;
+      const mocks = prismaClient._mocks;
       mocks.userFindFirst.mockResolvedValue({
         id: 'user-id',
         tenantId: 'tenant-123',
@@ -354,11 +388,13 @@ describe('AuthorizationWriteCompatibilityService', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe(DualWriteErrorCodes.INVALID_ROLE_MAPPING);
+      if (!result.success && result.error) {
+        expect(result.error.code).toBe(DualWriteErrorCodes.INVALID_ROLE_MAPPING);
+      }
     });
 
     it('should rollback on transaction failure', async () => {
-      const mocks = (prismaClient as unknown as { _mocks: ReturnType<typeof createMockPrismaClient>['_mocks'] })._mocks;
+      const mocks = prismaClient._mocks;
       mocks.transaction.mockRejectedValue(new Error('Database error'));
 
       const service = createAuthorizationWriteCompatibilityService({
@@ -434,7 +470,7 @@ describe('AuthorizationWriteCompatibilityService', () => {
 
     for (const { legacy, expected } of testCases) {
       it(`should map ${legacy} to ${expected}`, async () => {
-        const mocks = (prismaClient as unknown as { _mocks: ReturnType<typeof createMockPrismaClient>['_mocks'] })._mocks;
+        const mocks = prismaClient._mocks;
         mocks.userCreate.mockResolvedValue({ id: 'user-id' });
         mocks.membershipCreate.mockResolvedValue({ id: 'membership-id' });
 
@@ -454,6 +490,8 @@ describe('AuthorizationWriteCompatibilityService', () => {
           correlationId: 'corr',
         });
 
+        const createCall = mocks.membershipCreate.mock.calls[0];
+        expect(createCall).toBeDefined();
         expect(mocks.membershipCreate).toHaveBeenCalledWith(
           expect.objectContaining({
             data: expect.objectContaining({

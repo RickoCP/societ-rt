@@ -15,12 +15,13 @@
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   CacheProtocol,
   IoTGatewayProtocol,
   CircuitBreakerProtocol,
 } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types/AuthContextCompat';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { CommandResult, DeviceCommand } from '../entities';
@@ -46,7 +47,7 @@ export interface SendDeviceCommandInput {
 
 export interface SendDeviceCommandUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: SendDeviceCommandInput;
   }): Promise<DomainResult<CommandResult>>;
 }
@@ -74,6 +75,9 @@ export const SendDeviceCommandUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): SendDeviceCommandUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Check rate limit (max 30 commands per minute per device)
     const rateLimitKey = `iot:rate:${data.deviceId}`;
     const currentCount = await cacheProtocol.get<number>(rateLimitKey);
@@ -98,7 +102,7 @@ export const SendDeviceCommandUseCaseImpl = ({
       deviceId: data.deviceId,
       commandType: data.commandType,
       params: data.params,
-      requestedBy: authContext.userId,
+      requestedBy: userId,
     };
 
     const circuitResult = await circuitBreakerProtocol.execute(async () => {
@@ -125,8 +129,8 @@ export const SendDeviceCommandUseCaseImpl = ({
     // 3. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'iot_command_sent',
         resourceType: 'iot_device',
         resourceId: data.deviceId,

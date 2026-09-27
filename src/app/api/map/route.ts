@@ -13,7 +13,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
@@ -29,7 +29,7 @@ interface MapMarkerResponse {
   householdId: string;
   householdNumber: string;
   address: string;
-  block: string;
+  block: string | null;
   latitude: number | null;
   longitude: number | null;
   residentCount: number;
@@ -54,10 +54,10 @@ interface MapMarkersListResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with map markers list or error
  */
-const handleGetMapMarkers: AuthorizedRouteHandler<MapMarkersListResponse> = async (
+const handleGetMapMarkers: AuthorizedRouteHandler<MapMarkersListResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<MapMarkersListResponse>> => {
+): Promise<NextResponse<MapMarkersListResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -80,7 +80,7 @@ const handleGetMapMarkers: AuthorizedRouteHandler<MapMarkersListResponse> = asyn
 
   // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<MapMarkersListResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(

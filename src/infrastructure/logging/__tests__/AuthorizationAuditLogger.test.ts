@@ -7,14 +7,8 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-  type AuthorizationDecisionLogInput,
   type DenialDebuggingContext,
   createAuthorizationAuditLogger,
-  createInsufficientPermissionDenial,
-  createMembershipSuspendedDenial,
-  createMembershipRevokedDenial,
-  createTokenInvalidDenial,
-  createAuthorizationAllow,
   createInsufficientPermissionDebuggingContext,
   createTokenVersionMismatchDebuggingContext,
   createMembershipStatusDebuggingContext,
@@ -345,9 +339,9 @@ describe('AuthorizationAuditLogger', () => {
       });
 
       expect(calls).toHaveLength(1);
-      expect(calls[0].level).toBe('warn');
-      expect(calls[0].context).toHaveProperty('denial_debug');
-      expect(calls[0].context?.denial_debug).toHaveProperty(
+      expect(calls[0]!.level).toBe('warn');
+      expect(calls[0]!.context).toHaveProperty('denial_debug');
+      expect(calls[0]!.context?.denial_debug).toHaveProperty(
         'description',
         'User lacks required permissions',
       );
@@ -371,7 +365,7 @@ describe('AuthorizationAuditLogger', () => {
         denialContext,
       });
 
-      const denialDebug = calls[0].context?.denial_debug as Record<string, unknown>;
+      const denialDebug = calls[0]!.context?.denial_debug as Record<string, unknown>;
       expect(denialDebug.description).toBe('Test denial');
       expect(denialDebug.membership_status).toBe('SUSPENDED');
       expect(denialDebug.query_params).toEqual({ page: '1' });
@@ -397,7 +391,7 @@ describe('AuthorizationAuditLogger', () => {
         denialContext,
       });
 
-      const denialDebug = calls[0].context?.denial_debug as Record<string, unknown>;
+      const denialDebug = calls[0]!.context?.denial_debug as Record<string, unknown>;
       expect(denialDebug.token_version_mismatch).toEqual({
         expected: 5,
         actual: 3,
@@ -422,7 +416,7 @@ describe('AuthorizationAuditLogger', () => {
         denialContext,
       });
 
-      const denialDebug = calls[0].context?.denial_debug as Record<string, unknown>;
+      const denialDebug = calls[0]!.context?.denial_debug as Record<string, unknown>;
       expect(denialDebug.scope_mismatch).toEqual({
         requested_org_unit_id: 'org-requested',
         allowed_org_unit_ids: ['org-1', 'org-2'],
@@ -448,7 +442,7 @@ describe('AuthorizationAuditLogger', () => {
         denialContext,
       });
 
-      const denialDebug = calls[0].context?.denial_debug as Record<string, unknown>;
+      const denialDebug = calls[0]!.context?.denial_debug as Record<string, unknown>;
       expect(denialDebug.time_context).toEqual({
         request_timestamp: '2024-01-01T12:00:00Z',
         token_issued_at: '2024-01-01T00:00:00Z',
@@ -475,7 +469,7 @@ describe('AuthorizationAuditLogger', () => {
         denialContext,
       });
 
-      const denialDebug = calls[0].context?.denial_debug as Record<string, unknown>;
+      const denialDebug = calls[0]!.context?.denial_debug as Record<string, unknown>;
       expect(denialDebug.request_origin).toEqual({
         user_agent: 'Mozilla/5.0 (Test)',
         ip_hash: 'abc123',
@@ -498,7 +492,7 @@ describe('AuthorizationAuditLogger', () => {
         denialContext,
       });
 
-      const denialDebug = calls[0].context?.denial_debug as Record<string, unknown>;
+      const denialDebug = calls[0]!.context?.denial_debug as Record<string, unknown>;
       expect(denialDebug.cross_tenant_attempt).toBe(true);
     });
 
@@ -518,7 +512,7 @@ describe('AuthorizationAuditLogger', () => {
         denialContext,
       });
 
-      const denialDebug = calls[0].context?.denial_debug as Record<string, unknown>;
+      const denialDebug = calls[0]!.context?.denial_debug as Record<string, unknown>;
       expect(denialDebug.actual_permissions).toBeUndefined();
     });
 
@@ -538,7 +532,7 @@ describe('AuthorizationAuditLogger', () => {
         denialContext,
       });
 
-      const denialDebug = calls[0].context?.denial_debug as Record<string, unknown>;
+      const denialDebug = calls[0]!.context?.denial_debug as Record<string, unknown>;
       expect(denialDebug.actual_permissions).toEqual([
         'resident:read',
         'announcement:read',
@@ -554,8 +548,8 @@ describe('AuthorizationAuditLogger', () => {
       auditLogger.logAllow(baseInput);
 
       expect(calls).toHaveLength(1);
-      expect(calls[0].level).toBe('info');
-      expect(calls[0].context).not.toHaveProperty('denial_debug');
+      expect(calls[0]!.level).toBe('info');
+      expect(calls[0]!.context).not.toHaveProperty('denial_debug');
     });
   });
 
@@ -571,7 +565,7 @@ describe('AuthorizationAuditLogger', () => {
         orgUnitId: 'org-123',
       });
 
-      const context = calls[0].context;
+      const context = calls[0]!.context;
       
       // Required fields per Requirements 15.1
       expect(context?.correlation_id).toBe('test-correlation-123');
@@ -618,7 +612,7 @@ describe('Security: Sensitive Data Protection', () => {
       },
     });
 
-    const denialDebug = calls[0].context?.denial_debug as Record<string, unknown>;
+    const denialDebug = calls[0]!.context?.denial_debug as Record<string, unknown>;
     
     // Verify no token values in denial_debug
     expect(denialDebug).not.toHaveProperty('token');
@@ -650,7 +644,7 @@ describe('Security: Sensitive Data Protection', () => {
       denialContext,
     });
 
-    const denialDebug = calls[0].context?.denial_debug as Record<string, unknown>;
+    const denialDebug = calls[0]!.context?.denial_debug as Record<string, unknown>;
     const requestOrigin = denialDebug.request_origin as Record<string, unknown>;
     
     expect(requestOrigin.ip_hash).toBe('hashed-value-abc123');
@@ -693,7 +687,7 @@ describe('Context Sufficiency for Debugging', () => {
       denialContext,
     });
 
-    const context = calls[0].context;
+    const context = calls[0]!.context;
     const denialDebug = context?.denial_debug as Record<string, unknown>;
 
     // All required information for reproducing the issue:
@@ -732,7 +726,7 @@ describe('Context Sufficiency for Debugging', () => {
       reason: 'AUTH_NO_MEMBERSHIP',
     });
 
-    expect(calls[0].context?.correlation_id).toBe('unique-trace-id-12345');
+    expect(calls[0]!.context?.correlation_id).toBe('unique-trace-id-12345');
   });
 
   it('should generate fallback correlationId when not provided', () => {
@@ -748,9 +742,9 @@ describe('Context Sufficiency for Debugging', () => {
     });
 
     // Should have generated a correlationId
-    expect(calls[0].context?.correlation_id).toBeDefined();
-    expect(typeof calls[0].context?.correlation_id).toBe('string');
-    expect(calls[0].context?.correlation_id_generated).toBe(true);
+    expect(calls[0]!.context?.correlation_id).toBeDefined();
+    expect(typeof calls[0]!.context?.correlation_id).toBe('string');
+    expect(calls[0]!.context?.correlation_id_generated).toBe(true);
   });
 });
 

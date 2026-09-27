@@ -21,7 +21,7 @@
 
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
-import { businessError, technicalError, validationError, notFoundError } from '@core/utils';
+import { validationError, notFoundError } from '@core/utils';
 
 // ---------------------------------------------------------------------------
 // Audit Event Types

@@ -191,7 +191,7 @@ export const AuditTrailRepositoryImpl = ({
             actionType: prismaInput.actionType,
             resourceType: prismaInput.resourceType,
             resourceId: prismaInput.resourceId,
-            details: prismaInput.details,
+            details: prismaInput.details as object,
             ipAddress: prismaInput.ipAddress,
             impersonatorId: prismaInput.impersonatorId,
             timestamp: prismaInput.timestamp,

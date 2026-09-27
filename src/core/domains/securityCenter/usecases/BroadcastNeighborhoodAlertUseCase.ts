@@ -14,7 +14,6 @@
  */
 
 import type {
-  AuthContext,
   AuditQueueProtocol,
   NotificationQueueProtocol,
   RealtimeBusProtocol,
@@ -24,15 +23,17 @@ import type { DomainResult } from '@core/utils';
 import { fail, authorizationError } from '@core/utils';
 import type { NeighborhoodAlert, CreateNeighborhoodAlertInput } from '../entities';
 import type { SecurityCenterRepository } from '../repositories/SecurityCenterRepository';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId, hasAllowedUserRole } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const BROADCAST_ROLES: readonly UserRole[] = [
+const BROADCAST_ROLES: ReadonlySet<UserRole> = new Set([
   UserRole.Ketua_RT,
   UserRole.Security_Guard,
-];
+]);
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -40,7 +41,7 @@ const BROADCAST_ROLES: readonly UserRole[] = [
 
 export interface BroadcastNeighborhoodAlertUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     input: CreateNeighborhoodAlertInput;
   }): Promise<DomainResult<NeighborhoodAlert>>;
 }
@@ -62,19 +63,22 @@ export const BroadcastNeighborhoodAlertUseCaseImpl = ({
 }): BroadcastNeighborhoodAlertUseCase => ({
   execute: async ({ authContext, input }) => {
     // 1. Validate role — only Ketua_RT and Security_Guard can broadcast
-    if (!BROADCAST_ROLES.includes(authContext.role)) {
+    if (!hasAllowedUserRole(authContext, BROADCAST_ROLES)) {
       return fail(
         authorizationError(
           'AUTH_INSUFFICIENT_ROLE',
-          `Role ${authContext.role} is not allowed to broadcast neighborhood alerts`,
+          `User role is not allowed to broadcast neighborhood alerts`,
         ),
       );
     }
 
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 2. Persist alert
     const result = await securityCenterRepository.broadcastAlert(
-      authContext.tenantId,
-      authContext.userId,
+      tenantId,
+      userId,
       input,
     );
 
@@ -87,7 +91,7 @@ export const BroadcastNeighborhoodAlertUseCaseImpl = ({
     // 3. Dispatch notification to all Warga (fire-and-forget, must complete within 5s)
     notificationQueueProtocol
       .enqueueNotification({
-        tenantId: authContext.tenantId,
+        tenantId,
         userId: '', // broadcast to all Warga
         type: 'neighborhood_alert',
         title: `Security Alert: ${alert.severity.toUpperCase()}`,
@@ -100,10 +104,10 @@ export const BroadcastNeighborhoodAlertUseCaseImpl = ({
 
     // 4. Publish to Realtime Bus for live dashboard updates
     realtimeBusProtocol
-      .publish(`tenant:${authContext.tenantId}:security`, {
+      .publish(`tenant:${tenantId}:security`, {
         id: alert.id,
-        tenantId: authContext.tenantId,
-        channel: `tenant:${authContext.tenantId}:security`,
+        tenantId,
+        channel: `tenant:${tenantId}:security`,
         eventType: 'neighborhood_alert',
         payload: {
           alertId: alert.id,
@@ -121,8 +125,8 @@ export const BroadcastNeighborhoodAlertUseCaseImpl = ({
     // 5. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'neighborhood_alert_broadcast',
         resourceType: 'neighborhood_alert',
         resourceId: alert.id,

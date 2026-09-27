@@ -10,14 +10,14 @@
  * @see Requirements 32.6, 32.8
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { AttachEvidenceUseCase } from '@core/domains/incident/usecases';
 
 // ---------------------------------------------------------------------------
@@ -35,15 +35,16 @@ const attachEvidenceSchema = z.object({
 // POST handler — Attach evidence
 // ---------------------------------------------------------------------------
 
-async function handleAttachEvidence(
-  request: NextRequest,
-  authContext: AuthorizationContext,
-  context?: { params?: Promise<{ id: string }> },
-): Promise<NextResponse> {
+const handleAttachEvidence: AuthorizedRouteHandler<unknown> = async (
+  request,
+  authContext,
+  context,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
-  const { id } = await context!.params!;
+  const params = context?.params ? await context.params : { id: '' };
+  const { id } = params as { id: string };
 
   // 1. Parse and validate input
   let body: unknown;
@@ -98,7 +99,7 @@ async function handleAttachEvidence(
     },
     { status: 200 },
   );
-}
+};
 
 export const POST = withPermission(
   { permissions: ['security:manage'] },

@@ -27,7 +27,7 @@
 
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
-import { authorizationError, validationError, businessError } from '@core/utils';
+import { authorizationError, validationError } from '@core/utils';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -866,7 +866,7 @@ export const CrossTenantPreventionServiceImpl = ({
     validateResourceOwnership(
       resourceTenantId: string,
       requestTenantId: string,
-      operation: OperationType,
+      _operation: OperationType,
       resourceType: ResourceType,
       resourceId?: string,
     ): DomainResult<boolean> {
@@ -1005,7 +1005,7 @@ export const CrossTenantPreventionServiceImpl = ({
       }
 
       // All provided tenant IDs must match
-      const firstTenantId = tenantIds[0].value;
+      const firstTenantId = tenantIds[0]?.value ?? '';
       const mismatch = tenantIds.find(t => t.value !== firstTenantId);
 
       if (mismatch) {
@@ -1016,11 +1016,12 @@ export const CrossTenantPreventionServiceImpl = ({
           ipAddress,
         };
 
+        const firstTenant = tenantIds[0]!; // We know length >= 1 from the check above
         const result = await createBlockedResult(
           context,
           CrossTenantCheckType.REQUEST_CONTEXT,
           PreventionCheckStatus.TENANT_MISMATCH,
-          `Tenant context mismatch: ${tenantIds[0].source}='${tenantIds[0].value}' vs ${mismatch.source}='${mismatch.value}'`,
+          `Tenant context mismatch: ${firstTenant.source}='${firstTenant.value}' vs ${mismatch.source}='${mismatch.value}'`,
           OperationType.READ,
           PreventionEventSeverity.CRITICAL,
           {

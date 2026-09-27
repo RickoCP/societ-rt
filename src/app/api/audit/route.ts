@@ -34,7 +34,7 @@ interface AuditLogEntry {
   timestamp: string;
 }
 
-interface AuditLogResponse {
+interface AuditLogSuccessResponse {
   data: AuditLogEntry[];
   pagination: {
     total: number;
@@ -42,6 +42,14 @@ interface AuditLogResponse {
     pageSize: number;
   };
 }
+
+interface ErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+}
+
+type AuditLogResponse = AuditLogSuccessResponse | ErrorResponse;
 
 // ---------------------------------------------------------------------------
 // GET handler — List audit logs
@@ -92,7 +100,7 @@ const handleGetAuditLogs: AuthorizedRouteHandler<AuditLogResponse> = async (
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<AuditLogResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const paginated = result.data;

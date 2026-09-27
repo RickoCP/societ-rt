@@ -19,7 +19,6 @@ import {
   type IAuthorizationErrorLogger,
   type ErrorContext,
   type ErrorLogEntry,
-  type AuthorizationErrorCodeType,
 } from '../AuthorizationErrorHandlerService';
 import { authorizationError, authenticationError, unexpectedError } from '@core/utils';
 
@@ -244,7 +243,7 @@ describe('AuthorizationErrorHandlerService', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.errorChain).toHaveLength(1);
-        expect(result.data.errorChain[0].code).toBe('PREV_ERROR');
+        expect(result.data.errorChain[0]!.code).toBe('PREV_ERROR');
       }
     });
 
@@ -570,10 +569,10 @@ describe('AuthorizationErrorHandlerService', () => {
       const sanitized = service.sanitizeContext(context);
       const items = (sanitized.metadata as Record<string, unknown>).items as Array<Record<string, unknown>>;
 
-      expect(items[0].id).toBe('1');
-      expect(items[0].token).toBe('[REDACTED]');
-      expect(items[1].id).toBe('2');
-      expect(items[1].token).toBe('[REDACTED]');
+      expect(items[0]!.id).toBe('1');
+      expect(items[0]!.token).toBe('[REDACTED]');
+      expect(items[1]!.id).toBe('2');
+      expect(items[1]!.token).toBe('[REDACTED]');
     });
   });
 
@@ -602,7 +601,7 @@ describe('AuthorizationErrorHandlerService', () => {
         expect(mockLogger.logWarning).toHaveBeenCalled();
         expect(loggedEntries).toHaveLength(1);
 
-        const entry = loggedEntries[0];
+        const entry = loggedEntries[0]!;
         expect(entry.code).toBe(AuthorizationErrorCode.AUTH_TENANT_MISMATCH);
         expect(entry.correlationId).toBe('log-test-123');
         expect(entry.userId).toBe('user-1');
@@ -626,7 +625,7 @@ describe('AuthorizationErrorHandlerService', () => {
         service.logError(result.data);
 
         expect(mockLogger.logError).toHaveBeenCalled();
-        expect(loggedEntries[0].level).toBe('error');
+        expect(loggedEntries[0]!.level).toBe('error');
       }
     });
 
@@ -642,7 +641,7 @@ describe('AuthorizationErrorHandlerService', () => {
         service.logError(result.data);
 
         expect(mockLogger.logWarning).toHaveBeenCalled();
-        expect(loggedEntries[0].level).toBe('warn');
+        expect(loggedEntries[0]!.level).toBe('warn');
       }
     });
 
@@ -658,7 +657,7 @@ describe('AuthorizationErrorHandlerService', () => {
         service.logError(result.data);
 
         expect(mockLogger.logInfo).toHaveBeenCalled();
-        expect(loggedEntries[0].level).toBe('info');
+        expect(loggedEntries[0]!.level).toBe('info');
       }
     });
 
@@ -677,7 +676,7 @@ describe('AuthorizationErrorHandlerService', () => {
       if (result.success) {
         service.logError(result.data);
 
-        expect(loggedEntries[0].errorChainDepth).toBe(2);
+        expect(loggedEntries[0]!.errorChainDepth).toBe(2);
       }
     });
 
@@ -698,7 +697,7 @@ describe('AuthorizationErrorHandlerService', () => {
       if (result.success) {
         service.logError(result.data);
 
-        const loggedContext = loggedEntries[0].context;
+        const loggedContext = loggedEntries[0]!.context;
         // Sensitive data should be redacted, not exposed
         expect(loggedContext.password).toBe('[REDACTED]');
         expect(loggedContext.normal).toBe('should-appear');
@@ -720,8 +719,8 @@ describe('AuthorizationErrorHandlerService', () => {
       });
 
       expect(loggedEntries).toHaveLength(1);
-      expect(loggedEntries[0].code).toBe(AuthorizationErrorCode.AUTH_TOKEN_EXPIRED);
-      expect(loggedEntries[0].correlationId).toBe('app-err-123');
+      expect(loggedEntries[0]!.code).toBe(AuthorizationErrorCode.AUTH_TOKEN_EXPIRED);
+      expect(loggedEntries[0]!.correlationId).toBe('app-err-123');
     });
 
     it('should generate correlation ID if not provided', () => {
@@ -732,7 +731,7 @@ describe('AuthorizationErrorHandlerService', () => {
 
       service.logAppError(error, {});
 
-      expect(loggedEntries[0].correlationId).toMatch(/^auth-err-/);
+      expect(loggedEntries[0]!.correlationId).toMatch(/^auth-err-/);
     });
   });
 
@@ -1032,7 +1031,7 @@ describe('AuthorizationErrorHandlerService', () => {
 
       expect(loggedEntries).toHaveLength(1);
       // 503 errors should log at error level (>= 500 branch)
-      expect(loggedEntries[0].httpStatus).toBe(503);
+      expect(loggedEntries[0]!.httpStatus).toBe(503);
     });
 
     // Test sanitizeContext with null values
@@ -1120,7 +1119,7 @@ describe('AuthorizationErrorHandlerService', () => {
       if (result.success) {
         service.logError(result.data);
         expect(mockLogger.logWarning).toHaveBeenCalled();
-        expect(loggedEntries[0].level).toBe('warn');
+        expect(loggedEntries[0]!.level).toBe('warn');
       }
     });
 
@@ -1195,7 +1194,7 @@ describe('AuthorizationErrorHandlerService', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         service.logError(result.data);
-        const entry = loggedEntries[0];
+        const entry = loggedEntries[0]!;
         expect(entry.userId).toBeUndefined();
         expect(entry.tenantId).toBeUndefined();
         expect(entry.requestPath).toBeUndefined();
@@ -1252,7 +1251,7 @@ describe('AuthorizationErrorHandlerService', () => {
 
       // Step 3: Verify logging
       expect(loggedEntries).toHaveLength(1);
-      expect(loggedEntries[0].correlationId).toBe('full-flow-test');
+      expect(loggedEntries[0]!.correlationId).toBe('full-flow-test');
 
       // Step 4: Sanitize for response
       const sanitized = service.sanitizeForResponse(createResult.data);

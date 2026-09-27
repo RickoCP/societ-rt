@@ -128,8 +128,8 @@ function logSuccess(message: string, options?: CliOptions): void {
   }
 }
 
-function logWarning(message: string, options?: CliOptions): void {
-  if (!options?.json) {
+function logWarning(message: string, _options?: CliOptions): void {
+  if (!_options?.json) {
     console.warn(`[${SCRIPT_NAME}] ⚠️  ${message}`);
   }
 }
@@ -388,14 +388,12 @@ function parseSecurityTestResults(stdout: string, exitCode: number): {
   // Look for patterns like "✅ tablename READ blocked" or "❌ tablename READ FAILED"
   const passedRegex = /✅\s*(\w+)\s+(READ|INSERT|UPDATE|DELETE)\s+blocked/gi;
   const failedRegex = /❌\s*(\w+)\s+(READ|INSERT|UPDATE|DELETE)\s+(?:FAILED|SECURITY ISSUE)/gi;
-  const detailRegex = /\[cross-tenant-security-tests\]\s+(.+)/gi;
-
   let match: RegExpExecArray | null;
 
   // Parse passed tests
   while ((match = passedRegex.exec(stdout)) !== null) {
-    const tableName = match[1];
-    const operation = match[2].toUpperCase() as SecurityTestResult['operation'];
+    const tableName = match[1] ?? '';
+    const operation = (match[2]?.toUpperCase() ?? 'READ') as SecurityTestResult['operation'];
     tablesTestedSet.add(tableName);
     tests.push({
       tableName,
@@ -410,8 +408,8 @@ function parseSecurityTestResults(stdout: string, exitCode: number): {
 
   // Parse failed tests
   while ((match = failedRegex.exec(stdout)) !== null) {
-    const tableName = match[1];
-    const operation = match[2].toUpperCase() as SecurityTestResult['operation'];
+    const tableName = match[1] ?? '';
+    const operation = (match[2]?.toUpperCase() ?? 'READ') as SecurityTestResult['operation'];
     tablesTestedSet.add(tableName);
     tests.push({
       tableName,
@@ -439,11 +437,11 @@ function parseSecurityTestResults(stdout: string, exitCode: number): {
   let failedTests = tests.filter((t) => !t.passed).length;
   let executionTimeMs = 0;
 
-  if (totalMatch) totalTests = parseInt(totalMatch[1], 10);
-  if (passedMatch) passedTests = parseInt(passedMatch[1], 10);
-  if (failedMatch) failedTests = parseInt(failedMatch[1], 10);
+  if (totalMatch) totalTests = parseInt(totalMatch[1] ?? '0', 10);
+  if (passedMatch) passedTests = parseInt(passedMatch[1] ?? '0', 10);
+  if (failedMatch) failedTests = parseInt(failedMatch[1] ?? '0', 10);
   if (durationMatch) {
-    const duration = parseFloat(durationMatch[1]);
+    const duration = parseFloat(durationMatch[1] ?? '0');
     executionTimeMs = durationMatch[0].includes('s') && !durationMatch[0].includes('ms')
       ? duration * 1000
       : duration;
@@ -487,7 +485,7 @@ function parseSecurityTestResults(stdout: string, exitCode: number): {
 function generateVerificationReport(
   testResult: TestExecutionResult,
   rlsStatus: RlsStatusSummary,
-  options: CliOptions,
+  _options: CliOptions,
 ): SecurityVerificationReport {
   const timestamp = new Date();
   const messages: string[] = [];
@@ -741,11 +739,14 @@ async function main(): Promise<void> {
   }
 }
 
-// Run if executed directly
-main().catch((err) => {
-  console.error(`[${SCRIPT_NAME}] Fatal error:`, err instanceof Error ? err.message : String(err));
-  process.exit(2);
-});
+// Run if executed directly (not when imported as a module)
+const isMainModule = process.argv[1]?.includes('verify-cross-tenant-security');
+if (isMainModule) {
+  main().catch((err) => {
+    console.error(`[${SCRIPT_NAME}] Fatal error:`, err instanceof Error ? err.message : String(err));
+    process.exit(2);
+  });
+}
 
 export {
   runCrossTenantSecurityTests,

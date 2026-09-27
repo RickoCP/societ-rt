@@ -11,10 +11,8 @@
  * @see Requirements 32.6, 32.10
  */
 
-import type {
-  AuthContext,
-  AuditQueueProtocol,
-} from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { IncidentRepository } from '../repositories/IncidentRepository';
@@ -28,7 +26,7 @@ import { incidentNotFound, incidentEvidenceLimitExceeded } from '../errors/incid
 
 export interface AttachEvidenceUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     incidentId: string;
     evidenceUrls: string[];
   }): Promise<DomainResult<Incident>>;

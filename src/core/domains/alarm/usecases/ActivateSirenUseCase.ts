@@ -30,6 +30,7 @@ import type {
   IoTGatewayProtocol,
 } from '@core/protocols';
 import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok, validationError } from '@core/utils';
 import type { AlarmRepository } from '../repositories/AlarmRepository';
@@ -85,6 +86,9 @@ export const ActivateSirenUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): ActivateSirenUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Validate duration
     const duration = data.duration ?? DEFAULT_DURATION_SECONDS;
     if (duration <= 0 || duration > MAX_DURATION_SECONDS) {
@@ -104,7 +108,7 @@ export const ActivateSirenUseCaseImpl = ({
       deviceId: data.deviceId,
       commandType: 'siren_activate',
       params: { duration },
-      requestedBy: authContext.userId,
+      requestedBy: userId,
     });
 
     // 3. Handle unresponsive device
@@ -114,7 +118,7 @@ export const ActivateSirenUseCaseImpl = ({
       // Notify Security_Guard about unresponsive device (fire-and-forget)
       notificationQueueProtocol
         .enqueueNotification({
-          tenantId: authContext.tenantId,
+          tenantId,
           userId: '',
           type: 'alarm_device_unresponsive',
           title: 'Perangkat Alarm Tidak Merespons',
@@ -128,8 +132,8 @@ export const ActivateSirenUseCaseImpl = ({
       // Audit the failure (fire-and-forget)
       auditQueueProtocol
         .enqueueAudit({
-          tenantId: authContext.tenantId,
-          actorUserId: authContext.userId,
+          tenantId,
+          actorUserId: userId,
           actionType: 'alarm_activation_failed',
           resourceType: 'alarm_device',
           resourceId: data.deviceId,
@@ -155,7 +159,7 @@ export const ActivateSirenUseCaseImpl = ({
 
       notificationQueueProtocol
         .enqueueNotification({
-          tenantId: authContext.tenantId,
+          tenantId,
           userId: '',
           type: 'alarm_device_unresponsive',
           title: 'Perangkat Alarm Tidak Merespons',
@@ -171,7 +175,7 @@ export const ActivateSirenUseCaseImpl = ({
 
     // 4. Activate siren in repository
     const activateResult = await alarmRepository.activateSiren(
-      authContext.tenantId,
+      tenantId,
       data.deviceId,
     );
 
@@ -181,7 +185,7 @@ export const ActivateSirenUseCaseImpl = ({
 
     // 5. Record alarm event
     const eventResult = await alarmRepository.createEvent(
-      authContext.tenantId,
+      tenantId,
       {
         alarmDeviceId: data.deviceId,
         triggerSource: data.triggerSource,
@@ -197,11 +201,11 @@ export const ActivateSirenUseCaseImpl = ({
     const alarmEvent = eventResult.data;
 
     // 6. Publish alarm event to Realtime Bus (fire-and-forget)
-    const channel = `${EVENT_CHANNELS.ALARM_EVENTS}:${authContext.tenantId}`;
+    const channel = `${EVENT_CHANNELS.ALARM_EVENTS}:${tenantId}`;
     realtimeBusProtocol
       .publish(channel, {
         id: `alarm_activated_${data.deviceId}_${Date.now()}`,
-        tenantId: authContext.tenantId,
+        tenantId,
         channel: EVENT_CHANNELS.ALARM_EVENTS,
         eventType: 'alarm_triggered',
         payload: {
@@ -221,7 +225,7 @@ export const ActivateSirenUseCaseImpl = ({
     // 7. Enqueue notifications to Security_Guard and Ketua_RT (fire-and-forget)
     notificationQueueProtocol
       .enqueueNotification({
-        tenantId: authContext.tenantId,
+        tenantId,
         userId: '',
         type: 'alarm_activated',
         title: 'Alarm Aktif',
@@ -235,8 +239,8 @@ export const ActivateSirenUseCaseImpl = ({
     // 8. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'alarm_activated',
         resourceType: 'alarm_device',
         resourceId: data.deviceId,

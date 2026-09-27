@@ -31,19 +31,17 @@ import { ok, fail } from '@core/utils';
 import type {
   MembershipInvitation,
   Membership,
-  MembershipInvitationStatus,
 } from '../entities';
 import {
   MembershipInvitationStatus as InvitationStatus,
   isInvitationExpired,
-  canAcceptInvitation,
   canRevokeInvitation,
   canResendInvitation,
   calculateExpiryDate,
   INVITATION_TOKEN_BYTES,
   DEFAULT_INVITATION_EXPIRY_MS,
 } from '../entities';
-import type { MembershipRole, MembershipStatus } from '../types';
+import type { MembershipRole } from '../types';
 import { MembershipStatus as MembershipStatusEnum } from '../types';
 import type { IMembershipInvitationRepository } from '../repositories';
 import type { IMembershipLifecycleService } from './MembershipLifecycleService';

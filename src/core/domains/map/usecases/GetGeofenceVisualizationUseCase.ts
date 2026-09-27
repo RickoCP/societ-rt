@@ -10,7 +10,7 @@
  * @see Requirements 42.6, 42.8
  */
 
-import type { AuthContext, UserRole } from '@core/protocols';
+import { UserRole } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, authorizationError } from '@core/utils';
 import type { AlarmRepository } from '../../alarm/repositories/AlarmRepository';
@@ -20,16 +20,18 @@ import type {
   GeofenceZone,
   GeoCoordinate,
 } from '../entities/SecurityMapTypes';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, hasAllowedUserRole } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Allowed roles
 // ---------------------------------------------------------------------------
 
-const ALLOWED_ROLES: readonly UserRole[] = [
+const ALLOWED_ROLES: ReadonlySet<UserRole> = new Set([
   'Ketua_RT' as UserRole,
   'Pengurus' as UserRole,
   'Security_Guard' as UserRole,
-];
+]);
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -37,7 +39,7 @@ const ALLOWED_ROLES: readonly UserRole[] = [
 
 export interface GetGeofenceVisualizationUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
   }): Promise<DomainResult<GeofenceVisualizationData>>;
 }
 
@@ -54,7 +56,7 @@ export const GetGeofenceVisualizationUseCaseImpl = ({
 }): GetGeofenceVisualizationUseCase => ({
   execute: async ({ authContext }) => {
     // Role check
-    if (!ALLOWED_ROLES.includes(authContext.role)) {
+    if (!hasAllowedUserRole(authContext, ALLOWED_ROLES)) {
       return fail(
         authorizationError(
           'SECURITY_MAP_ACCESS_DENIED',
@@ -63,7 +65,7 @@ export const GetGeofenceVisualizationUseCaseImpl = ({
       );
     }
 
-    const tenantId = authContext.tenantId;
+    const tenantId = getTenantId(authContext);
 
     // Fetch patrol routes and alarm devices in parallel
     const [patrolRoutesResult, alarmDevicesResult] = await Promise.all([

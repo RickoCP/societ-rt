@@ -17,6 +17,7 @@ import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RegisterDoorSensorUseCase } from '@core/domains/doorMonitoring/usecases';
 
 const registerSchema = z.object({
@@ -26,14 +27,38 @@ const registerSchema = z.object({
   sirenZone: z.string().min(1, 'sirenZone is required').max(120),
 });
 
+// ---------------------------------------------------------------------------
+// Response Types
+// ---------------------------------------------------------------------------
+
+interface RegisterSuccessResponse {
+  data: {
+    householdId: string;
+    sirenZone: string | null;
+    deviceConfigured: boolean;
+    monitorStart: string | null;
+    monitorEnd: string | null;
+    enabled: boolean;
+  };
+}
+
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type RegisterResponse = RegisterSuccessResponse | ErrorResponse;
+
 /**
  * Handler for registering a new door sensor.
  * Requires device:manage permission for admin-level device registration.
  */
-const handleRegisterSensor: AuthorizedRouteHandler<void> = async (
+const handleRegisterSensor: AuthorizedRouteHandler<RegisterResponse> = async (
   request: NextRequest,
-  authContext,
-): Promise<NextResponse> => {
+  authContext: AuthorizationContext,
+): Promise<NextResponse<RegisterResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 

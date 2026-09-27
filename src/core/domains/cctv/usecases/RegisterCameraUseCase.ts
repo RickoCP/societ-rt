@@ -11,12 +11,24 @@
  * @see Requirements 34.1, 34.9, 34.10, 34.11
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { fail, ok, authorizationError } from '@core/utils';
 import { UserRole } from '@core/protocols';
 import type { CctvRepository } from '../repositories/CctvRepository';
 import type { CctvCamera, RegisterCctvCameraInput } from '../entities';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { hasAllowedUserRole, getTenantId, getUserId } from '@core/domains/authorization/types';
+
+// ---------------------------------------------------------------------------
+// Allowed roles
+// ---------------------------------------------------------------------------
+
+const ALLOWED_ROLES: ReadonlySet<UserRole> = new Set([
+  UserRole.Ketua_RT,
+  UserRole.Pengurus,
+  UserRole.Security_Guard,
+]);
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -24,7 +36,7 @@ import type { CctvCamera, RegisterCctvCameraInput } from '../entities';
 
 export interface RegisterCameraUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: RegisterCctvCameraInput;
   }): Promise<DomainResult<CctvCamera>>;
 }
@@ -41,12 +53,11 @@ export const RegisterCameraUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): RegisterCameraUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Validate role: only Ketua_RT, Pengurus, or Security_Guard can register cameras
-    if (
-      authContext.role !== UserRole.Ketua_RT &&
-      authContext.role !== UserRole.Pengurus &&
-      authContext.role !== UserRole.Security_Guard
-    ) {
+    if (!hasAllowedUserRole(authContext, ALLOWED_ROLES)) {
       return fail(
         authorizationError(
           'AUTH_INSUFFICIENT_ROLE',
@@ -59,7 +70,7 @@ export const RegisterCameraUseCaseImpl = ({
     // 2. Register camera via repository
     //    Note: RTSP URL encryption (AES-256) is handled at the infrastructure layer
     const result = await cctvRepository.registerCamera(
-      authContext.tenantId,
+      tenantId,
       data,
     );
 
@@ -72,8 +83,8 @@ export const RegisterCameraUseCaseImpl = ({
     // 3. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'cctv_camera_registered',
         resourceType: 'cctv_camera',
         resourceId: camera.id,

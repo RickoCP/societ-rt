@@ -14,13 +14,14 @@
  */
 
 import type {
-  AuthContext,
   NotificationQueueProtocol,
   AuditQueueProtocol,
 } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok } from '@core/utils';
 import type { PatrolRepository } from '../repositories/PatrolRepository';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -52,7 +53,7 @@ export interface PatrolDeviationResult {
 
 export interface DetectPatrolDeviationUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: DetectPatrolDeviationParams;
   }): Promise<DomainResult<PatrolDeviationResult>>;
 }
@@ -71,6 +72,9 @@ export const DetectPatrolDeviationUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): DetectPatrolDeviationUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Determine if deviation has occurred
     const deviationDetected =
       data.minutesSinceLastCheckpoint > data.expectedMaxMinutes;
@@ -89,7 +93,7 @@ export const DetectPatrolDeviationUseCaseImpl = ({
     // 2. Deviation detected — notify Ketua_RT (fire-and-forget)
     notificationQueueProtocol
       .enqueueNotification({
-        tenantId: authContext.tenantId,
+        tenantId,
         userId: '', // broadcast to Ketua_RT
         type: 'patrol_deviation_detected',
         title: 'Deviasi Patroli Terdeteksi',
@@ -103,8 +107,8 @@ export const DetectPatrolDeviationUseCaseImpl = ({
     // 3. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'patrol_deviation_detected',
         resourceType: 'patrol_session',
         resourceId: data.sessionId,

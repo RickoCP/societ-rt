@@ -11,6 +11,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import type { ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
@@ -20,9 +21,11 @@ import type { GetBalanceUseCase } from '@core/domains/finance/usecases';
 // Response types
 // ---------------------------------------------------------------------------
 
-interface BalanceResponse {
+interface BalanceData {
   balance: number;
 }
+
+type BalanceResponse = BalanceData | ErrorResponseBody;
 
 // ---------------------------------------------------------------------------
 // GET handler — Get balance
@@ -41,7 +44,7 @@ const handleGetBalance: AuthorizedRouteHandler<BalanceResponse> = async (
 
   // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<BalanceResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(

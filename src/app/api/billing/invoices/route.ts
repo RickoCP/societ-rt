@@ -28,7 +28,7 @@ const createInvoiceSchema = z.object({
   idempotencyKey: z.string().min(1, 'Idempotency key is required'),
 });
 
-interface InvoiceCreateResponse {
+interface InvoiceCreateSuccessResponse {
   data: {
     id: string;
     planName: string;
@@ -40,7 +40,7 @@ interface InvoiceCreateResponse {
   };
 }
 
-interface InvoiceListResponse {
+interface InvoiceListSuccessResponse {
   data: Array<{
     id: string;
     planName: string;
@@ -52,6 +52,16 @@ interface InvoiceListResponse {
     createdAt: string;
   }>;
 }
+
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type InvoiceCreateResponse = InvoiceCreateSuccessResponse | ErrorResponse;
+type InvoiceListResponse = InvoiceListSuccessResponse | ErrorResponse;
 
 const handleCreateInvoice: AuthorizedRouteHandler<InvoiceCreateResponse> = async (
   request: NextRequest,
@@ -66,7 +76,7 @@ const handleCreateInvoice: AuthorizedRouteHandler<InvoiceCreateResponse> = async
     return NextResponse.json(
       { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
       { status: 400 },
-    ) as NextResponse<InvoiceCreateResponse>;
+    );
   }
 
   const validation = createInvoiceSchema.safeParse(body);
@@ -74,7 +84,7 @@ const handleCreateInvoice: AuthorizedRouteHandler<InvoiceCreateResponse> = async
     return NextResponse.json(
       { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId },
       { status: 400 },
-    ) as NextResponse<InvoiceCreateResponse>;
+    );
   }
 
   const useCase = container.resolve<GenerateInvoiceUseCase>('generateInvoiceUseCase');
@@ -89,7 +99,7 @@ const handleCreateInvoice: AuthorizedRouteHandler<InvoiceCreateResponse> = async
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<InvoiceCreateResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const inv = result.data;
@@ -121,7 +131,7 @@ const handleGetInvoices: AuthorizedRouteHandler<InvoiceListResponse> = async (
   const result = await billingRepository.findInvoicesByTenant(authContext.tenantId, statusParam ?? undefined);
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<InvoiceListResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(

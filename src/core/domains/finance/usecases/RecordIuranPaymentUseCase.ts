@@ -10,7 +10,9 @@
  * @see Requirements 7.4, 7.5
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail } from '@core/utils';
 import type { FinanceRepository } from '../repositories/FinanceRepository';
@@ -21,7 +23,7 @@ import type { FinanceRepository } from '../repositories/FinanceRepository';
 
 export interface RecordIuranPaymentUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     householdId: string;
     month: string;
     transactionId: string;
@@ -40,9 +42,12 @@ export const RecordIuranPaymentUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): RecordIuranPaymentUseCase => ({
   execute: async ({ authContext, householdId, month, transactionId }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+    
     // 1. Record iuran payment via repository
     const result = await financeRepository.recordIuranPayment(
-      authContext.tenantId,
+      tenantId,
       householdId,
       month,
       transactionId,
@@ -55,8 +60,8 @@ export const RecordIuranPaymentUseCaseImpl = ({
     // 2. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'iuran_payment_recorded',
         resourceType: 'iuran_status',
         resourceId: householdId,

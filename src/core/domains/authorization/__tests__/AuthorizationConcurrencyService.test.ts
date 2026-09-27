@@ -329,9 +329,9 @@ describe('AuthorizationConcurrencyService', () => {
 
       // Verify audit log entry
       expect(mockAuditLogger.entries.length).toBe(1);
-      expect(mockAuditLogger.entries[0].operationType).toBe('membership:update');
-      expect(mockAuditLogger.entries[0].userId).toBe(USER_A_ID);
-      expect(mockAuditLogger.entries[0].tenantId).toBe(TENANT_A_ID);
+      expect(mockAuditLogger.entries[0]!.operationType).toBe('membership:update');
+      expect(mockAuditLogger.entries[0]!.userId).toBe(USER_A_ID);
+      expect(mockAuditLogger.entries[0]!.tenantId).toBe(TENANT_A_ID);
     });
 
     it('should call authorization check before operation execution', async () => {
@@ -573,8 +573,8 @@ describe('AuthorizationConcurrencyService', () => {
 
       expect(mockAuditLogger.logIncident).toHaveBeenCalledWith(entry);
       expect(mockAuditLogger.entries.length).toBe(1);
-      expect(mockAuditLogger.entries[0].incidentId).toBe('test-incident-123');
-      expect(mockAuditLogger.entries[0].operationType).toBe('membership:update');
+      expect(mockAuditLogger.entries[0]!.incidentId).toBe('test-incident-123');
+      expect(mockAuditLogger.entries[0]!.operationType).toBe('membership:update');
     });
   });
 
@@ -604,8 +604,8 @@ describe('AuthorizationConcurrencyService', () => {
       expect(failures.length).toBe(1);
 
       // The failure should be MEMBERSHIP_LOCK_TIMEOUT
-      if (!failures[0].success) {
-        expect(failures[0].error.code).toBe('MEMBERSHIP_LOCK_TIMEOUT');
+      if (!failures[0]!.success) {
+        expect(failures[0]!.error.code).toBe('MEMBERSHIP_LOCK_TIMEOUT');
       }
     });
 

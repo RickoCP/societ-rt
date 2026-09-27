@@ -23,7 +23,7 @@ interface MonthlyData {
   balance: number;
 }
 
-interface SummaryResponse {
+interface SummaryData {
   data: {
     currentBalance: number;
     totalIncome: number;
@@ -32,6 +32,14 @@ interface SummaryResponse {
     monthly: MonthlyData[];
   };
 }
+
+interface ErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+}
+
+type SummaryResponse = SummaryData | ErrorResponse;
 
 const handleGetSummary: AuthorizedRouteHandler<SummaryResponse> = async (
   request: NextRequest,
@@ -116,7 +124,7 @@ const handleGetSummary: AuthorizedRouteHandler<SummaryResponse> = async (
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
-    ) as NextResponse<SummaryResponse>;
+    );
   }
 };
 

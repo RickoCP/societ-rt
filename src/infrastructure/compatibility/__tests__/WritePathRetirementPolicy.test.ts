@@ -313,7 +313,7 @@ describe('WritePathRetirementPolicy', () => {
 
       expect(evaluation.canRetire).toBe(false);
       expect(evaluation.blockingConditions).toHaveLength(1);
-      expect(evaluation.blockingConditions[0].id).toBe('COND-000');
+      expect(evaluation.blockingConditions[0]!.id).toBe('COND-000');
       expect(evaluation.recommendation).toContain('not found');
     });
 

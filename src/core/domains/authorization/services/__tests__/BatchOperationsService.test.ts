@@ -14,6 +14,7 @@ import {
   BatchItemStatus,
   DEFAULT_BATCH_OPERATIONS_CONFIG,
 } from '../BatchOperationsService';
+import { MembershipStatus, MembershipRole } from '@core/domains/membership/types';
 
 // ---------------------------------------------------------------------------
 // Test Helpers
@@ -205,8 +206,8 @@ describe('BatchOperationsService', () => {
         expect(result.data.totalItems).toBe(2);
         expect(result.data.transactionMode).toBe(BatchTransactionMode.PARTIAL);
         expect(result.data.itemResults).toHaveLength(2);
-        expect(result.data.itemResults[0].status).toBe(BatchItemStatus.SUCCESS);
-        expect(result.data.itemResults[1].status).toBe(BatchItemStatus.SUCCESS);
+        expect(result.data.itemResults[0]!.status).toBe(BatchItemStatus.SUCCESS);
+        expect(result.data.itemResults[1]!.status).toBe(BatchItemStatus.SUCCESS);
       }
     });
 
@@ -221,7 +222,7 @@ describe('BatchOperationsService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.itemResults[0].data?.granted).toBe(true);
+        expect(result.data.itemResults[0]!.data?.granted).toBe(true);
       }
     });
 
@@ -236,8 +237,8 @@ describe('BatchOperationsService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.itemResults[0].data?.granted).toBe(false);
-        expect(result.data.itemResults[0].data?.denyReason).toBe('PERMISSION_NOT_GRANTED');
+        expect(result.data.itemResults[0]!.data?.granted).toBe(false);
+        expect(result.data.itemResults[0]!.data?.denyReason).toBe('PERMISSION_NOT_GRANTED');
       }
     });
 
@@ -253,10 +254,10 @@ describe('BatchOperationsService', () => {
       });
 
       expect(entries).toHaveLength(1);
-      expect(entries[0].operationType).toBe('PERMISSION_CHECK');
-      expect(entries[0].tenantId).toBe(TEST_TENANT_ID);
-      expect(entries[0].initiatedBy).toBe(TEST_USER_ID);
-      expect(entries[0].totalItems).toBe(1);
+      expect(entries[0]!.operationType).toBe('PERMISSION_CHECK');
+      expect(entries[0]!.tenantId).toBe(TEST_TENANT_ID);
+      expect(entries[0]!.initiatedBy).toBe(TEST_USER_ID);
+      expect(entries[0]!.totalItems).toBe(1);
     });
 
     it('should track processing time per item when enabled', async () => {
@@ -270,7 +271,7 @@ describe('BatchOperationsService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.itemResults[0].processingTimeMs).toBeDefined();
+        expect(result.data.itemResults[0]!.processingTimeMs).toBeDefined();
         expect(result.data.totalProcessingTimeMs).toBeGreaterThanOrEqual(0);
       }
     });
@@ -318,8 +319,8 @@ describe('BatchOperationsService', () => {
         tenantId: TEST_TENANT_ID,
         updatedBy: TEST_USER_ID,
         updates: [
-          { membershipId: 'm1', newStatus: 'SUSPENDED' },
-          { membershipId: 'm2', newRole: 'RT_ADMIN' },
+          { membershipId: 'm1', newStatus: MembershipStatus.SUSPENDED },
+          { membershipId: 'm2', newRole: MembershipRole.RT_ADMIN },
         ],
         transactionMode: BatchTransactionMode.PARTIAL,
       });
@@ -367,17 +368,17 @@ describe('BatchOperationsService', () => {
         tenantId: TEST_TENANT_ID,
         updatedBy: TEST_USER_ID,
         updates: [
-          { membershipId: 'm1', newStatus: 'SUSPENDED' },
-          { membershipId: 'm2', newRole: 'RT_ADMIN' },
+          { membershipId: 'm1', newStatus: MembershipStatus.SUSPENDED },
+          { membershipId: 'm2', newRole: MembershipRole.RT_ADMIN },
         ],
       });
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.itemResults[0].itemId).toBe('m1');
-        expect(result.data.itemResults[0].data?.membershipId).toBe('m1');
-        expect(result.data.itemResults[1].itemId).toBe('m2');
-        expect(result.data.itemResults[1].data?.membershipId).toBe('m2');
+        expect(result.data.itemResults[0]!.itemId).toBe('m1');
+        expect(result.data.itemResults[0]!.data?.membershipId).toBe('m1');
+        expect(result.data.itemResults[1]!.itemId).toBe('m2');
+        expect(result.data.itemResults[1]!.data?.membershipId).toBe('m2');
       }
     });
 
@@ -393,8 +394,8 @@ describe('BatchOperationsService', () => {
       });
 
       expect(entries).toHaveLength(1);
-      expect(entries[0].operationType).toBe('MEMBERSHIP_UPDATE');
-      expect(entries[0].correlationId).toBe('test-correlation-id');
+      expect(entries[0]!.operationType).toBe('MEMBERSHIP_UPDATE');
+      expect(entries[0]!.correlationId).toBe('test-correlation-id');
     });
   });
 
@@ -432,8 +433,8 @@ describe('BatchOperationsService', () => {
       if (result.success) {
         expect(result.data.totalItems).toBe(2);
         expect(result.data.successCount).toBe(2);
-        expect(result.data.itemResults[0].data?.userId).toBe('user1');
-        expect(result.data.itemResults[1].data?.userId).toBe('user2');
+        expect(result.data.itemResults[0]!.data?.userId).toBe('user1');
+        expect(result.data.itemResults[1]!.data?.userId).toBe('user2');
       }
     });
 
@@ -447,8 +448,8 @@ describe('BatchOperationsService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.itemResults[0].data?.hasActiveMembership).toBe(true);
-        expect(result.data.itemResults[0].data?.role).toBe('RESIDENT');
+        expect(result.data.itemResults[0]!.data?.hasActiveMembership).toBe(true);
+        expect(result.data.itemResults[0]!.data?.role).toBe('RESIDENT');
       }
     });
 
@@ -462,7 +463,7 @@ describe('BatchOperationsService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.itemResults[0].data?.permissionGranted).toBeDefined();
+        expect(result.data.itemResults[0]!.data?.permissionGranted).toBeDefined();
       }
     });
 
@@ -477,8 +478,8 @@ describe('BatchOperationsService', () => {
       });
 
       expect(entries).toHaveLength(1);
-      expect(entries[0].operationType).toBe('AUTHORIZATION_QUERY');
-      expect(entries[0].tenantId).toBe(TEST_TENANT_ID);
+      expect(entries[0]!.operationType).toBe('AUTHORIZATION_QUERY');
+      expect(entries[0]!.tenantId).toBe(TEST_TENANT_ID);
     });
   });
 
@@ -512,8 +513,8 @@ describe('BatchOperationsService', () => {
       if (result.success) {
         expect(result.data.totalItems).toBe(2);
         expect(result.data.successCount).toBe(2);
-        expect(result.data.itemResults[0].data?.invalidated).toBe(true);
-        expect(result.data.itemResults[1].data?.invalidated).toBe(true);
+        expect(result.data.itemResults[0]!.data?.invalidated).toBe(true);
+        expect(result.data.itemResults[1]!.data?.invalidated).toBe(true);
       }
     });
 
@@ -527,8 +528,8 @@ describe('BatchOperationsService', () => {
       });
 
       expect(entries).toHaveLength(1);
-      expect(entries[0].operationType).toBe('CACHE_INVALIDATION');
-      expect(entries[0].correlationId).toBe('cache-invalidation-123');
+      expect(entries[0]!.operationType).toBe('CACHE_INVALIDATION');
+      expect(entries[0]!.correlationId).toBe('cache-invalidation-123');
     });
   });
 
@@ -668,8 +669,8 @@ describe('BatchOperationsService', () => {
         permissions: [{ permission: 'resident:read' }],
       });
 
-      expect(entries[0].operationId).toBeDefined();
-      expect(entries[0].operationId).toMatch(/^batch-/);
+      expect(entries[0]!.operationId).toBeDefined();
+      expect(entries[0]!.operationId).toMatch(/^batch-/);
     });
 
     it('should include timestamp in audit entry', async () => {
@@ -685,8 +686,8 @@ describe('BatchOperationsService', () => {
       });
       const afterTime = new Date();
 
-      expect(entries[0].timestamp.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
-      expect(entries[0].timestamp.getTime()).toBeLessThanOrEqual(afterTime.getTime());
+      expect(entries[0]!.timestamp.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+      expect(entries[0]!.timestamp.getTime()).toBeLessThanOrEqual(afterTime.getTime());
     });
 
     it('should report accurate success/failure counts in audit', async () => {
@@ -704,9 +705,9 @@ describe('BatchOperationsService', () => {
         ],
       });
 
-      expect(entries[0].totalItems).toBe(3);
-      expect(entries[0].successCount).toBe(3);
-      expect(entries[0].failureCount).toBe(0);
+      expect(entries[0]!.totalItems).toBe(3);
+      expect(entries[0]!.successCount).toBe(3);
+      expect(entries[0]!.failureCount).toBe(0);
     });
   });
 
@@ -776,12 +777,12 @@ describe('BatchOperationsService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.itemResults[0].index).toBe(0);
-        expect(result.data.itemResults[0].data?.permission).toBe('first');
-        expect(result.data.itemResults[1].index).toBe(1);
-        expect(result.data.itemResults[1].data?.permission).toBe('second');
-        expect(result.data.itemResults[2].index).toBe(2);
-        expect(result.data.itemResults[2].data?.permission).toBe('third');
+        expect(result.data.itemResults[0]!.index).toBe(0);
+        expect(result.data.itemResults[0]!.data?.permission).toBe('first');
+        expect(result.data.itemResults[1]!.index).toBe(1);
+        expect(result.data.itemResults[1]!.data?.permission).toBe('second');
+        expect(result.data.itemResults[2]!.index).toBe(2);
+        expect(result.data.itemResults[2]!.data?.permission).toBe('third');
       }
     });
   });

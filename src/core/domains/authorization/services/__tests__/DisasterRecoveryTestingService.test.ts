@@ -677,10 +677,14 @@ describe('DisasterRecoveryTestingService', () => {
       const mockRlsChecker = createMockRlsPolicyChecker({
         verifyPolicy: vi.fn().mockImplementation(async () => {
           callCount++;
-          // Fail half the checks
-          if (callCount % 2 === 0) {
+          // Tables are checked in pairs (A, B), so calls 1-2 are table 0, 3-4 are table 1, etc.
+          // To get 50% pass rate (4 out of 8 policies), we need 2 tables to pass (both A and B)
+          // Calls 1-4 (tables 0-1) should fail, calls 5-8 (tables 2-3) should pass
+          if (callCount <= 4) {
+            // First 2 tables: no policy applied
             return { hasAccess: true, policyApplied: '' };
           }
+          // Last 2 tables: policy applied for both tenants
           return { hasAccess: true, policyApplied: 'tenant_isolation_policy' };
         }),
       });

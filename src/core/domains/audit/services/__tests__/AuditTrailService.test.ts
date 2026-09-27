@@ -182,7 +182,7 @@ describe('AuditTrailService', () => {
         },
       });
 
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.details.password).toBe('[REDACTED]');
       expect(calledWith.details.token).toBe('[REDACTED]');
       expect(calledWith.details.apiKey).toBe('[REDACTED]');
@@ -200,7 +200,7 @@ describe('AuditTrailService', () => {
         eventType: AuditEventType.AUTH_LOGIN_SUCCESS,
       });
 
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.success).toBe(true);
     });
 
@@ -215,7 +215,7 @@ describe('AuditTrailService', () => {
       });
 
       expect(mockEmitter.emit).toHaveBeenCalledOnce();
-      expect(mockEmitter.emittedEvents[0].tenantId).toBe(TEST_TENANT_ID);
+      expect(mockEmitter.emittedEvents[0]!.tenantId).toBe(TEST_TENANT_ID);
     });
   });
 
@@ -240,7 +240,7 @@ describe('AuditTrailService', () => {
       );
 
       expect(result.success).toBe(true);
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.resourceType).toBe('AUTH');
       expect(calledWith.ipAddress).toBe('192.168.1.1');
       expect(calledWith.userAgent).toBe('TestAgent/1.0');
@@ -263,7 +263,7 @@ describe('AuditTrailService', () => {
         { success: false, errorCode: 'INVALID_CREDENTIALS' },
       );
 
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.userId).toBeNull();
       expect(calledWith.success).toBe(false);
       expect(calledWith.errorCode).toBe('INVALID_CREDENTIALS');
@@ -289,7 +289,7 @@ describe('AuditTrailService', () => {
       );
 
       expect(result.success).toBe(true);
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.resourceType).toBe('MEMBERSHIP');
       expect(calledWith.resourceId).toBe(TEST_MEMBERSHIP_ID);
       expect(calledWith.orgUnitId).toBe('org-001');
@@ -311,7 +311,7 @@ describe('AuditTrailService', () => {
         { impersonatorId: 'admin-001' },
       );
 
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.impersonatorId).toBe('admin-001');
     });
   });
@@ -335,7 +335,7 @@ describe('AuditTrailService', () => {
         { success: true },
       );
 
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.resourceType).toBe('RESIDENT');
       expect(calledWith.resourceId).toBe(TEST_RESOURCE_ID);
       expect(calledWith.success).toBe(true);
@@ -359,7 +359,7 @@ describe('AuditTrailService', () => {
         { success: false, errorCode: 'AUTH_INSUFFICIENT_PERMISSION' },
       );
 
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.success).toBe(false);
       expect(calledWith.errorCode).toBe('AUTH_INSUFFICIENT_PERMISSION');
     });
@@ -384,7 +384,7 @@ describe('AuditTrailService', () => {
         { orgUnitId: 'org-001' },
       );
 
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.eventType).toBe(AuditEventType.ADMIN_ACTION);
       expect(calledWith.details.action).toBe('SUSPEND_USER');
       expect(calledWith.resourceType).toBe('USER');
@@ -612,7 +612,7 @@ describe('AuditTrailService', () => {
         { userId: TEST_USER_ID },
       );
 
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.eventType).toBe(AuditEventType.SECURITY_ALERT_TRIGGERED);
       expect(calledWith.details.alertType).toBe('SUSPICIOUS_LOGIN');
     });
@@ -633,7 +633,7 @@ describe('AuditTrailService', () => {
         { operation: 'READ_RESIDENT' },
       );
 
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.eventType).toBe(AuditEventType.SECURITY_CROSS_TENANT_ATTEMPT);
       expect(calledWith.tenantId).toBe(TEST_TENANT_ID); // Logged in source tenant
       expect(calledWith.resourceId).toBe(TEST_TENANT_ID_2); // Target tenant
@@ -748,7 +748,7 @@ describe('AuditTrailService', () => {
       });
 
       expect(result.success).toBe(true);
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect(calledWith.details).toEqual({});
     });
 
@@ -772,7 +772,7 @@ describe('AuditTrailService', () => {
         },
       });
 
-      const calledWith = mockRepository.create.mock.calls[0][0];
+      const calledWith = mockRepository.create.mock.calls[0]![0]!;
       expect((calledWith.details.user as Record<string, unknown>).password).toBe('[REDACTED]');
       expect((calledWith.details.config as Record<string, unknown>).apiKey).toBe('[REDACTED]');
       expect((calledWith.details.user as Record<string, unknown>).name).toBe('John');

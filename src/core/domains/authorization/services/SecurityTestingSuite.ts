@@ -1183,12 +1183,15 @@ export const SecurityTestingSuiteImpl = (
 
         // Log to audit if available
         if (auditLogger) {
-          await auditLogger.logSecurityTestEvent({
-            testId: scenario.id,
-            category: scenario.category,
-            status: results[results.length - 1].status,
-            details: { attackVector: scenario.attackVector },
-          });
+          const lastResult = results[results.length - 1];
+          if (lastResult) {
+            await auditLogger.logSecurityTestEvent({
+              testId: scenario.id,
+              category: scenario.category,
+              status: lastResult.status,
+              details: { attackVector: scenario.attackVector },
+            });
+          }
         }
       }
 
@@ -1434,7 +1437,7 @@ export const SecurityTestingSuiteImpl = (
     },
 
     async simulateJwtManipulation(
-      originalJwt: string,
+      _originalJwt: string,
       manipulationType: 'ROLE_ESCALATION' | 'TENANT_SWITCH' | 'TOKEN_VERSION_BYPASS' | 'SIGNATURE_STRIP',
     ): Promise<DomainResult<SecurityTestResult>> {
       // Simulate JWT manipulation detection
@@ -1518,7 +1521,7 @@ export const SecurityTestingSuiteImpl = (
     },
 
     async simulateTokenReplayAttack(
-      revokedTokenHash: string,
+      _revokedTokenHash: string,
       familyId: string,
       generation: number,
     ): Promise<DomainResult<SecurityTestResult>> {

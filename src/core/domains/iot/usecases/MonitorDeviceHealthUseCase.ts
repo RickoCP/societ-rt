@@ -7,7 +7,8 @@
  * @see Requirements 44.1, 44.2, 44.3
  */
 
-import type { AuthContext } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId } from '@core/domains/authorization/types/AuthContextCompat';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import { notFoundError } from '@core/utils';
@@ -34,7 +35,7 @@ export interface DeviceHealthSnapshot {
 
 export interface MonitorDeviceHealthUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     deviceId: string;
   }): Promise<DomainResult<DeviceHealthSnapshot>>;
 }
@@ -49,9 +50,11 @@ export const MonitorDeviceHealthUseCaseImpl = ({
   iotRepository: IoTRepository;
 }): MonitorDeviceHealthUseCase => ({
   execute: async ({ authContext, deviceId }) => {
+    const tenantId = getTenantId(authContext);
+
     // 1. Find device events to compute error count
     const eventsResult = await iotRepository.findEventsByDevice(
-      authContext.tenantId,
+      tenantId,
       deviceId,
       100,
     );
@@ -98,7 +101,7 @@ export const MonitorDeviceHealthUseCaseImpl = ({
 
     const snapshot: DeviceHealthSnapshot = {
       deviceId,
-      tenantId: authContext.tenantId,
+      tenantId,
       onlineStatus,
       lastHeartbeat: lastEvent.createdAt,
       batteryLevel,

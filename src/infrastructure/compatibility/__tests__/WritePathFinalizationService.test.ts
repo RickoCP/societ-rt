@@ -384,9 +384,9 @@ describe('WritePathFinalizationService', () => {
 
       const auditLog = finalizationService.getRetirementAuditLog();
       expect(auditLog.length).toBeGreaterThan(0);
-      expect(auditLog[0].writePathId).toBe('WP-001');
-      expect(auditLog[0].operatorId).toBe('admin-123');
-      expect(auditLog[0].correlationId).toBe('corr-123');
+      expect(auditLog[0]!.writePathId).toBe('WP-001');
+      expect(auditLog[0]!.operatorId).toBe('admin-123');
+      expect(auditLog[0]!.correlationId).toBe('corr-123');
     });
   });
 
@@ -654,8 +654,8 @@ describe('WritePathFinalizationService', () => {
 
       // Most recent first
       if (auditLog.length >= 2) {
-        expect(auditLog[0].timestamp.getTime()).toBeGreaterThanOrEqual(
-          auditLog[1].timestamp.getTime(),
+        expect(auditLog[0]!.timestamp.getTime()).toBeGreaterThanOrEqual(
+          auditLog[1]!.timestamp.getTime(),
         );
       }
     });

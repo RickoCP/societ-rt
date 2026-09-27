@@ -21,6 +21,7 @@ import type {
   IoTGatewayProtocol,
 } from '@core/protocols';
 import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { AlarmRepository } from '../repositories/AlarmRepository';
@@ -64,12 +65,15 @@ export const DeactivateSirenUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): DeactivateSirenUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Send deactivation command via IoT Gateway
     const commandResult = await iotGatewayProtocol.sendCommand(data.deviceId, {
       deviceId: data.deviceId,
       commandType: 'siren_deactivate',
       params: {},
-      requestedBy: authContext.userId,
+      requestedBy: userId,
     });
 
     // 2. Handle unresponsive device
@@ -79,7 +83,7 @@ export const DeactivateSirenUseCaseImpl = ({
       // Notify Security_Guard about unresponsive device (fire-and-forget)
       notificationQueueProtocol
         .enqueueNotification({
-          tenantId: authContext.tenantId,
+          tenantId,
           userId: '',
           type: 'alarm_device_unresponsive',
           title: 'Perangkat Alarm Tidak Merespons',
@@ -93,8 +97,8 @@ export const DeactivateSirenUseCaseImpl = ({
       // Audit the failure (fire-and-forget)
       auditQueueProtocol
         .enqueueAudit({
-          tenantId: authContext.tenantId,
-          actorUserId: authContext.userId,
+          tenantId,
+          actorUserId: userId,
           actionType: 'alarm_deactivation_failed',
           resourceType: 'alarm_device',
           resourceId: data.deviceId,
@@ -113,7 +117,7 @@ export const DeactivateSirenUseCaseImpl = ({
 
     // 3. Deactivate siren in repository
     const deactivateResult = await alarmRepository.deactivateSiren(
-      authContext.tenantId,
+      tenantId,
       data.deviceId,
     );
 
@@ -123,7 +127,7 @@ export const DeactivateSirenUseCaseImpl = ({
 
     // 4. Record deactivation event
     const eventResult = await alarmRepository.createEvent(
-      authContext.tenantId,
+      tenantId,
       {
         alarmDeviceId: data.deviceId,
         triggerSource: data.triggerSource,
@@ -141,8 +145,8 @@ export const DeactivateSirenUseCaseImpl = ({
     // 5. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'alarm_deactivated',
         resourceType: 'alarm_device',
         resourceId: data.deviceId,

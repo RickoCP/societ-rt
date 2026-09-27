@@ -783,7 +783,7 @@ export const PerformanceValidationServiceImpl = (
     retentionMs: number,
   ): void => {
     const cutoff = Date.now() - retentionMs;
-    while (samples.length > 0 && samples[0].timestamp.getTime() < cutoff) {
+    while (samples.length > 0 && (samples[0]?.timestamp.getTime() ?? 0) < cutoff) {
       samples.shift();
     }
     // Also trim if exceeding max samples
@@ -808,7 +808,7 @@ export const PerformanceValidationServiceImpl = (
   ): number => {
     if (sortedValues.length === 0) return 0;
     const index = Math.ceil((percentile / 100) * sortedValues.length) - 1;
-    return sortedValues[Math.max(0, Math.min(index, sortedValues.length - 1))];
+    return sortedValues[Math.max(0, Math.min(index, sortedValues.length - 1))] ?? 0;
   };
 
   // Helper: Calculate statistics from samples
@@ -847,8 +847,8 @@ export const PerformanceValidationServiceImpl = (
 
     return {
       sampleCount: samples.length,
-      minMs: sorted[0],
-      maxMs: sorted[sorted.length - 1],
+      minMs: sorted[0] ?? 0,
+      maxMs: sorted[sorted.length - 1] ?? 0,
       meanMs: Math.round(mean * 100) / 100,
       medianMs: calculatePercentile(sorted, 50),
       stdDevMs: Math.round(stdDev * 100) / 100,
@@ -1341,7 +1341,7 @@ export const PerformanceValidationServiceImpl = (
       try {
         // Clean up old RLS samples
         const cutoff = Date.now() - retentionMinutes * 60 * 1000;
-        while (rlsSamples.length > 0 && rlsSamples[0].timestamp.getTime() < cutoff) {
+        while (rlsSamples.length > 0 && (rlsSamples[0]?.timestamp.getTime() ?? 0) < cutoff) {
           rlsSamples.shift();
         }
         while (rlsSamples.length > maxSamples) {
@@ -2038,7 +2038,7 @@ export const PerformanceValidationServiceImpl = (
         const permLatencies: number[] = [];
 
         const totalOps = config.targetOpsPerSecond * config.durationSeconds;
-        const opsPerUser = Math.ceil(totalOps / config.concurrentUsers);
+        const _opsPerUser = Math.ceil(totalOps / config.concurrentUsers);
 
         // Simulate operations (simplified for demonstration)
         for (let i = 0; i < totalOps; i++) {
@@ -2063,8 +2063,8 @@ export const PerformanceValidationServiceImpl = (
         const actualOpsPerSecond = Math.round((totalOps / (durationMs / 1000)) * 100) / 100;
 
         // Calculate statistics
-        const authSorted = [...authLatencies].sort((a, b) => a - b);
-        const permSorted = [...permLatencies].sort((a, b) => a - b);
+        const _authSorted = [...authLatencies].sort((a, b) => a - b);
+        const _permSorted = [...permLatencies].sort((a, b) => a - b);
 
         const authContextStats = calculateStatistics(
           authLatencies.map((l, i) => ({

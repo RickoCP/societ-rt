@@ -18,23 +18,24 @@
 
 import type { DomainResult } from '@core/utils';
 import { ok, fail, businessError } from '@core/utils';
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import type {
   PaymentGatewayProtocol,
   InitiatePaymentRequest,
 } from '@core/protocols';
-import type { Invoice, InvoiceStatus, CreateInvoiceInput, UpdateInvoiceInput } from '../entities';
+import type { Invoice, InvoiceStatus, CreateInvoiceInput } from '../entities';
 import type { BillingRepository } from '../repositories';
 import type { ISubscriptionStatusService } from '@core/domains/subscription/services';
 import type { ISubscriptionPlanRepository } from '@core/domains/subscription/repositories';
 import { SubscriptionStatus } from '@core/domains/subscription/types';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const DEFAULT_MAX_RETRIES = 3;
-const DEFAULT_RETRY_INTERVAL_HOURS = 24;
 
 // ---------------------------------------------------------------------------
 // Service Interface
@@ -74,7 +75,7 @@ export interface IBillingService {
    * Uses idempotency key to prevent duplicate invoices.
    */
   generateInvoice(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     tenantId: string;
     data: CreateInvoiceInput;
   }): Promise<DomainResult<GenerateInvoiceResult>>;
@@ -83,7 +84,7 @@ export interface IBillingService {
    * Initiate payment for an invoice through the payment gateway.
    */
   initiatePayment(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     invoiceId: string;
     redirectUrl?: string;
   }): Promise<DomainResult<ProcessPaymentResult>>;
@@ -92,7 +93,7 @@ export interface IBillingService {
    * Sync payment status from gateway and update invoice.
    */
   syncPaymentStatus(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     invoiceId: string;
   }): Promise<DomainResult<PaymentStatusSyncResult>>;
 
@@ -120,7 +121,7 @@ export interface IBillingService {
    * Retry failed payment for an invoice.
    */
   retryFailedPayment(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     invoiceId: string;
   }): Promise<DomainResult<ProcessPaymentResult>>;
 
@@ -128,7 +129,7 @@ export interface IBillingService {
    * Get invoice by ID.
    */
   getInvoice(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     invoiceId: string;
   }): Promise<DomainResult<Invoice>>;
 
@@ -136,7 +137,7 @@ export interface IBillingService {
    * List invoices for a tenant.
    */
   listInvoices(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     status?: InvoiceStatus;
   }): Promise<DomainResult<Invoice[]>>;
 }
@@ -236,6 +237,7 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
   return {
     async generateInvoice(params): Promise<DomainResult<GenerateInvoiceResult>> {
       const { authContext, tenantId, data } = params;
+      const userId = getUserId(authContext);
 
       // Check for existing invoice (idempotency)
       const existingResult = await billingRepository.findInvoiceByIdempotencyKey(
@@ -260,7 +262,7 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
       const invoice = createResult.data;
 
       // Audit log
-      logAudit(tenantId, authContext.userId, 'invoice_generated', invoice.id, {
+      logAudit(tenantId, userId, 'invoice_generated', invoice.id, {
         planName: invoice.planName,
         amount: invoice.amount,
         idempotencyKey: invoice.idempotencyKey,
@@ -274,9 +276,11 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
 
     async initiatePayment(params): Promise<DomainResult<ProcessPaymentResult>> {
       const { authContext, invoiceId, redirectUrl } = params;
+      const tenantId = getTenantId(authContext);
+      const userId = getUserId(authContext);
 
       // Get all invoices for tenant and find the specific one
-      const invoicesResult = await billingRepository.findInvoicesByTenant(authContext.tenantId);
+      const invoicesResult = await billingRepository.findInvoicesByTenant(tenantId);
       if (!invoicesResult.success) {
         return fail(invoicesResult.error);
       }
@@ -298,12 +302,12 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
         currency: 'IDR',
         description: `Invoice for ${invoice.planName}`,
         customer: {
-          id: authContext.userId,
+          id: userId,
           email: '',
           name: '',
         },
         metadata: {
-          tenantId: authContext.tenantId,
+          tenantId,
           invoiceId: invoice.id,
           planName: invoice.planName,
           billingPeriod: `${invoice.billingPeriodStart.toISOString()}-${invoice.billingPeriodEnd.toISOString()}`,
@@ -322,7 +326,7 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
 
       // Update invoice with gateway transaction ID
       const updateResult = await billingRepository.updateInvoiceStatus(
-        authContext.tenantId,
+        tenantId,
         invoiceId,
         invoice.status,
         gatewayResponse.gatewayTransactionId,
@@ -333,8 +337,8 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
 
       // Audit log
       logAudit(
-        authContext.tenantId,
-        authContext.userId,
+        tenantId,
+        userId,
         'payment_initiated',
         invoice.id,
         {
@@ -354,9 +358,10 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
 
     async syncPaymentStatus(params): Promise<DomainResult<PaymentStatusSyncResult>> {
       const { authContext, invoiceId } = params;
+      const tenantId = getTenantId(authContext);
 
       // Get invoice
-      const invoicesResult = await billingRepository.findInvoicesByTenant(authContext.tenantId);
+      const invoicesResult = await billingRepository.findInvoicesByTenant(tenantId);
       if (!invoicesResult.success) {
         return fail(invoicesResult.error);
       }
@@ -398,7 +403,7 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
       // Update if status changed
       if (newStatus !== previousStatus) {
         const updateResult = await billingRepository.updateInvoiceStatus(
-          authContext.tenantId,
+          tenantId,
           invoiceId,
           newStatus,
           invoice.gatewayTransactionId,
@@ -411,14 +416,14 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
         // Update subscription status if needed
         if (newStatus === 'paid') {
           const subUpdate = await updateSubscriptionStatusForPayment(
-            authContext.tenantId,
+            tenantId,
             true,
             `Invoice ${invoiceId} paid`,
           );
           subscriptionStatusChanged = subUpdate.changed;
         } else if (newStatus === 'failed') {
           const subUpdate = await updateSubscriptionStatusForPayment(
-            authContext.tenantId,
+            tenantId,
             false,
             `Invoice ${invoiceId} payment failed`,
           );
@@ -548,9 +553,10 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
 
     async retryFailedPayment(params): Promise<DomainResult<ProcessPaymentResult>> {
       const { authContext, invoiceId } = params;
+      const tenantId = getTenantId(authContext);
 
       // Get invoice
-      const invoicesResult = await billingRepository.findInvoicesByTenant(authContext.tenantId);
+      const invoicesResult = await billingRepository.findInvoicesByTenant(tenantId);
       if (!invoicesResult.success) {
         return fail(invoicesResult.error);
       }
@@ -575,7 +581,7 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
       }
 
       // Increment retry count
-      await billingRepository.incrementRetryCount(authContext.tenantId, invoiceId);
+      await billingRepository.incrementRetryCount(tenantId, invoiceId);
 
       // Initiate new payment
       return this.initiatePayment({
@@ -586,8 +592,9 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
 
     async getInvoice(params): Promise<DomainResult<Invoice>> {
       const { authContext, invoiceId } = params;
+      const tenantId = getTenantId(authContext);
 
-      const invoicesResult = await billingRepository.findInvoicesByTenant(authContext.tenantId);
+      const invoicesResult = await billingRepository.findInvoicesByTenant(tenantId);
       if (!invoicesResult.success) {
         return fail(invoicesResult.error);
       }
@@ -602,8 +609,9 @@ export function createBillingService(deps: BillingServiceDeps): IBillingService 
 
     async listInvoices(params): Promise<DomainResult<Invoice[]>> {
       const { authContext, status } = params;
+      const tenantId = getTenantId(authContext);
 
-      return billingRepository.findInvoicesByTenant(authContext.tenantId, status);
+      return billingRepository.findInvoicesByTenant(tenantId, status);
     },
   };
 }

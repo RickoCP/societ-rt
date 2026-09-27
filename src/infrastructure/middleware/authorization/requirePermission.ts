@@ -311,6 +311,31 @@ export function withPermission<T = unknown>(
         ) as NextResponse<T>;
       }
 
+      if (membershipStatus === MembershipStatus.INVITED) {
+        // INVITED memberships have not yet been activated and cannot access any routes
+        // @see MembershipStatus.INVITED — Authorization: NOT eligible for operations
+        logger.warn('Authorization denied: Membership not yet activated', {
+          correlation_id: correlationId,
+          user_id: authContext.userId,
+          tenant_id: authContext.tenantId,
+          membership_id: authContext.membershipId,
+          membership_status: membershipStatus,
+          route,
+          method,
+          decision: 'DENY',
+          reason: 'Membership invitation has not been accepted',
+        });
+
+        return NextResponse.json(
+          {
+            code: 'AUTH_MEMBERSHIP_INACTIVE',
+            message: 'Your membership invitation has not been accepted yet',
+            correlationId,
+          },
+          { status: 403 },
+        ) as NextResponse<T>;
+      }
+
       if (membershipStatus === MembershipStatus.SUSPENDED && !allowSuspended) {
         // SUSPENDED users blocked from non-safety routes
         logger.warn('Authorization denied: Membership suspended', {
@@ -1008,8 +1033,8 @@ export function withPublicRoute<T = unknown>(
         const ip = getClientIp(request);
         const rateLimitResult = checkRateLimit(
           ip,
-          mergedOptions.rateLimit.maxRequests,
-          mergedOptions.rateLimit.windowMs,
+          mergedOptions.rateLimit.maxRequests ?? 100,
+          mergedOptions.rateLimit.windowMs ?? 60_000,
         );
 
         if (!rateLimitResult.allowed) {

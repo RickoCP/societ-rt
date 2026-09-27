@@ -73,6 +73,16 @@ interface EventListResponse {
   }>;
 }
 
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type EventCreateResponse = EventResponse | ErrorResponse;
+type EventListApiResponse = EventListResponse | ErrorResponse;
+
 // ---------------------------------------------------------------------------
 // POST handler — Create event
 // ---------------------------------------------------------------------------
@@ -89,10 +99,10 @@ interface EventListResponse {
  *
  * @see Permission Mapping: POST /api/events → announcement:publish
  */
-const handleCreateEvent: AuthorizedRouteHandler<EventResponse> = async (
+const handleCreateEvent: AuthorizedRouteHandler<EventCreateResponse> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<EventResponse>> => {
+): Promise<NextResponse<EventCreateResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -106,7 +116,7 @@ const handleCreateEvent: AuthorizedRouteHandler<EventResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      } as unknown as EventResponse,
+      },
       { status: 400 },
     );
   }
@@ -118,7 +128,7 @@ const handleCreateEvent: AuthorizedRouteHandler<EventResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         fields: formatZodErrors(validation.error),
         correlationId,
-      } as unknown as EventResponse,
+      },
       { status: 400 },
     );
   }
@@ -138,7 +148,7 @@ const handleCreateEvent: AuthorizedRouteHandler<EventResponse> = async (
 
   // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<EventResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const event = result.data;
@@ -176,10 +186,10 @@ const handleCreateEvent: AuthorizedRouteHandler<EventResponse> = async (
  *
  * @see Permission Mapping: GET /api/events → announcement:read
  */
-const handleListEvents: AuthorizedRouteHandler<EventListResponse> = async (
+const handleListEvents: AuthorizedRouteHandler<EventListApiResponse> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<EventListResponse>> => {
+): Promise<NextResponse<EventListApiResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -189,7 +199,7 @@ const handleListEvents: AuthorizedRouteHandler<EventListResponse> = async (
   const result = await eventRepository.findByTenant(authContext.tenantId);
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<EventListResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   // 2. Get RSVP counts for all events

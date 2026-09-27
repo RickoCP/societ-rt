@@ -10,7 +10,8 @@
  * @see Requirements 10.3, 10.5
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import type { EmergencyRepository } from '../repositories/EmergencyRepository';
@@ -22,7 +23,7 @@ import type { EmergencyAlert } from '../entities';
 
 export interface UpdateEmergencyStatusUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     alertId: string;
     status: EmergencyAlert['status'];
   }): Promise<DomainResult<EmergencyAlert>>;

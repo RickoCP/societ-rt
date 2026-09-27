@@ -174,8 +174,8 @@ export interface PrivilegedExecutionAuditEntry {
   readonly actorUserId: string;
   readonly justification: string;
   readonly operationContext?: Record<string, unknown>;
-  readonly success: boolean;
-  readonly error?: string;
+  success: boolean;
+  error?: string;
 }
 
 /**

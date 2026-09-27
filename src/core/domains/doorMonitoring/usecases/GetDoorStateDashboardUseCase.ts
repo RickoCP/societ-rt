@@ -11,8 +11,9 @@
  * current instant so the dashboard reflects live monitoring state.
  */
 
-import type { AuthContext } from '@core/protocols';
-import { UserRole } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types/AuthContextCompat';
+import { getMembershipRole, getTenantId } from '@core/domains/authorization/types/AuthContextCompat';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, authorizationError } from '@core/utils';
 import type { DoorMonitoringRepository } from '../repositories/DoorMonitoringRepository';
@@ -25,7 +26,7 @@ import { isWithinMonitoringWindow } from '../utils/monitoringWindow';
 
 export interface GetDoorStateDashboardUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     /** Injectable clock for deterministic testing; defaults to now(). */
     now?: Date;
   }): Promise<DomainResult<DoorStateMarker[]>>;
@@ -35,10 +36,12 @@ export interface GetDoorStateDashboardUseCase {
 // Allowed roles
 // ---------------------------------------------------------------------------
 
-const ALLOWED_ROLES: ReadonlySet<UserRole> = new Set([
-  UserRole.Security_Guard,
-  UserRole.Ketua_RT,
-  UserRole.Pengurus,
+const ALLOWED_ROLES: ReadonlySet<MembershipRole> = new Set([
+  MembershipRole.SECURITY,
+  MembershipRole.RT_ADMIN,
+  MembershipRole.ORG_ADMIN, // Pengurus maps to ORG_ADMIN
+  MembershipRole.TENANT_OWNER,
+  MembershipRole.PLATFORM_ADMIN,
 ]);
 
 // ---------------------------------------------------------------------------
@@ -52,7 +55,8 @@ export const GetDoorStateDashboardUseCaseImpl = ({
 }): GetDoorStateDashboardUseCase => ({
   execute: async ({ authContext, now }) => {
     // 1. Role gate.
-    if (!ALLOWED_ROLES.has(authContext.role)) {
+    const role = getMembershipRole(authContext);
+    if (!ALLOWED_ROLES.has(role)) {
       return fail(
         authorizationError(
           'DOOR_MONITORING_DASHBOARD_ACCESS_DENIED',
@@ -65,9 +69,8 @@ export const GetDoorStateDashboardUseCaseImpl = ({
     }
 
     // 2. Load markers.
-    const result = await doorMonitoringRepository.listDoorStateMarkers(
-      authContext.tenantId,
-    );
+    const tenantId = getTenantId(authContext);
+    const result = await doorMonitoringRepository.listDoorStateMarkers(tenantId);
     if (!result.success) {
       return fail(result.error);
     }

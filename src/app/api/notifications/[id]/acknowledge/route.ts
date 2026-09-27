@@ -70,7 +70,19 @@ const handleAcknowledgeNotification: AuthorizedRouteHandler<
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
   // 1. Extract notification ID from route params
-  const { id: notificationId } = await routeContext!.params!;
+  const params = await routeContext!.params!;
+  const notificationId = params.id;
+
+  if (!notificationId) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Missing notification id parameter',
+        correlationId,
+      },
+      { status: 400 },
+    );
+  }
 
   // 2. Parse and validate input
   let body: unknown;
@@ -92,6 +104,7 @@ const handleAcknowledgeNotification: AuthorizedRouteHandler<
     return NextResponse.json(
       {
         code: 'COMMON_VALIDATION_FAILED',
+        message: 'Validation failed',
         fields: formatZodErrors(validation.error),
         correlationId,
       },

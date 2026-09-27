@@ -165,7 +165,7 @@ function detectRouteId(filePath: string, content: string): string {
 
   // Extract route from Next.js App Router structure
   const appRouteMatch = normalizedPath.match(/\/app\/api\/(.+?)\/route\.tsx?$/);
-  if (appRouteMatch) {
+  if (appRouteMatch?.[1]) {
     const routePath = appRouteMatch[1].replace(/\[([^\]]+)\]/g, ':$1');
     return `/api/${routePath}`;
   }
@@ -179,7 +179,7 @@ function detectRouteId(filePath: string, content: string): string {
   if (/export\s+(?:async\s+)?function\s+DELETE/i.test(content)) methods.push('DELETE');
 
   // Build route ID
-  if (appRouteMatch && appRouteMatch[1] && methods.length > 0) {
+  if (appRouteMatch?.[1] && methods.length > 0) {
     const routePath = appRouteMatch[1].replace(/\[([^\]]+)\]/g, ':$1');
     return `${methods.join('|')} /api/${routePath}`;
   }

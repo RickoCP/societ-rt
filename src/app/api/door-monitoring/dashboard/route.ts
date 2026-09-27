@@ -19,16 +19,16 @@ import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GetDoorStateDashboardUseCase } from '@core/domains/doorMonitoring/usecases';
 
 /**
- * Response shape for door monitoring dashboard data.
+ * Response shape for door monitoring dashboard data (success).
  */
-interface DoorMonitoringDashboardResponse {
+interface DoorMonitoringDashboardSuccessResponse {
   data: Array<{
     householdId: string;
     householdNumber: string;
     address: string;
-    block: string;
-    latitude: number;
-    longitude: number;
+    block: string | null;
+    latitude: number | null;
+    longitude: number | null;
     currentState: string;
     monitoringEnabled: boolean;
     withinWindow: boolean;
@@ -39,6 +39,14 @@ interface DoorMonitoringDashboardResponse {
     lastStateChange: string | null;
   }>;
 }
+
+interface ErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+}
+
+type DoorMonitoringDashboardResponse = DoorMonitoringDashboardSuccessResponse | ErrorResponse;
 
 /**
  * Handles GET request for door monitoring dashboard.
@@ -66,7 +74,7 @@ const handleGetDoorMonitoringDashboard: AuthorizedRouteHandler<DoorMonitoringDas
   const result = await useCase.execute({ authContext });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<DoorMonitoringDashboardResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(

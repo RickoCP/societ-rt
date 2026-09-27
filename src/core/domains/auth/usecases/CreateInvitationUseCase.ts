@@ -14,10 +14,7 @@
 import type { AuditQueueProtocol } from '@core/protocols';
 import { UserRole } from '@core/protocols';
 import type { AuthContextCompat } from '@core/domains/authorization/types';
-import {
-  isAuthorizationContext,
-  getMembershipRole,
-} from '@core/domains/authorization/types';
+import { isAuthorizationContext } from '@core/domains/authorization/types';
 import { MembershipRole } from '@core/domains/membership/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';

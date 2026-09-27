@@ -11,8 +11,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
+import {
+  withPermission,
+  type AuthorizedRouteHandler,
+} from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RequestDataDeletionUseCase } from '@core/domains/privacy/usecases';
 
@@ -30,10 +33,10 @@ interface DeletionRequestResponse {
 // POST handler — Request data deletion
 // ---------------------------------------------------------------------------
 
-const handleRequestDataDeletion: AuthorizedRouteHandler<DeletionRequestResponse> = async (
+const handleRequestDataDeletion: AuthorizedRouteHandler<DeletionRequestResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<DeletionRequestResponse>> => {
+): Promise<NextResponse<DeletionRequestResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -47,7 +50,7 @@ const handleRequestDataDeletion: AuthorizedRouteHandler<DeletionRequestResponse>
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<DeletionRequestResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(

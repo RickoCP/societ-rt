@@ -1,0 +1,274 @@
+src/app/api/security/analytics/route.ts(100,14): error TS2352: Conversion of type 'NextResponse<ErrorResponseBody>' to type 'NextResponse<SecurityAnalyticsResponse>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Property 'data' is missing in type 'ErrorResponseBody' but required in type 'SecurityAnalyticsResponse'.
+src/app/api/security/analytics/route.ts(105,5): error TS2322: Type 'NextResponse<{ data: { incidentsBySeverity: IncidentCountBySeverity[]; averageResponseTime: number; incidentsByCategory: IncidentCountByCategory[]; patrolCoveragePercentage: number; deviceEventFrequency: DeviceEventFrequency[]; timeRange: { ...; }; }; }>' is not assignable to type 'NextResponse<SecurityAnalyticsResponse>'.
+  Type '{ data: { incidentsBySeverity: IncidentCountBySeverity[]; averageResponseTime: number; incidentsByCategory: IncidentCountByCategory[]; patrolCoveragePercentage: number; deviceEventFrequency: DeviceEventFrequency[]; timeRange: { ...; }; }; }' is not assignable to type 'SecurityAnalyticsResponse'.
+src/app/api/security/dashboard/route.ts(84,14): error TS2352: Conversion of type 'NextResponse<ErrorResponseBody>' to type 'NextResponse<SecurityDashboardResponse>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Property 'data' is missing in type 'ErrorResponseBody' but required in type 'SecurityDashboardResponse'.
+src/app/api/security/dashboard/route.ts(89,5): error TS2322: Type 'NextResponse<{ data: { activeIncidents: number; emergencyAlerts: number; gateStatus: GateStatusSummary; cctvStatus: CctvStatusSummary; patrolStatus: PatrolStatusSummary; recentEvents: { ...; }[]; }; }>' is not assignable to type 'NextResponse<SecurityDashboardResponse>'.
+  Type '{ data: { activeIncidents: number; emergencyAlerts: number; gateStatus: GateStatusSummary; cctvStatus: CctvStatusSummary; patrolStatus: PatrolStatusSummary; recentEvents: { ...; }[]; }; }' is not assignable to type 'SecurityDashboardResponse'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(337,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(338,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(339,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(356,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(370,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(384,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(397,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(411,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(415,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(441,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(445,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(458,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(473,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(492,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(509,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(526,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(548,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(552,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(572,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(587,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(606,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(607,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(625,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(628,29): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(628,29): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(643,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(644,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(658,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(780,14): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(781,14): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(797,14): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(816,26): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(816,26): error TS18048: 'call.details' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(885,14): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(892,14): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(906,14): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts(918,14): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(206,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(207,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(208,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(209,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(210,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(211,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(212,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(213,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(214,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(228,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(229,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(243,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(257,23): error TS2339: Property 'error' does not exist on type 'DomainResult<AuditEvent>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(276,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(277,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(278,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(299,23): error TS2339: Property 'data' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(318,23): error TS2339: Property 'data' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(325,23): error TS2339: Property 'error' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(355,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(356,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(384,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(385,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(403,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(404,17): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(405,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(420,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(421,16): error TS18048: 'call' is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(431,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(446,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(447,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(448,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(449,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(456,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(463,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(463,54): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(464,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(464,70): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(471,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(472,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(473,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationVerificationResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(482,23): error TS2339: Property 'data' does not exist on type 'DomainResult<VerificationCheckResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(483,23): error TS2339: Property 'data' does not exist on type 'DomainResult<VerificationCheckResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(490,23): error TS2339: Property 'error' does not exist on type 'DomainResult<VerificationCheckResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(499,23): error TS2339: Property 'data' does not exist on type 'DomainResult<VerificationCheckResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(500,23): error TS2339: Property 'data' does not exist on type 'DomainResult<VerificationCheckResult>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(519,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(520,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(521,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(522,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(533,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(534,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(535,81): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(546,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(547,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(559,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(560,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(561,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(573,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(574,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(585,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(596,23): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(599,25): error TS2339: Property 'data' does not exist on type 'DomainResult<IsolationAuditReport>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(609,37): error TS2339: Property 'data' does not exist on type 'DomainResult<readonly IsolationViolationSummary[]>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(624,23): error TS2339: Property 'data' does not exist on type 'DomainResult<number>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(625,23): error TS2339: Property 'data' does not exist on type 'DomainResult<number>'.
+src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts(717,14): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(165,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(166,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(167,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(181,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(182,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(183,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(184,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(198,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(199,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(213,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(227,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(228,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(242,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(260,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(261,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(276,23): error TS2339: Property 'data' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(289,23): error TS2339: Property 'error' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(290,23): error TS2339: Property 'error' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(291,23): error TS2339: Property 'error' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(303,23): error TS2339: Property 'error' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(315,23): error TS2339: Property 'error' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(336,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(337,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(355,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(356,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(369,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(370,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(380,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(390,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(400,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(420,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(421,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(431,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(442,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(443,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(444,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(445,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(456,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(457,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(468,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(477,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(478,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(488,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(499,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(508,23): error TS2339: Property 'data' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(515,23): error TS2339: Property 'error' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(516,23): error TS2339: Property 'error' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(523,23): error TS2339: Property 'error' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(530,23): error TS2339: Property 'error' does not exist on type 'DomainResult<boolean>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(562,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(563,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(564,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(565,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(583,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(584,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(585,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(586,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(601,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(602,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(624,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(625,16): error TS2532: Object is possibly 'undefined'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(638,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(639,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(652,23): error TS2339: Property 'error' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(667,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(682,23): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(702,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(703,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(715,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(729,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(730,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(744,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(756,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(772,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(773,23): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(787,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(788,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(789,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(790,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(791,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(805,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(819,23): error TS2339: Property 'error' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(962,21): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(996,21): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(997,21): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(1022,21): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(1023,21): error TS2339: Property 'data' does not exist on type 'DomainResult<PreventionCheckResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(1047,21): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(1048,21): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(1049,21): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts(1050,21): error TS2339: Property 'data' does not exist on type 'DomainResult<BatchValidationResult>'.
+src/core/domains/authorization/services/__tests__/SecurityTestingSuite.test.ts(93,3): error TS2322: Type '{ validateTenantIsolation: Mock<(input: any) => Promise<{ success: boolean; data: { status: string; message: string; }; }>>; testTokenVersionMismatchRejection: Mock<(jwtVersion: any, dbVersion: any) => Promise<...>>; testRefreshTokenReuseDetection: Mock<...>; validateMembershipResolutionSecurity: Mock<...>; }' is not assignable to type '{ validateTenantIsolation: (input: { authContext: { tenantId: string; }; targetTenantId: string; resourceType: string; resourceId: string; }) => Promise<DomainResult<{ status: string; message: string; }>>; testTokenVersionMismatchRejection: (jwtTokenVersion: number, dbTokenVersion: number) => Promise<...>; testRefre...'.
+src/core/domains/authorization/services/__tests__/SecurityTestingSuite.test.ts(312,21): error TS2339: Property 'error' does not exist on type 'DomainResult<SecurityTestResult>'.
+  Property 'error' does not exist on type '{ readonly success: true; readonly data: SecurityTestResult; }'.
+src/core/domains/authorization/services/__tests__/SecurityTestingSuite.test.ts(418,21): error TS2339: Property 'error' does not exist on type 'DomainResult<SecurityTestResult>'.
+  Property 'error' does not exist on type '{ readonly success: true; readonly data: SecurityTestResult; }'.
+src/core/domains/authorization/services/__tests__/SecurityTestingSuite.test.ts(700,21): error TS2339: Property 'error' does not exist on type 'DomainResult<VulnerabilityScanResult>'.
+src/core/domains/authorization/services/__tests__/SecurityTestingSuite.test.ts(863,21): error TS2339: Property 'error' does not exist on type 'DomainResult<string>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(237,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBinding>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(238,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBinding>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(239,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBinding>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(240,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBinding>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(241,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBinding>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(242,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBinding>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(265,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(266,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(267,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(276,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(277,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(278,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(294,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(295,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(296,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(308,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(309,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(310,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(327,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(328,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(329,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(343,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(344,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(345,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(346,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(347,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(373,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(374,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(375,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(402,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(403,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(404,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(424,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(425,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(426,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(463,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(464,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(465,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(466,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(488,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(489,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(490,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshPatternAnomalyResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(504,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(505,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(506,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(507,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(508,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(518,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(519,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(520,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(591,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(592,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(593,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(594,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(595,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(614,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityAction>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(640,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityAction>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(667,21): error TS2339: Property 'data' does not exist on type 'DomainResult<RefreshSecurityAction>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(863,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts(864,21): error TS2339: Property 'data' does not exist on type 'DomainResult<TokenBindingValidationResult>'.
+src/infrastructure/auth/__tests__/RefreshTokenService.test.ts(28,25): error TS6133: 'DomainResult' is declared but its value is never read.
+src/infrastructure/auth/__tests__/RefreshTokenService.test.ts(337,52): error TS2345: Argument of type '{ code: string; message: string; }' is not assignable to parameter of type 'AppError'.
+src/infrastructure/auth/__tests__/SessionInvalidationService.test.ts(130,5): error TS2353: Object literal may only specify known properties, and 'issuedAt' does not exist in type 'RefreshToken'.
+src/infrastructure/auth/RefreshTokenService.ts(20,39): error TS2724: '"@core/domains/auth/repositories/RefreshTokenRepository"' has no exported member named 'CreateRefreshTokenInput'. Did you mean 'RepoCreateRefreshTokenInput'?

@@ -203,22 +203,12 @@ function log(message: string): void {
   console.log(`[${SCRIPT_NAME}] ${message}`);
 }
 
-function logVerbose(message: string, verbose: boolean): void {
-  if (verbose) {
-    console.log(`[${SCRIPT_NAME}] ${message}`);
-  }
-}
-
 function logError(message: string): void {
   console.error(`[${SCRIPT_NAME}] ❌ ERROR: ${message}`);
 }
 
 function logSuccess(message: string): void {
   console.log(`[${SCRIPT_NAME}] ✅ ${message}`);
-}
-
-function logWarning(message: string): void {
-  console.log(`[${SCRIPT_NAME}] ⚠️ ${message}`);
 }
 
 function logSection(title: string): void {
@@ -632,11 +622,11 @@ function buildCompletionReport(validationResults: ValidationResult[]): Completio
     },
     testResults: {
       passed: testsResult?.passed ?? false,
-      totalTests: (testsResult?.details as Record<string, unknown>)?.tests?.total as number ?? 0,
-      passedTests: (testsResult?.details as Record<string, unknown>)?.tests?.passed as number ?? 0,
-      failedTests: (testsResult?.details as Record<string, unknown>)?.tests?.failed as number ?? 0,
-      skippedTests: (testsResult?.details as Record<string, unknown>)?.tests?.skipped as number ?? 0,
-      coveragePercentage: (testsResult?.details as Record<string, unknown>)?.coverage?.lines?.percentage as number,
+      totalTests: ((testsResult?.details as Record<string, unknown>)?.tests as Record<string, unknown>)?.total as number ?? 0,
+      passedTests: ((testsResult?.details as Record<string, unknown>)?.tests as Record<string, unknown>)?.passed as number ?? 0,
+      failedTests: ((testsResult?.details as Record<string, unknown>)?.tests as Record<string, unknown>)?.failed as number ?? 0,
+      skippedTests: ((testsResult?.details as Record<string, unknown>)?.tests as Record<string, unknown>)?.skipped as number ?? 0,
+      coveragePercentage: (((testsResult?.details as Record<string, unknown>)?.coverage as Record<string, unknown>)?.lines as Record<string, unknown>)?.percentage as number,
       details: testsResult?.details ?? {},
     },
     performanceBenchmarks: {
@@ -650,11 +640,11 @@ function buildCompletionReport(validationResults: ValidationResult[]): Completio
     },
     shadowModeMetrics: {
       passed: shadowModeResult?.passed ?? false,
-      consecutiveDaysAt0Percent: (shadowModeResult?.details as Record<string, unknown>)?.aggregateStats?.consecutiveDaysAt0Percent as number ?? 0,
+      consecutiveDaysAt0Percent: ((shadowModeResult?.details as Record<string, unknown>)?.aggregateStats as Record<string, unknown>)?.consecutiveDaysAt0Percent as number ?? 0,
       requiredDays: 7,
-      totalRequests: (shadowModeResult?.details as Record<string, unknown>)?.aggregateStats?.totalRequests as number ?? 0,
+      totalRequests: ((shadowModeResult?.details as Record<string, unknown>)?.aggregateStats as Record<string, unknown>)?.totalRequests as number ?? 0,
       requiredSampleSize: 10000,
-      mismatchRate: (shadowModeResult?.details as Record<string, unknown>)?.aggregateStats?.overallMismatchRate as number ?? 0,
+      mismatchRate: ((shadowModeResult?.details as Record<string, unknown>)?.aggregateStats as Record<string, unknown>)?.overallMismatchRate as number ?? 0,
       meetsRequirements: shadowModeResult?.passed ?? false,
       details: shadowModeResult?.details ?? {},
     },
@@ -1151,8 +1141,11 @@ async function main(): Promise<void> {
   }
 }
 
-// Run main
-main();
+// Run if executed directly (not when imported as a module)
+const isMainModule = process.argv[1]?.includes('generate-completion-report');
+if (isMainModule) {
+  main();
+}
 
 export {
   type CompletionReport,

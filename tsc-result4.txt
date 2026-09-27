@@ -1,0 +1,10 @@
+﻿src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1465,14): error TS1005: ':' expected.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1465,21): error TS1005: ',' expected.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1472,21): error TS1005: ';' expected.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1472,23): error TS1434: Unexpected keyword or identifier.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1474,6): error TS1128: Declaration or statement expected.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1476,29): error TS1005: ',' expected.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1476,61): error TS1005: ';' expected.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1477,54): error TS1005: ',' expected.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1479,3): error TS1109: Expression expected.
+src/core/domains/audit/services/TenantDataIsolationAuditService.ts(1480,1): error TS1128: Declaration or statement expected.

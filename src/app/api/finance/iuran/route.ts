@@ -50,16 +50,27 @@ interface IuranStatusResponse {
     createdAt: string;
     updatedAt: string;
   };
+  year?: number;
 }
+
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type IuranRecordApiResponse = IuranRecordResponse | ErrorResponse;
+type IuranStatusApiResponse = IuranStatusResponse | ErrorResponse;
 
 // ---------------------------------------------------------------------------
 // POST handler — Record iuran payment
 // ---------------------------------------------------------------------------
 
-const handleRecordIuranPayment: AuthorizedRouteHandler<IuranRecordResponse> = async (
+const handleRecordIuranPayment: AuthorizedRouteHandler<IuranRecordApiResponse> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<IuranRecordResponse>> => {
+): Promise<NextResponse<IuranRecordApiResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -75,7 +86,7 @@ const handleRecordIuranPayment: AuthorizedRouteHandler<IuranRecordResponse> = as
         correlationId,
       },
       { status: 400 },
-    ) as NextResponse<IuranRecordResponse>;
+    );
   }
 
   const validation = recordIuranPaymentSchema.safeParse(body);
@@ -87,7 +98,7 @@ const handleRecordIuranPayment: AuthorizedRouteHandler<IuranRecordResponse> = as
         correlationId,
       },
       { status: 400 },
-    ) as NextResponse<IuranRecordResponse>;
+    );
   }
 
   // Execute use case via DI
@@ -103,7 +114,7 @@ const handleRecordIuranPayment: AuthorizedRouteHandler<IuranRecordResponse> = as
 
   // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<IuranRecordResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(
@@ -116,10 +127,10 @@ const handleRecordIuranPayment: AuthorizedRouteHandler<IuranRecordResponse> = as
 // GET handler — Get iuran status
 // ---------------------------------------------------------------------------
 
-const handleGetIuranStatus: AuthorizedRouteHandler<IuranStatusResponse> = async (
+const handleGetIuranStatus: AuthorizedRouteHandler<IuranStatusApiResponse> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<IuranStatusResponse>> => {
+): Promise<NextResponse<IuranStatusApiResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -136,7 +147,7 @@ const handleGetIuranStatus: AuthorizedRouteHandler<IuranStatusResponse> = async 
         correlationId,
       },
       { status: 400 },
-    ) as NextResponse<IuranStatusResponse>;
+    );
   }
 
   if (!MONTH_REGEX.test(month)) {
@@ -147,7 +158,7 @@ const handleGetIuranStatus: AuthorizedRouteHandler<IuranStatusResponse> = async 
         correlationId,
       },
       { status: 400 },
-    ) as NextResponse<IuranStatusResponse>;
+    );
   }
 
   // Query repository directly for read operations
@@ -162,7 +173,7 @@ const handleGetIuranStatus: AuthorizedRouteHandler<IuranStatusResponse> = async 
 
   // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<IuranStatusResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const status = result.data;

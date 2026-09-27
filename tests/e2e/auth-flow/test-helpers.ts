@@ -196,9 +196,10 @@ export function createAuthenticatedRequest(
     ...options.headers,
   });
 
-  const init: RequestInit = {
+  const init = {
     method: options.method ?? 'GET',
     headers,
+    body: undefined as string | undefined,
   };
 
   if (options.body && options.method !== 'GET' && options.method !== 'HEAD') {
@@ -225,9 +226,10 @@ export function createUnauthenticatedRequest(
     ...options.headers,
   });
 
-  const init: RequestInit = {
+  const init = {
     method: options.method ?? 'GET',
     headers,
+    body: undefined as string | undefined,
   };
 
   if (options.body && options.method !== 'GET' && options.method !== 'HEAD') {

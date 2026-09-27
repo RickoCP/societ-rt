@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { AddResidentUseCase } from '@core/domains/resident/usecases';
@@ -45,7 +45,7 @@ const addResidentSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Response Types
+// Response types
 // ---------------------------------------------------------------------------
 
 interface ResidentResponse {
@@ -85,10 +85,10 @@ interface ResidentListResponse {
 // POST handler — Add resident
 // ---------------------------------------------------------------------------
 
-const handleAddResident: AuthorizedRouteHandler<ResidentResponse> = async (
+const handleAddResident: AuthorizedRouteHandler<ResidentResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<ResidentResponse>> => {
+): Promise<NextResponse<ResidentResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -102,7 +102,7 @@ const handleAddResident: AuthorizedRouteHandler<ResidentResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      } as unknown as ResidentResponse,
+      },
       { status: 400 },
     );
   }
@@ -112,9 +112,10 @@ const handleAddResident: AuthorizedRouteHandler<ResidentResponse> = async (
     return NextResponse.json(
       {
         code: 'COMMON_VALIDATION_FAILED',
+        message: 'Validation failed',
         fields: formatZodErrors(validation.error),
         correlationId,
-      } as unknown as ResidentResponse,
+      },
       { status: 400 },
     );
   }
@@ -131,7 +132,7 @@ const handleAddResident: AuthorizedRouteHandler<ResidentResponse> = async (
 
   // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<ResidentResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const resident = result.data;
@@ -159,10 +160,10 @@ const handleAddResident: AuthorizedRouteHandler<ResidentResponse> = async (
 // GET handler — List residents
 // ---------------------------------------------------------------------------
 
-const handleListResidents: AuthorizedRouteHandler<ResidentListResponse> = async (
+const handleListResidents: AuthorizedRouteHandler<ResidentListResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<ResidentListResponse>> => {
+): Promise<NextResponse<ResidentListResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -202,7 +203,7 @@ const handleListResidents: AuthorizedRouteHandler<ResidentListResponse> = async 
 
   // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<ResidentListResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const paginated = result.data;

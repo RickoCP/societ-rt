@@ -8,7 +8,7 @@
  * @see Requirements 42.1, 42.2, 42.5, 42.8
  */
 
-import type { AuthContext, UserRole } from '@core/protocols';
+import { UserRole } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, authorizationError } from '@core/utils';
 import type { IncidentRepository } from '../../incident/repositories/IncidentRepository';
@@ -26,16 +26,18 @@ import type {
   PatrolRouteLayer,
   GuardPositionMarker,
 } from '../entities/SecurityMapTypes';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, hasAllowedUserRole } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Allowed roles
 // ---------------------------------------------------------------------------
 
-const ALLOWED_ROLES: readonly UserRole[] = [
-  'Ketua_RT' as UserRole,
-  'Pengurus' as UserRole,
-  'Security_Guard' as UserRole,
-];
+const ALLOWED_ROLES_SET: ReadonlySet<UserRole> = new Set([
+  UserRole.Ketua_RT,
+  UserRole.Pengurus,
+  UserRole.Security_Guard,
+]);
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -43,7 +45,7 @@ const ALLOWED_ROLES: readonly UserRole[] = [
 
 export interface GetSecurityMapDataUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     layers?: SecurityMapLayer[];
   }): Promise<DomainResult<SecurityMapData>>;
 }
@@ -67,7 +69,7 @@ export const GetSecurityMapDataUseCaseImpl = ({
 }): GetSecurityMapDataUseCase => ({
   execute: async ({ authContext, layers }) => {
     // Role check
-    if (!ALLOWED_ROLES.includes(authContext.role)) {
+    if (!hasAllowedUserRole(authContext, ALLOWED_ROLES_SET)) {
       return fail(
         authorizationError(
           'SECURITY_MAP_ACCESS_DENIED',
@@ -76,7 +78,7 @@ export const GetSecurityMapDataUseCaseImpl = ({
       );
     }
 
-    const tenantId = authContext.tenantId;
+    const tenantId = getTenantId(authContext);
 
     // Determine which layers to fetch (default: all)
     const activeLayers: SecurityMapLayer[] = layers ?? [

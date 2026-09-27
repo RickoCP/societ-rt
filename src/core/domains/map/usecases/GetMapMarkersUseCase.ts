@@ -6,9 +6,10 @@
  * 2. Return the result
  *
  * @see Requirements 11.1, 11.2, 11.3
+ * @see Requirements 6.2, 6.5 (AuthorizationContext migration)
  */
 
-import type { AuthContext } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail } from '@core/utils';
 import type { MapRepository } from '../repositories/MapRepository';
@@ -20,7 +21,7 @@ import type { HouseholdMapMarker, MapFilters } from '../entities';
 
 export interface GetMapMarkersUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     filters: MapFilters;
   }): Promise<DomainResult<HouseholdMapMarker[]>>;
 }

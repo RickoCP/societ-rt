@@ -20,13 +20,12 @@ import { MembershipRole, MembershipStatus } from '@core/domains/membership/types
 import { getPermissionsForRole } from '@core/domains/authorization/permissions/PermissionRegistry';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RefreshToken } from '@core/domains/auth/entities/RefreshToken';
-import { ok, fail, isFail, type DomainResult } from '@core/utils';
+import { ok, fail } from '@core/utils';
 
 // Infrastructure imports
 import {
   RefreshTokenServiceImpl,
   type RefreshTokenService,
-  type TokenRotationResult,
 } from '@infrastructure/auth/RefreshTokenService';
 import type { RefreshTokenRepository } from '@core/domains/auth/repositories/RefreshTokenRepository';
 
@@ -35,15 +34,12 @@ import {
   createTestUser,
   createTestTenant,
   createTestOrgUnit,
-  createMockMembership,
   createMockAuthContext,
   type TestMembershipSetup,
 } from './test-helpers';
 
 import {
   generateTestAccessToken,
-  generateTestAuthContext,
-  type TestAuthContext,
 } from './setup/auth-token-helper';
 
 // ---------------------------------------------------------------------------
@@ -154,7 +150,7 @@ function createMockRefreshTokenRepository(): MockRefreshTokenRepository {
         return ok(undefined);
       }
     }
-    return fail({ code: 'NOT_FOUND', message: 'Token not found' });
+    return fail({ type: 'not_found', code: 'NOT_FOUND', message: 'Token not found' });
   });
 
   // Realistic revokeByFamily implementation
@@ -620,7 +616,6 @@ describe('Refresh Token Rotation E2E Tests', () => {
       if (!createResult.success) return;
 
       const oldToken = createResult.data.token;
-      const familyId = createResult.data.record.familyId;
 
       // Rotate to get a valid new token
       const rotate1Result = await refreshTokenService.rotateToken({

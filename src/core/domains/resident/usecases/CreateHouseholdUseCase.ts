@@ -9,7 +9,9 @@
  * @see Requirements 5.1, 6.1
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { ResidentRepository } from '../repositories/ResidentRepository';
@@ -21,7 +23,7 @@ import type { CreateHouseholdInput, Household } from '../entities';
 
 export interface CreateHouseholdUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreateHouseholdInput;
   }): Promise<DomainResult<Household>>;
 }
@@ -38,9 +40,12 @@ export const CreateHouseholdUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): CreateHouseholdUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Create household via repository
     const result = await residentRepository.createHousehold(
-      authContext.tenantId,
+      tenantId,
       data,
     );
 
@@ -53,8 +58,8 @@ export const CreateHouseholdUseCaseImpl = ({
     // 2. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'household_created',
         resourceType: 'household',
         resourceId: household.id,

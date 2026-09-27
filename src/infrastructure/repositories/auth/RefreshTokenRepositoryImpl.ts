@@ -8,7 +8,7 @@
 
 import { getPrismaClient } from '../prismaClient';
 import type {
-  CreateRefreshTokenInput,
+  RepoCreateRefreshTokenInput,
   RefreshTokenQueryOptions,
   RefreshTokenRepository,
   RevokeTokenInput,
@@ -67,7 +67,7 @@ export function RefreshTokenRepositoryImpl(): RefreshTokenRepository {
   const prisma = getPrismaClient();
 
   async function create(
-    input: CreateRefreshTokenInput,
+    input: RepoCreateRefreshTokenInput,
   ): Promise<DomainResult<RefreshToken>> {
     try {
       const token = await prisma.refreshToken.create({

@@ -88,17 +88,21 @@ const createTestMembership = (overrides?: Partial<Membership>): Membership => ({
   ...overrides,
 });
 
-const createTestTransfer = (overrides?: Partial<TenantTransfer>): TenantTransfer => ({
-  id: 'transfer-001',
-  tenantId: 'tenant-001',
-  initiatorUserId: 'user-owner',
-  targetUserId: 'user-target',
-  status: TenantTransferStatus.PENDING,
-  createdAt: new Date('2024-01-01'),
-  expiresAt: new Date('2024-01-02'), // 24 hours later
-  updatedAt: new Date('2024-01-01'),
-  ...overrides,
-});
+const createTestTransfer = (overrides?: Partial<TenantTransfer>): TenantTransfer => {
+  // Use future expiry date relative to test execution time to avoid false TRANSFER_EXPIRED errors
+  const futureExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+  return {
+    id: 'transfer-001',
+    tenantId: 'tenant-001',
+    initiatorUserId: 'user-owner',
+    targetUserId: 'user-target',
+    status: TenantTransferStatus.PENDING,
+    createdAt: new Date('2024-01-01'),
+    expiresAt: futureExpiry,
+    updatedAt: new Date('2024-01-01'),
+    ...overrides,
+  };
+};
 
 // ---------------------------------------------------------------------------
 // Test Suite
@@ -112,6 +116,9 @@ describe('TenantTransferService', () => {
   let mockTransferRepository: ITenantTransferRepository;
 
   beforeEach(() => {
+    // Clear all mocks before each test for proper isolation
+    vi.clearAllMocks();
+    
     mockAuditEmitter = createMockTransferAuditEmitter();
     mockReauthService = createMockReauthService();
     mockMembershipQueryService = createMockMembershipQueryService();
@@ -142,9 +149,14 @@ describe('TenantTransferService', () => {
         userId: 'user-owner',
         role: MembershipRole.TENANT_OWNER,
       });
-      vi.mocked(mockMembershipQueryService.findTenantOwnerMembership).mockResolvedValue(
-        ownerMembership,
-      );
+      
+      // For initiateTransfer, findTenantOwnerMembership is called twice:
+      // 1. First call for initiator validation (should return owner membership)
+      // 2. Second call for target validation (should return null - target is not already owner)
+      vi.mocked(mockMembershipQueryService.findTenantOwnerMembership)
+        .mockResolvedValueOnce(ownerMembership) // Initiator is owner
+        .mockResolvedValueOnce(null); // Target is NOT already owner
+      
       vi.mocked(mockMembershipQueryService.userExists).mockResolvedValue(true);
       vi.mocked(mockMembershipQueryService.isUserQuarantined).mockResolvedValue(false);
       vi.mocked(mockMembershipQueryService.findActiveMembership).mockResolvedValue(
@@ -178,7 +190,10 @@ describe('TenantTransferService', () => {
     });
 
     it('should fail if initiator is not TENANT_OWNER (Req 54 AC 1)', async () => {
-      vi.mocked(mockMembershipQueryService.findTenantOwnerMembership).mockResolvedValue(null);
+      // Reset and set new mock to return null for initiator check
+      vi.mocked(mockMembershipQueryService.findTenantOwnerMembership)
+        .mockReset()
+        .mockResolvedValue(null);
 
       const result = await service.initiateTransfer(validInput);
 
@@ -211,7 +226,9 @@ describe('TenantTransferService', () => {
     });
 
     it('should fail if target user is already TENANT_OWNER', async () => {
+      // Reset and set mock chain for this test: initiator is owner (first call), target is also owner (second call)
       vi.mocked(mockMembershipQueryService.findTenantOwnerMembership)
+        .mockReset()
         .mockResolvedValueOnce(createTestMembership({ userId: 'user-owner' })) // First call for initiator
         .mockResolvedValueOnce(createTestMembership({ userId: 'user-target' })); // Second call for target
 
@@ -224,6 +241,11 @@ describe('TenantTransferService', () => {
     });
 
     it('should fail if target user has no membership in tenant', async () => {
+      // Re-setup mocks for this test: initiator is owner, target is not owner, but target has no membership
+      vi.mocked(mockMembershipQueryService.findTenantOwnerMembership)
+        .mockReset()
+        .mockResolvedValueOnce(createTestMembership({ userId: 'user-owner' })) // Initiator is owner
+        .mockResolvedValueOnce(null); // Target is NOT already owner
       vi.mocked(mockMembershipQueryService.findActiveMembership).mockResolvedValue(null);
 
       const result = await service.initiateTransfer(validInput);
@@ -235,6 +257,11 @@ describe('TenantTransferService', () => {
     });
 
     it('should fail if there is already a pending transfer', async () => {
+      // Re-setup mocks for this test: initiator is owner, target is valid, but pending transfer exists
+      vi.mocked(mockMembershipQueryService.findTenantOwnerMembership)
+        .mockReset()
+        .mockResolvedValueOnce(createTestMembership({ userId: 'user-owner' })) // Initiator is owner
+        .mockResolvedValueOnce(null); // Target is NOT already owner
       vi.mocked(mockTransferRepository.hasPendingTransfer).mockResolvedValue(true);
 
       const result = await service.initiateTransfer(validInput);
@@ -317,9 +344,9 @@ describe('TenantTransferService', () => {
     };
 
     beforeEach(() => {
-      // Setup default successful mocks
+      // Setup default successful mocks with future expiry
       vi.mocked(mockTransferRepository.findById).mockResolvedValue(
-        ok(createTestTransfer()),
+        ok(createTestTransfer()), // Uses future expiry by default now
       );
       vi.mocked(mockReauthService.verifyToken).mockResolvedValue(true);
       vi.mocked(mockMembershipQueryService.findTenantOwnerMembership).mockResolvedValue(
@@ -361,8 +388,11 @@ describe('TenantTransferService', () => {
     });
 
     it('should include before/after state in completion audit (Req 54 AC 7)', async () => {
-      // Setup mock for new owner's membership after completion
+      // Setup mock for chained calls:
+      // 1. First call: get old owner's membership (for before state)
+      // 2. Second call: get new owner's membership (for after state)
       vi.mocked(mockMembershipQueryService.findTenantOwnerMembership)
+        .mockReset()
         .mockResolvedValueOnce(createTestMembership({ id: 'old-membership', userId: 'user-owner' }))
         .mockResolvedValueOnce(createTestMembership({ id: 'new-membership', userId: 'user-target' }));
 
@@ -692,13 +722,15 @@ describe('TenantTransferService', () => {
 
   describe('State Machine Transitions', () => {
     it('should follow PENDING → ACCEPTED → COMPLETED path on successful acceptance', async () => {
+      // Create transfer with future expiry for this test
       vi.mocked(mockTransferRepository.findById).mockResolvedValue(
         ok(createTestTransfer({ status: TenantTransferStatus.PENDING })),
       );
       vi.mocked(mockReauthService.verifyToken).mockResolvedValue(true);
-      vi.mocked(mockMembershipQueryService.findTenantOwnerMembership).mockResolvedValue(
-        createTestMembership(),
-      );
+      vi.mocked(mockMembershipQueryService.findTenantOwnerMembership)
+        .mockReset()
+        .mockResolvedValueOnce(createTestMembership({ userId: 'user-owner' })) // For before state
+        .mockResolvedValueOnce(createTestMembership({ userId: 'user-target' })); // For after state
       vi.mocked(mockTransferRepository.updateStatus).mockResolvedValue(
         ok(createTestTransfer({ status: TenantTransferStatus.ACCEPTED })),
       );
@@ -802,6 +834,7 @@ describe('TenantTransferService', () => {
     });
 
     it('should require re-authentication for acceptance', async () => {
+      // Create transfer with future expiry
       vi.mocked(mockTransferRepository.findById).mockResolvedValue(
         ok(createTestTransfer()),
       );
@@ -836,6 +869,7 @@ describe('TenantTransferService', () => {
     });
 
     it('should only allow target user to accept transfer', async () => {
+      // Create transfer with future expiry
       vi.mocked(mockTransferRepository.findById).mockResolvedValue(
         ok(createTestTransfer()),
       );
@@ -859,9 +893,11 @@ describe('TenantTransferService', () => {
 
   describe('Audit Logging', () => {
     it('should log initiation with correct details', async () => {
-      vi.mocked(mockMembershipQueryService.findTenantOwnerMembership).mockResolvedValue(
-        createTestMembership(),
-      );
+      // Setup mocks for initiation with proper chaining
+      vi.mocked(mockMembershipQueryService.findTenantOwnerMembership)
+        .mockReset()
+        .mockResolvedValueOnce(createTestMembership({ userId: 'user-owner' })) // Initiator is owner
+        .mockResolvedValueOnce(null); // Target is NOT already owner
       vi.mocked(mockMembershipQueryService.userExists).mockResolvedValue(true);
       vi.mocked(mockMembershipQueryService.isUserQuarantined).mockResolvedValue(false);
       vi.mocked(mockMembershipQueryService.findActiveMembership).mockResolvedValue(
@@ -906,11 +942,12 @@ describe('TenantTransferService', () => {
     });
 
     it('should log completion with before/after state snapshots', async () => {
-      vi.mocked(mockTransferRepository.findById).mockResolvedValue(
-        ok(createTestTransfer()),
-      );
+      // Create fresh transfer with future expiry for this test
+      const testTransfer = createTestTransfer();
+      vi.mocked(mockTransferRepository.findById).mockResolvedValue(ok(testTransfer));
       vi.mocked(mockReauthService.verifyToken).mockResolvedValue(true);
       vi.mocked(mockMembershipQueryService.findTenantOwnerMembership)
+        .mockReset()
         .mockResolvedValueOnce(createTestMembership({ id: 'membership-old', userId: 'user-owner' }))
         .mockResolvedValueOnce(createTestMembership({ id: 'membership-new', userId: 'user-target' }));
       vi.mocked(mockTransferRepository.updateStatus).mockResolvedValue(

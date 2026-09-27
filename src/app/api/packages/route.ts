@@ -15,7 +15,7 @@ import type { PrismaClient } from '@/generated/prisma/client';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
@@ -78,10 +78,10 @@ interface PackageListResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with created package log or error
  */
-const handleLogPackage: AuthorizedRouteHandler<PackageLogResponse> = async (
+const handleLogPackage: AuthorizedRouteHandler<PackageLogResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<PackageLogResponse>> => {
+): Promise<NextResponse<PackageLogResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -90,7 +90,7 @@ const handleLogPackage: AuthorizedRouteHandler<PackageLogResponse> = async (
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId } as unknown as PackageLogResponse,
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
       { status: 400 },
     );
   }
@@ -98,7 +98,7 @@ const handleLogPackage: AuthorizedRouteHandler<PackageLogResponse> = async (
   const validation = logPackageSchema.safeParse(body);
   if (!validation.success) {
     return NextResponse.json(
-      { code: 'COMMON_VALIDATION_FAILED', fields: formatZodErrors(validation.error), correlationId } as unknown as PackageLogResponse,
+      { code: 'COMMON_VALIDATION_FAILED', message: 'Validation failed', fields: formatZodErrors(validation.error), correlationId },
       { status: 400 },
     );
   }
@@ -107,7 +107,7 @@ const handleLogPackage: AuthorizedRouteHandler<PackageLogResponse> = async (
   const result = await useCase.execute({ authContext, data: validation.data });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<PackageLogResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const pkg = result.data;
@@ -142,10 +142,10 @@ const handleLogPackage: AuthorizedRouteHandler<PackageLogResponse> = async (
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with package logs list or error
  */
-const handleListPackages: AuthorizedRouteHandler<PackageListResponse> = async (
+const handleListPackages: AuthorizedRouteHandler<PackageListResponse | ErrorResponseBody> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
-): Promise<NextResponse<PackageListResponse>> => {
+): Promise<NextResponse<PackageListResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -193,7 +193,7 @@ const handleListPackages: AuthorizedRouteHandler<PackageListResponse> = async (
     );
   } catch {
     return NextResponse.json(
-      { code: 'PACKAGE_LIST_FAILED', message: 'An unexpected error occurred. Please try again later.', correlationId } as unknown as PackageListResponse,
+      { code: 'PACKAGE_LIST_FAILED', message: 'An unexpected error occurred. Please try again later.', correlationId },
       { status: 500 },
     );
   }

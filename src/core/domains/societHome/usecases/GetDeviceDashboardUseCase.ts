@@ -11,11 +11,13 @@
  * @see Requirements 37.2, 37.5, 37.6
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getMembershipRole } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
 import { authorizationError, notFoundError } from '@core/utils';
-import { UserRole } from '@core/protocols';
+import { MembershipRole } from '@core/domains/membership/types';
 import type { HomeRepository } from '../repositories/HomeRepository';
 import type { DeviceDashboardItem } from '../entities';
 
@@ -25,7 +27,7 @@ import type { DeviceDashboardItem } from '../entities';
 
 export interface GetDeviceDashboardUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     householdId: string;
   }): Promise<DomainResult<DeviceDashboardItem[]>>;
 }
@@ -43,9 +45,11 @@ export const GetDeviceDashboardUseCaseImpl = ({
 }): GetDeviceDashboardUseCase => ({
   execute: async ({ authContext, householdId }) => {
     // 1. Validate role — only Warga or Ketua_RT can access device dashboard
+    // Use getMembershipRole for AuthContextCompat compatibility
+    const role = getMembershipRole(authContext);
     if (
-      authContext.role !== UserRole.Warga &&
-      authContext.role !== UserRole.Ketua_RT
+      role !== MembershipRole.RESIDENT &&
+      role !== MembershipRole.RT_ADMIN
     ) {
       return fail(
         authorizationError(

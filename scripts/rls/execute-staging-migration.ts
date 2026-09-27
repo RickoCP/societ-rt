@@ -145,7 +145,7 @@ async function validateDatabaseConnection(client: Client): Promise<void> {
   console.log(`✅ Connected to: ${versionString.split(',')[0]}`);
 
   const versionMatch = versionString.match(/PostgreSQL (\d+)/);
-  if (versionMatch) {
+  if (versionMatch && versionMatch[1]) {
     const majorVersion = parseInt(versionMatch[1], 10);
     if (majorVersion < 10) {
       console.warn(
@@ -318,8 +318,7 @@ async function executeMigration(config: MigrationConfig): Promise<MigrationExecu
     }
 
     const success =
-      migrationResult.status === 'success' ||
-      (config.dryRun && migrationResult.status === 'success');
+      migrationResult.status === 'success';
 
     return {
       success,

@@ -14,6 +14,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import type { ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RecordTransactionUseCase } from '@core/domains/finance/usecases';
@@ -38,7 +39,7 @@ const recordTransactionSchema = z.object({
 // Response types
 // ---------------------------------------------------------------------------
 
-interface TransactionCreateResponse {
+interface TransactionCreateData {
   data: {
     id: string;
     type: string;
@@ -51,7 +52,7 @@ interface TransactionCreateResponse {
   };
 }
 
-interface TransactionListResponse {
+interface TransactionListData {
   data: Array<{
     id: string;
     type: string;
@@ -70,6 +71,16 @@ interface TransactionListResponse {
   pageSize: number;
   totalPages: number;
 }
+
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type TransactionCreateResponse = TransactionCreateData | ErrorResponse | ErrorResponseBody;
+type TransactionListResponse = TransactionListData | ErrorResponse | ErrorResponseBody;
 
 // ---------------------------------------------------------------------------
 // POST handler — Record transaction
@@ -94,7 +105,7 @@ const handleRecordTransaction: AuthorizedRouteHandler<TransactionCreateResponse>
         correlationId,
       },
       { status: 400 },
-    ) as NextResponse<TransactionCreateResponse>;
+    );
   }
 
   const validation = recordTransactionSchema.safeParse(body);
@@ -106,7 +117,7 @@ const handleRecordTransaction: AuthorizedRouteHandler<TransactionCreateResponse>
         correlationId,
       },
       { status: 400 },
-    ) as NextResponse<TransactionCreateResponse>;
+    );
   }
 
   // Execute use case via DI
@@ -123,7 +134,7 @@ const handleRecordTransaction: AuthorizedRouteHandler<TransactionCreateResponse>
 
   // Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<TransactionCreateResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const tx = result.data;
@@ -178,7 +189,7 @@ const handleListTransactions: AuthorizedRouteHandler<TransactionListResponse> = 
         correlationId,
       },
       { status: 400 },
-    ) as NextResponse<TransactionListResponse>;
+    );
   }
 
   // Query repository directly for read operations
@@ -192,7 +203,7 @@ const handleListTransactions: AuthorizedRouteHandler<TransactionListResponse> = 
   });
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<TransactionListResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const allTransactions = result.data.transactions;

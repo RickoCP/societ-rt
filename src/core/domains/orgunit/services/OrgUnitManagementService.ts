@@ -27,7 +27,7 @@
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import { v4 as uuidv4 } from 'uuid';
-import type { OrgUnit, CreateOrgUnitInput, UpdateOrgUnitInput } from '../entities';
+import type { OrgUnit, UpdateOrgUnitInput } from '../entities';
 import type { IOrgUnitRepository } from '../repositories';
 import type {
   OrgUnitWriteRepository,
@@ -37,8 +37,6 @@ import type { OrgUnitType } from '../types';
 import { MAX_ORGUNIT_DEPTH, canBeParent, isValidOrgUnitType } from '../types';
 import {
   orgUnitNotFound,
-  orgUnitTenantMismatch,
-  orgUnitCycleDetected,
   orgUnitParentTenantMismatch,
   orgUnitHasChildren,
   orgUnitHasMembers,
@@ -217,8 +215,8 @@ export interface PathRepairDetail {
   readonly oldDepth: number;
   /** New (correct) depth */
   readonly newDepth: number;
-  /** Whether repair was applied */
-  readonly applied: boolean;
+  /** Whether repair was applied - mutable during repair process */
+  applied: boolean;
 }
 
 // ---------------------------------------------------------------------------

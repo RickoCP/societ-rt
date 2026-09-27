@@ -10,12 +10,14 @@
  * reported, valid rows are applied. Role: Super_Admin only.
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import { UserRole } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, validationError } from '@core/utils';
 import type { TenantRepository } from '../repositories/TenantRepository';
 import { authInsufficientRole } from '@core/domains/auth/errors/authErrors';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { hasUserRole, getTenantId, getUserId, getImpersonatorId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Result shape (mirrors the resident CSV import summary)
@@ -36,7 +38,7 @@ export interface TenantSirenImportResult {
 
 export interface ImportTenantSirenCsvUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     csvContent: string;
   }): Promise<DomainResult<TenantSirenImportResult>>;
 }
@@ -88,9 +90,13 @@ export const ImportTenantSirenCsvUseCaseImpl = ({
 }): ImportTenantSirenCsvUseCase => ({
   execute: async ({ authContext, csvContent }) => {
     // 1. Role gate — platform admin only
-    if (authContext.role !== UserRole.Super_Admin) {
+    if (!hasUserRole(authContext, UserRole.Super_Admin)) {
       return fail(authInsufficientRole());
     }
+
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+    const impersonatorId = getImpersonatorId(authContext);
 
     // 2. Split into rows (strip BOM, tolerate CRLF/LF, drop blank lines)
     const rows = csvContent
@@ -186,17 +192,17 @@ export const ImportTenantSirenCsvUseCaseImpl = ({
     // 6. Audit (fire-and-forget) — no device ids logged, only counts.
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'tenant_siren_devices_imported',
         resourceType: 'tenant',
-        resourceId: authContext.tenantId,
+        resourceId: tenantId,
         details: {
           updatedCount,
           clearedCount,
           skippedCount: skippedRows.length,
         },
-        impersonatorId: authContext.impersonatorId,
+        impersonatorId,
       })
       .catch(() => {
         /* audit must not block the response */

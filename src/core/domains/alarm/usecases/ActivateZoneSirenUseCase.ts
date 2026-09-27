@@ -21,6 +21,7 @@ import type {
   IoTGatewayProtocol,
 } from '@core/protocols';
 import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { fail, ok, validationError } from '@core/utils';
 import type { AlarmRepository } from '../repositories/AlarmRepository';
@@ -75,6 +76,9 @@ export const ActivateZoneSirenUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): ActivateZoneSirenUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // Validate duration
     const duration = data.duration ?? DEFAULT_DURATION_SECONDS;
     if (duration <= 0 || duration > MAX_DURATION_SECONDS) {
@@ -91,7 +95,7 @@ export const ActivateZoneSirenUseCaseImpl = ({
 
     // 1. Validate zone exists by querying devices in the zone
     const devicesResult = await alarmRepository.findByZone(
-      authContext.tenantId,
+      tenantId,
       data.zone,
     );
 
@@ -117,7 +121,7 @@ export const ActivateZoneSirenUseCaseImpl = ({
           deviceId: device.deviceId,
           commandType: 'siren_activate',
           params: { duration },
-          requestedBy: authContext.userId,
+          requestedBy: userId,
         },
       );
 
@@ -125,7 +129,7 @@ export const ActivateZoneSirenUseCaseImpl = ({
       if (!commandResult.success) {
         notificationQueueProtocol
           .enqueueNotification({
-            tenantId: authContext.tenantId,
+            tenantId,
             userId: '',
             type: 'alarm_device_unresponsive',
             title: 'Perangkat Alarm Tidak Merespons',
@@ -138,8 +142,8 @@ export const ActivateZoneSirenUseCaseImpl = ({
 
         auditQueueProtocol
           .enqueueAudit({
-            tenantId: authContext.tenantId,
-            actorUserId: authContext.userId,
+            tenantId,
+            actorUserId: userId,
             actionType: 'alarm_activation_failed',
             resourceType: 'alarm_device',
             resourceId: device.id,
@@ -156,11 +160,11 @@ export const ActivateZoneSirenUseCaseImpl = ({
       }
 
       // Activate siren in repository
-      await alarmRepository.activateSiren(authContext.tenantId, device.deviceId);
+      await alarmRepository.activateSiren(tenantId, device.deviceId);
 
       // 4. Record alarm event
       const eventResult = await alarmRepository.createEvent(
-        authContext.tenantId,
+        tenantId,
         {
           alarmDeviceId: device.deviceId,
           triggerSource: data.triggerSource,
@@ -176,11 +180,11 @@ export const ActivateZoneSirenUseCaseImpl = ({
 
     // 5. Publish alarm event to Realtime Bus (fire-and-forget)
     if (activatedEvents.length > 0) {
-      const channel = `${EVENT_CHANNELS.ALARM_EVENTS}:${authContext.tenantId}`;
+      const channel = `${EVENT_CHANNELS.ALARM_EVENTS}:${tenantId}`;
       realtimeBusProtocol
         .publish(channel, {
           id: `alarm_zone_activated_${data.zone}_${Date.now()}`,
-          tenantId: authContext.tenantId,
+          tenantId,
           channel: EVENT_CHANNELS.ALARM_EVENTS,
           eventType: 'alarm_triggered',
           payload: {
@@ -201,7 +205,7 @@ export const ActivateZoneSirenUseCaseImpl = ({
       // 6. Enqueue notifications to Security_Guard and Ketua_RT (fire-and-forget)
       notificationQueueProtocol
         .enqueueNotification({
-          tenantId: authContext.tenantId,
+          tenantId,
           userId: '',
           type: 'alarm_zone_activated',
           title: 'Alarm Zona Aktif',
@@ -215,8 +219,8 @@ export const ActivateZoneSirenUseCaseImpl = ({
       // Audit log (fire-and-forget)
       auditQueueProtocol
         .enqueueAudit({
-          tenantId: authContext.tenantId,
-          actorUserId: authContext.userId,
+          tenantId,
+          actorUserId: userId,
           actionType: 'alarm_zone_activated',
           resourceType: 'alarm_zone',
           resourceId: data.zone,

@@ -1,0 +1,970 @@
+﻿
+> societ-rt@0.1.0 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.1 [39m[90mD:/RCP/Idea/SocieT RT/SocieT RT[39m
+
+node.exe : [90mstderr[2m | src/core/domains/notification/services/__tests__/NotificationSecurityService.test.ts[2m > 
+[22m[2mNotificationSecurityService[2m > [22m[2mAudit Logging[2m > [22m[2mlogDelivery[2m > [22m[2mshould 
+handle audit emitter failures gracefully
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([90mstderr[2m...ures gracefully:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[22m[39m[NotificationSecurityService] Audit emit failed: Error: Emitter failure
+    at Object.<anonymous> [90m(D:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\core\domains\notification\services\__tests__\NotificationSecurityService.test.ts:692:19[90m)[39m
+    at Object.mockCall 
+[90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/spy[24m/dist/index.js:89:15[90m)[39m
+    at Object.spy [as emitDeliveryAudit] 
+[90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4mtinyspy[24m/dist/index.js:47:80[90m)[39m
+    at Object.logDelivery [90m(D:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\core\domains\notification\services\NotificationSecurityService.ts:1032:28[90m)[39m
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\core\domains\notification\services\__tests__\NotificationSecurityService.test.ts:702:56
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+
+ [32mΓ£ô[39m src/core/domains/notification/services/__tests__/NotificationSecurityService.test.ts [2m([22m[2m46 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+(node:35820) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to 
+[process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32mΓ£ô[39m src/core/domains/audit/services/__tests__/TenantDataIsolationAuditService.test.ts [2m([22m[2m39 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/auth/__tests__/SessionInvalidationService.test.ts[2m > 
+[22m[2mSessionInvalidationService[2m > [22m[2minvalidateSession[2m > [22m[2mshould handle revocation errors 
+gracefully
+[22m[39mError during session invalidation: { code: [32m'REVOKE_ERROR'[39m, message: [32m'Failed to revoke'[39m }
+
+[90mstderr[2m | src/infrastructure/auth/__tests__/SessionInvalidationService.test.ts[2m > 
+[22m[2mSessionInvalidationService[2m > [22m[2mAudit Logger[2m > [22m[2mshould not fail if audit logger throws
+[22m[39mFailed to log session invalidation audit entry
+
+[90mstderr[2m | src/infrastructure/auth/__tests__/RefreshTokenService.test.ts[2m > [22m[2mRefreshTokenService[2m > 
+[22m[2maudit logging[2m > [22m[2mshould not throw if audit logger fails
+[22m[39mFailed to log refresh token audit entry
+
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/SessionInvalidationService.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 56[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/RefreshTokenService.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 61[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mcheckPermissionsBatch[2m > [22m[2mshould process multiple permission checks successfully
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh5w4-ay2fv8'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.084Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m29[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mcheckPermissionsBatch[2m > [22m[2mshould return granted true for allowed permissions
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh5wk-4awifs'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.100Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m12[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mcheckPermissionsBatch[2m > [22m[2mshould return granted false for denied permissions
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh5wz-yuz4k8'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.115Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m14[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembershipRepository.test.ts[2m > 
+[22m[2mPrismaMembershipRepository[2m > [22m[2mfindByUserId[2m > [22m[2mshould return empty array on error
+[22m[39m[MembershipRepository] findByUserId error: Error: DB error
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\repositories\membership\__tests__\PrismaMembershipRepository.test.ts:242:56
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembershipRepository.test.ts[2m > 
+[22m[2mPrismaMembershipRepository[2m > [22m[2mfindByUserAndTenant[2m > [22m[2mshould return empty array on error
+[22m[39m[MembershipRepository] findByUserAndTenant error: Error: DB connection failed
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\repositories\membership\__tests__\PrismaMembershipRepository.test.ts:303:56
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembershipRepository.test.ts[2m > 
+[22m[2mPrismaMembershipRepository[2m > [22m[2mfindActiveByUserAndTenant[2m > [22m[2mshould return empty array on 
+error
+[22m[39m[MembershipRepository] findActiveByUserAndTenant error: Error: Database timeout
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\repositories\membership\__tests__\PrismaMembershipRepository.test.ts:346:56
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mcheckPermissionsBatch[2m > [22m[2mshould track processing time per item when enabled
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh5xw-vumyec'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.148Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m15[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembershipRepository.test.ts[2m > 
+[22m[2mPrismaMembershipRepository[2m > [22m[2mfindByUserAndTenantWithStatus (TPR-04)[2m > [22m[2mshould return 
+empty array on error
+[22m[39m[MembershipRepository] findByUserAndTenantWithStatus error: Error: Connection refused
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\repositories\membership\__tests__\PrismaMembershipRepository.test.ts:410:56
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembershipRepository.test.ts[2m > 
+[22m[2mPrismaMembershipRepository[2m > [22m[2mresolveMembership[2m > [22m[2merror handling[2m > [22m[2mshould 
+return technical error on database failure
+[22m[39m[MembershipRepository] resolveMembership error: Error: Connection failed
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\repositories\membership\__tests__\PrismaMembershipRepository.test.ts:709:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembershipRepository.test.ts[2m > 
+[22m[2mPrismaMembershipRepository[2m > [22m[2mhasActiveMembershipInTenant[2m > [22m[2mshould return false on 
+error
+[22m[39m[MembershipRepository] hasActiveMembershipInTenant error: Error: DB error
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\repositories\membership\__tests__\PrismaMembershipRepository.test.ts:792:53
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembershipRepository.test.ts[2m > 
+[22m[2mPrismaMembershipRepository[2m > [22m[2mcountByUserAndTenant[2m > [22m[2mshould return 0 on error
+[22m[39m[MembershipRepository] countByUserAndTenant error: Error: DB error
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\repositories\membership\__tests__\PrismaMembershipRepository.test.ts:848:53
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mupdateMembershipsBatch[2m > [22m[2mshould process multiple membership updates successfully
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh5yb-oqwblf'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.163Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m11[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/MembershipInvitationService.test.ts [2m([22m[2m31 tests[22m[2m)[22m[32m 55[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/repositories/membership/__tests__/PrismaMembershipRepository.test.ts [2m([22m[2m47 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mupdateMembershipsBatch[2m > [22m[2mshould use ATOMIC transaction mode by default
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh5yr-0dqm7d'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.179Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'ATOMIC'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m15[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/AdminMembershipService.test.ts [2m([22m[2m51 tests[22m[2m)[22m[32m 73[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mupdateMembershipsBatch[2m > [22m[2mshould respect specified transaction mode
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh5z6-kssulc'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.194Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m13[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mupdateMembershipsBatch[2m > [22m[2mshould return detailed results for each item
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh602-zy2whb'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.226Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'ATOMIC'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m31[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mqueryAuthorizationBatch[2m > [22m[2mshould process multiple authorization queries successfully
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh60x-xt95ki'[39m,
+  operationType: [32m'AUTHORIZATION_QUERY'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.257Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'system'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m28[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [32mΓ£ô[39m src/core/domains/orgunit/services/__tests__/OrgUnitManagementService.test.ts [2m([22m[2m39 tests[22m[2m)[22m[32m 75[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mqueryAuthorizationBatch[2m > [22m[2mshould return membership status in query result
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh60z-5x1b8x'[39m,
+  operationType: [32m'AUTHORIZATION_QUERY'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.259Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'system'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m0[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mqueryAuthorizationBatch[2m > [22m[2mshould check specific permission when provided
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh61d-t4jgvf'[39m,
+  operationType: [32m'AUTHORIZATION_QUERY'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.273Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'system'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m13[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2minvalidateCachesBatch[2m > [22m[2mshould process multiple cache invalidation requests successfully
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh61o-el252v'[39m,
+  operationType: [32m'CACHE_INVALIDATION'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.284Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'system'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m6[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mTransaction Mode[2m > [22m[2mshould indicate success=true when all items succeed in ATOMIC mode
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh62p-wd7ghl'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.321Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'ATOMIC'[39m,
+  totalItems: [33m2[39m,
+  successCount: [33m2[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m30[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mTransaction Mode[2m > [22m[2mshould indicate success=true in PARTIAL mode when at least one item succeeds
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh635-1kjdoj'[39m,
+  operationType: [32m'MEMBERSHIP_UPDATE'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.337Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m15[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mResult Aggregation[2m > [22m[2mshould correctly count successes and failures
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh642-g9927b'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.370Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m3[39m,
+  successCount: [33m3[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m31[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [32mΓ£ô[39m src/core/domains/transfer/services/__tests__/TenantTransferService.test.ts [2m([22m[2m48 tests[22m[2m)[22m[32m 88[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mResult Aggregation[2m > [22m[2mshould include processing time in results
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh64g-reyst0'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.384Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m12[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle single item batch
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh68d-3q2tin'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.525Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m14[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/infrastructure/middleware/authorization/__tests__/authorizationMiddleware.test.ts[2m > [22m[2mPerformance Tests[2m > [22m[2mresolution + serialization should complete under 50ms p99
+[22m[39mPerformance Test Results (100 iterations):
+  Average: 0.78ms
+  p50: 0.39ms
+  p95: 2.86ms
+  p99: 8.47ms
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle batch at exact size limit
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh69o-gqjt1i'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.572Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m3[39m,
+  successCount: [33m3[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m46[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/infrastructure/middleware/authorization/__tests__/authorizationMiddleware.test.ts[2m > [22m[2mPerformance Tests[2m > [22m[2mJWT extraction should be fast (< 10ms avg)
+[22m[39mJWT Extraction Performance (50 iterations):
+  Average: 0.22ms
+
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle null orgUnitId for tenant-level queries
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh6a4-125gun'[39m,
+  operationType: [32m'AUTHORIZATION_QUERY'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.588Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'system'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m1[39m,
+  successCount: [33m1[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m14[39m,
+  correlationId: [90mundefined[39m
+}
+
+[90mstdout[2m | src/infrastructure/middleware/authorization/__tests__/authorizationMiddleware.test.ts[2m > [22m[2mPerformance Tests[2m > [22m[2mheader serialization should be fast (< 1ms avg)
+[22m[39mHeader Serialization Performance (100 iterations):
+  Average: 0.01ms
+
+ [32mΓ£ô[39m src/infrastructure/middleware/authorization/__tests__/authorizationMiddleware.test.ts [2m([22m[2m54 tests[22m[2m)[22m[33m 438[2mms[22m[39m
+[90mstdout[2m | src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts[2m > [22m[2mBatchOperationsService[2m > [22m[2mEdge Cases[2m > [22m[2mshould maintain item order in results
+[22m[39m[BATCH] Operation completed: {
+  operationId: [32m'batch-muilh6az-fa6div'[39m,
+  operationType: [32m'PERMISSION_CHECK'[39m,
+  timestamp: [32m'2026-09-26T16:19:04.619Z'[39m,
+  tenantId: [32m'tenant-456'[39m,
+  initiatedBy: [32m'user-123'[39m,
+  transactionMode: [32m'PARTIAL'[39m,
+  totalItems: [33m3[39m,
+  successCount: [33m3[39m,
+  failureCount: [33m0[39m,
+  rolledBack: [33mfalse[39m,
+  totalProcessingTimeMs: [33m29[39m,
+  correlationId: [90mundefined[39m
+}
+
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/BatchOperationsService.test.ts [2m([22m[2m42 tests[22m[2m)[22m[33m 573[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/__tests__/membership.property.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 183[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/ShadowAuthorizationService.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/PerformanceTargetsValidationService.test.ts [2m([22m[2m60 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/RefreshTokenSecurityService.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32mΓ£ô[39m src/core/utils/errors/ErrorCodeRegistry.test.ts [2m([22m[2m66 tests[22m[2m)[22m[32m 106[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/orgunit/services/__tests__/MultiClusterService.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-removal/__tests__/CodePathAnalyzer.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 1489[2mms[22m[39m
+   [33m[2mΓ£ô[22m[39m CodePathAnalyzer[2m > [22mCodePathAnalyzerImpl[2m > [22manalyzeCodePaths[2m > [22mshould use default options when none provided [33m 1482[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/tenant/services/__tests__/TenantOnboardingService.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 53[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/audit/services/__tests__/AuditSecurityEventsService.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/context/__tests__/ContextSwitchService.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/middleware/authorization/__tests__/auth-flow-rt-admin.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32mΓ£ô[39m tests/e2e/auth-flow/flows/platform-admin.test.ts [2m([22m[2m54 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [32mΓ£ô[39m tests/e2e/auth-flow/flows/resident.test.ts [2m([22m[2m61 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/DisasterRecoveryTestingService.test.ts [2m([22m[2m49 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/middleware/authorization/__tests__/requireEntitlement.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/CrossTenantPreventionService.test.ts [2m([22m[2m57 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/middleware/authorization/__tests__/requirePermission.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/cutover/__tests__/AuthorizationCutoverService.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 62[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/__tests__/e2e/auth-flow/context-switch.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/subscription/services/__tests__/EntitlementService.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32mΓ£ô[39m tests/e2e/auth-flow/refresh-token-rotation.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 51[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/usecases/__tests__/ProcessDoorEventUseCase.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/PermissionSyncService.test.ts [2m([22m[2m44 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/MembershipLifecycleService.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould evaluate all write paths in inventory
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.799Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould track status counts correctly
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.802Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould identify paths ready for retirement
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.803Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":2,"blockedCount":2,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould identify paths blocked from retirement
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.804Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"2.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould verify quarantine is preserved
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.804Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould fail quarantine verification when count is wrong
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.805Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":false}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mevaluateAllWritePaths[2m > [22m[2mshould provide summary message
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.806Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2minitiateRetirement[2m > [22m[2mshould retire eligible write path
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.808Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > 
+[22m[2mWritePathFinalizationService[2m > [22m[2minitiateRetirement[2m > [22m[2mshould fail for ineligible write 
+path (recent cutover)
+[22m[39m[WritePathFinalization] FAILED {"timestamp":"2026-09-26T16:19:06.808Z","type":"WRITE_PATH_FINALIZATION","operat
+ion":"INITIATE_RETIREMENT","writePathId":"WP-001","success":false,"hoursSinceCutover":"2.00","error":"Conditions not 
+met","blockers":"Stability Window, Minimum Successful Writes, Rollback Window"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > 
+[22m[2mWritePathFinalizationService[2m > [22m[2minitiateRetirement[2m > [22m[2mshould fail for unknown write path
+[22m[39m[WritePathFinalization] FAILED {"timestamp":"2026-09-26T16:19:06.809Z","type":"WRITE_PATH_FINALIZATION","operat
+ion":"INITIATE_RETIREMENT","writePathId":"WP-UNKNOWN","success":false,"hoursSinceCutover":"72.00","error":"Write path 
+not found"}
+
+ [32mΓ£ô[39m src/core/domains/emergency/services/__tests__/SafetyCriticalProtectionService.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2minitiateRetirement[2m > [22m[2mshould allow skipping stability check
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.810Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"1.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2minitiateRetirement[2m > [22m[2mshould create audit entry
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.810Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123","correlationId":"corr-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mrevertRetirement[2m > [22m[2mshould revert retired path to dual-write
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.812Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mrevertRetirement[2m > [22m[2mshould revert retired path to dual-write
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.812Z","type":"WRITE_PATH_FINALIZATION","operation":"REVERT_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"MEMBERSHIP_ONLY","newStatus":"DUAL_WRITE","operatorId":"admin-456"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mrevertRetirement[2m > [22m[2mshould mark rollback triggered after revert
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.813Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mrevertRetirement[2m > [22m[2mshould mark rollback triggered after revert
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.814Z","type":"WRITE_PATH_FINALIZATION","operation":"REVERT_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"MEMBERSHIP_ONLY","newStatus":"DUAL_WRITE","operatorId":"admin-456"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould filter by writePathId
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.816Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould filter by writePathId
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.816Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-002","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould limit results
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.817Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould limit results
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.817Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-002","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould sort by timestamp descending
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.817Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mgetRetirementAuditLog[2m > [22m[2mshould sort by timestamp descending
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.817Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-002","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2misFinalizationComplete[2m > [22m[2mshould return true when all paths retired and quarantine verified
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.819Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2misFinalizationComplete[2m > [22m[2mshould return true when all paths retired and quarantine verified
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.819Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-002","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2misFinalizationComplete[2m > [22m[2mshould return true when all paths retired and quarantine verified
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.819Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-006","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2misFinalizationComplete[2m > [22m[2mshould return true when all paths retired and quarantine verified
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.819Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-008","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.819Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":4,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.820Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":4,"blockedCount":0,"isComplete":false,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.820Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.820Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-002","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.820Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-006","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.820Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-008","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle full retirement workflow
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.820Z","type":"WRITE_PATH_FINALIZATION","operation":"EVALUATE_ALL","writePathId":"all","success":true,"hoursSinceCutover":"72.00","totalPaths":8,"readyCount":0,"blockedCount":0,"isComplete":true,"quarantineVerified":true}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle retirement and revert cycle
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.821Z","type":"WRITE_PATH_FINALIZATION","operation":"INITIATE_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"DUAL_WRITE","newStatus":"MEMBERSHIP_ONLY","operatorId":"admin-123"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts[2m > [22m[2mWritePathFinalizationService[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle retirement and revert cycle
+[22m[39m[WritePathFinalization] {"timestamp":"2026-09-26T16:19:06.821Z","type":"WRITE_PATH_FINALIZATION","operation":"REVERT_RETIREMENT","writePathId":"WP-001","success":true,"hoursSinceCutover":"72.00","previousStatus":"MEMBERSHIP_ONLY","newStatus":"DUAL_WRITE","operatorId":"admin-456"}
+
+ [32mΓ£ô[39m src/infrastructure/compatibility/__tests__/WritePathFinalizationService.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/logging/__tests__/AuthorizationAuditLogger.test.ts [2m([22m[2m46 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32mΓ£ô[39m tests/e2e/auth-flow/suspended-membership.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/SecurityValidationSuite.test.ts [2m([22m[2m55 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-cleanup/__tests__/SchemaCleanupService.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/auth/__tests__/PasswordChangeHandler.test.ts[2m > 
+[22m[2mPasswordChangeHandler[2m > [22m[2mcheckPasswordHistory[2m > [22m[2mshould handle repository errors 
+gracefully
+[22m[39mFailed to check password history: { code: [32m'DB_ERROR'[39m, message: [32m'Database error'[39m }
+
+[90mstderr[2m | src/infrastructure/auth/__tests__/PasswordChangeHandler.test.ts[2m > 
+[22m[2mPasswordChangeHandler[2m > [22m[2mchangePassword[2m > [22m[2mshould complete password change even if 
+tokenVersion increment fails
+[22m[39mCRITICAL: Failed to increment tokenVersion during password change: { code: [32m'DB_ERROR'[39m, message: 
+[32m'Database error'[39m }
+
+ [32mΓ£ô[39m src/core/domains/orgunit/services/__tests__/OrgUnitHierarchyReader.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/PasswordChangeHandler.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/PerformanceValidationService.test.ts [2m([22m[2m59 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/usecases/__tests__/GetDoorStateDashboardUseCase.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/subscription/services/__tests__/SubscriptionStatusService.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/iot/services/__tests__/IoTDeviceIsolationService.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/household/services/__tests__/HouseholdIsolationService.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/utils/__tests__/jwtService.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 1189[2mms[22m[39m
+   [33m[2mΓ£ô[22m[39m JWTService[2m > [22mcreate and validate consistency[2m > [22mshould create tokens with unique iat timestamps [33m 1114[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/remediation/__tests__/LegacyDataRemediationService.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 63[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/compatibility/__tests__/WritePathRetirementPolicy.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/billing/services/__tests__/BillingService.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/orgunit/services/__tests__/OrgUnitCrudService.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/auth/__tests__/TokenVersionService.test.ts[2m > [22m[2mTokenVersionService[2m > 
+[22m[2mforceLogoutTenant[2m > [22m[2mshould handle getUserIdsByTenant failure gracefully
+[22m[39mFailed to get user IDs for refresh token revocation { code: [32m'DB_ERROR'[39m, message: [32m'Failed to get 
+users'[39m }
+
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/TokenVersionService.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/MembershipResolutionService.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/AuthorizationErrorHandlerService.test.ts [2m([22m[2m75 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/services/__tests__/SecurityTestingSuite.test.ts [2m([22m[2m49 tests[22m[2m)[22m[32m 51[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-cleanup/__tests__/BackupService.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+{"timestamp":"2026-09-26T16:19:08.310Z","level":"info","message":"Context switch successful: TENANT_SWITCH for user user-456","service_name":"societ-rt","service_version":"1.0.0-staging","environment":"staging","correlation_id":"test-correlation-123","user_id":"user-456","tenant_id":"tenant-b-012","event_type":"CONTEXT_SWITCH","switch_type":"TENANT_SWITCH","from_tenant_id":"tenant-a-789","to_tenant_id":"tenant-b-012","from_org_unit_id":null,"to_org_unit_id":null,"success":true,"result_code":"SUCCESS","trigger":"USER_INITIATED","membership_id":"membership-901"}
+[90mstderr[2m | src/core/domains/authorization/__tests__/AuthorizationConcurrencyService.test.ts[2m > 
+[22m[2mAuthorizationConcurrencyService[2m > [22m[2mDefault Configuration[2m > [22m[2mshould work with default 
+audit logger when none provided
+[22m[39m[SECURITY] TOCTOU Race Detected: {
+  incidentId: [32m'toctou-muilh95h-vbvdt4'[39m,
+  timestamp: [32m'2026-09-26T16:19:08.309Z'[39m,
+  operationType: [32m'membership:update'[39m,
+  userId: [32m'user-a-uuid'[39m,
+  tenantId: [32m'tenant-a-uuid'[39m,
+  stateChange: [32m'Authorization revoked between check and execution'[39m,
+  context: { userId: [32m'user-a-uuid'[39m, tenantId: [32m'tenant-a-uuid'[39m }
+}
+
+[90mstderr[2m | src/core/domains/audit/services/__tests__/AuditTrailService.test.ts[2m > 
+[22m[2mAuditTrailService[2m > [22m[2medge cases[2m > [22m[2mshould handle emitter failures gracefully
+[22m[39m[AuditTrailService] Failed to emit event: Error: Emitter failed
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\core\domains\audit\services\__tests__\AuditTrailService.test.ts:704:42
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/utils/__tests__/monitoringWindow.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/logging/__tests__/ContextSwitchAuditLogger.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/CacheInvalidationService.test.ts [2m([22m[2m60 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/audit/services/__tests__/AuditTrailService.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 53[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/AuthorizationConcurrencyService.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/repositories/membership/__tests__/PrismaMembershipWriteRepository.test.ts[2m > 
+[22m[2mPrismaMembershipWriteRepository[2m > [22m[2mcreate[2m > [22m[2mshould return technical error for other 
+database errors
+[22m[39m[MembershipWriteRepository] create error: Error: Database connection failed
+    at [90mD:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\repositories\membership\__tests__\PrismaMembershipWriteRepository.test.ts:144:9
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+    at runSuite [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-ho
+oks.js:1718:8[90m)[39m
+
+ [32mΓ£ô[39m src/infrastructure/repositories/membership/__tests__/PrismaMembershipWriteRepository.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/cutover/__tests__/CutoverExecutionService.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/PermissionRegistry.test.ts [2m([22m[2m45 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/auth/__tests__/SecureTokenStorage.test.ts[2m > [22m[2mSecureTokenStorage[2m > 
+[22m[2mencrypt/decrypt[2m > [22m[2mshould return null when no active key
+[22m[39mSecureTokenStorage: No active encryption key
+
+[90mstderr[2m | src/infrastructure/auth/__tests__/SecureTokenStorage.test.ts[2m > [22m[2mSecureTokenStorage[2m > 
+[22m[2mencrypt/decrypt[2m > [22m[2mshould fail decryption with tampered ciphertext
+[22m[39mSecureTokenStorage: Decryption failed Error: Unsupported state or unable to authenticate data
+[90m    at Decipheriv.final (node:internal/crypto/cipher:170:29)[39m
+    at Object.decrypt [90m(D:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\auth\SecureTokenStorage.ts:329:18[90m)[39m
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\infrastructure\auth\__tests__\SecureTokenStorage.test.ts:213:33
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+
+[90mstderr[2m | src/infrastructure/auth/__tests__/SecureTokenStorage.test.ts[2m > [22m[2mSecureTokenStorage[2m > 
+[22m[2mencrypt/decrypt[2m > [22m[2mshould fail decryption with tampered auth tag
+[22m[39mSecureTokenStorage: Decryption failed Error: Unsupported state or unable to authenticate data
+[90m    at Decipheriv.final (node:internal/crypto/cipher:170:29)[39m
+    at Object.decrypt [90m(D:\RCP\Idea\SocieT RT\SocieT 
+RT\[39msrc\infrastructure\auth\SecureTokenStorage.ts:329:18[90m)[39m
+    at [90mD:\RCP\Idea\SocieT RT\SocieT RT\[39msrc\infrastructure\auth\__tests__\SecureTokenStorage.test.ts:229:33
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:154:11
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:751:26
+    at 
+[90mfile:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1886:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/ch
+unk-hooks.js:1852:10[90m)[39m
+    at runTest [90m(file:///D:/RCP/Idea/SocieT%20RT/SocieT%20RT/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hoo
+ks.js:1563:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+
+[90mstdout[2m | src/infrastructure/legacy-cleanup/__tests__/PreFlightVerificationService.test.ts[2m > [22m[2mPreFlightVerificationService[2m > [22m[2mfail-closed behavior[2m > [22m[2mshould fail closed when no services provided
+[22m[39mStarting pre-flight verification { correlationId: [32m'preflight-1790439548868-5nxjpkzf5'[39m }
+
+[90mstderr[2m | src/infrastructure/auth/__tests__/SecureTokenStorage.test.ts[2m > [22m[2mSecureTokenStorage[2m > 
+[22m[2mreEncrypt[2m > [22m[2mshould return null if decryption fails
+[22m[39mSecureTokenStorage: Key version 999 not found
+
+[90mstdout[2m | src/infrastructure/legacy-cleanup/__tests__/PreFlightVerificationService.test.ts[2m > [22m[2mPreFlightVerificationService[2m > [22m[2mfail-closed behavior[2m > [22m[2mshould fail closed when no services provided
+[22m[39mPre-flight verification FAILED {
+  correlationId: [32m'preflight-1790439548868-5nxjpkzf5'[39m,
+  verified: [33mfalse[39m,
+  blockingIssuesCount: [33m5[39m
+}
+
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/SecureTokenStorage.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-cleanup/__tests__/PreFlightVerificationService.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32mΓ£ô[39m tests/e2e/auth-flow/token-invalidation.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/OrgUnitScopeAuthorizer.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/logging/__tests__/LoggingConfiguration.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/compatibility/__tests__/PreCutoverGateService.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/logging/__tests__/Logger.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-removal/__tests__/DeprecationHelper.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/AuthorizationContextResolver.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32mΓ£ô[39m src/core/utils/errors/createErrorFromCode.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/remediation/__tests__/QuarantineValidator.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/DelegatedMembershipService.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/rls/__tests__/RlsPolicyManager.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/cutover/__tests__/CutoverPlan.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/quarantine/__tests__/QuarantineManifestService.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-cleanup/__tests__/PostDropValidationService.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/subscription/services/__tests__/SubscriptionPlanService.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/membership/services/__tests__/DelegationMatrixService.test.ts [2m([22m[2m73 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/rls/__tests__/RlsSessionContext.test.ts [2m([22m[2m46 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/rls/__tests__/TableClassificationRegistry.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mcreateUserWithMembership[2m > [22m[2mshould create both User and Membership in single transaction
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:19:10.235Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr-123","operation":"create","category":"USER_CREATION","actorUserId":"admin-789","tenantId":"tenant-123","success":true,"userId":"new-user-id","membershipId":"new-membership-id","role":"Warga","membershipRole":"RESIDENT"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mcreateUserWithMembership[2m > [22m[2mshould map legacy role to MembershipRole correctly
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:19:10.240Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Warga","membershipRole":"RESIDENT"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > 
+[22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mcreateUserWithMembership[2m > [22m[2mshould fail for 
+invalid role mapping
+[22m[39m[DualWrite] FAILED {"timestamp":"2026-09-26T16:19:10.246Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr"
+,"operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":false,"error":"I
+nvalid role mapping","legacyRole":"InvalidRole"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > 
+[22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mcreateUserWithMembership[2m > [22m[2mshould rollback 
+on transaction failure
+[22m[39m[DualWrite] FAILED {"timestamp":"2026-09-26T16:19:10.247Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr"
+,"operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":false,"error":"D
+atabase error"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mcreateUserWithMembership[2m > [22m[2mshould include correlation ID in result
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:19:10.249Z","type":"DUAL_WRITE_OPERATION","correlationId":"test-correlation-id","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Warga","membershipRole":"RESIDENT"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mupdateRoleWithMembership[2m > [22m[2mshould update both User.role and Membership.role in single transaction
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:19:10.250Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"update","category":"ROLE_ASSIGNMENT","actorUserId":"admin","tenantId":"tenant-123","targetUserId":"user-id","success":true,"newRole":"Pengurus","membershipRole":"ORG_ADMIN"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > 
+[22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mupdateRoleWithMembership[2m > [22m[2mshould block 
+quarantined users (INV-QUARANTINE-001)
+[22m[39m[DualWrite] FAILED {"timestamp":"2026-09-26T16:19:10.251Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr"
+,"operation":"update","category":"ROLE_ASSIGNMENT","actorUserId":"admin","tenantId":"tenant-123","targetUserId":"quaranti
+ned-user-id","success":false,"error":"Quarantined user blocked","reason":"INV-QUARANTINE-001"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mupdateRoleWithMembership[2m > [22m[2mshould create Membership if none exists (legacy user compatibility)
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:19:10.252Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"update","category":"ROLE_ASSIGNMENT","actorUserId":"admin","tenantId":"tenant-123","targetUserId":"user-id","success":true,"newRole":"Pengurus","membershipRole":"ORG_ADMIN"}
+
+ [32mΓ£ô[39m src/infrastructure/cutover/__tests__/CutoverMonitoringService.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > 
+[22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mupdateRoleWithMembership[2m > [22m[2mshould fail for 
+invalid role mapping
+[22m[39m[DualWrite] FAILED {"timestamp":"2026-09-26T16:19:10.254Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr"
+,"operation":"update","category":"ROLE_ASSIGNMENT","actorUserId":"admin","tenantId":"tenant-123","targetUserId":"user-id"
+,"success":false,"error":"Invalid role mapping","legacyRole":"NonExistentRole"}
+
+[90mstderr[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > 
+[22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mupdateRoleWithMembership[2m > [22m[2mshould rollback 
+on transaction failure
+[22m[39m[DualWrite] FAILED {"timestamp":"2026-09-26T16:19:10.255Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr"
+,"operation":"update","category":"ROLE_ASSIGNMENT","actorUserId":"admin","tenantId":"tenant-123","targetUserId":"user-id"
+,"success":false,"error":"Database error"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mRole Mapping Coverage[2m > [22m[2mshould map Super_Admin to PLATFORM_ADMIN
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:19:10.260Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Super_Admin","membershipRole":"PLATFORM_ADMIN"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mRole Mapping Coverage[2m > [22m[2mshould map Ketua_RT to RT_ADMIN
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:19:10.262Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Ketua_RT","membershipRole":"RT_ADMIN"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mRole Mapping Coverage[2m > [22m[2mshould map Pengurus to ORG_ADMIN
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:19:10.263Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Pengurus","membershipRole":"ORG_ADMIN"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mRole Mapping Coverage[2m > [22m[2mshould map Warga to RESIDENT
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:19:10.264Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Warga","membershipRole":"RESIDENT"}
+
+[90mstdout[2m | src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts[2m > [22m[2mAuthorizationWriteCompatibilityService[2m > [22m[2mRole Mapping Coverage[2m > [22m[2mshould map Security_Guard to SECURITY
+[22m[39m[DualWrite] {"timestamp":"2026-09-26T16:19:10.265Z","type":"DUAL_WRITE_OPERATION","correlationId":"corr","operation":"create","category":"USER_CREATION","actorUserId":"admin","tenantId":"tenant-123","success":true,"userId":"user-id","membershipId":"membership-id","role":"Security_Guard","membershipRole":"SECURITY"}
+
+ [32mΓ£ô[39m src/infrastructure/compatibility/__tests__/AuthorizationWriteCompatibilityService.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/remediation/__tests__/RemediationReportGenerator.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-cleanup/__tests__/CleanupMigrationGenerator.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/logging/__tests__/TokenValidationLogger.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/rls/__tests__/RlsCoverageEnforcer.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/auth/__tests__/TokenEntropyValidator.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-removal/__tests__/MigrationStatusTracker.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/authorization/__tests__/ShadowModeFeatureFlagService.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/compatibility/__tests__/WritePathInventory.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/remediation/__tests__/RoleMappingService.test.ts [2m([22m[2m43 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/utils/__tests__/correlationId.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-removal/__tests__/types.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/authorization/__tests__/LegacyAuthorizationAdapter.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/legacy-removal/__tests__/AuthPathValidator.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/usecases/__tests__/RegisterDoorSensorUseCase.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/usecases/__tests__/SetMonitoringWindowUseCase.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/doorMonitoring/usecases/__tests__/RequestDoorSensorInstallationUseCase.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32mΓ£ô[39m src/infrastructure/iot/__tests__/tuyaEventMapper.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32mΓ£ô[39m src/core/domains/emergencyContact/usecases/__tests__/EmergencyContactUseCases.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m106 passed[39m[22m[90m (106)[39m
+[2m      Tests [22m [1m[32m3491 passed[39m[22m[90m (3491)[39m
+[2m   Start at [22m 23:19:02
+[2m   Duration [22m 8.80s[2m (transform 22.75s, setup 0ms, collect 47.89s, tests 7.39s, environment 33ms, prepare 23.55s)[22m
+

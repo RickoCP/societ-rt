@@ -40,13 +40,22 @@ const openingBalanceSchema = z.object({
 // Response types
 // ---------------------------------------------------------------------------
 
-interface OpeningBalanceResponse {
+interface OpeningBalanceData {
   data: {
     year: number;
     amount: number;
     transactionId: string | null;
   };
 }
+
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type OpeningBalanceResponse = OpeningBalanceData | ErrorResponse;
 
 // ---------------------------------------------------------------------------
 // PUT handler — Set opening balance
@@ -67,7 +76,7 @@ const handleSetOpeningBalance: AuthorizedRouteHandler<OpeningBalanceResponse> = 
     return NextResponse.json(
       { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
       { status: 400 },
-    ) as NextResponse<OpeningBalanceResponse>;
+    );
   }
 
   const validation = openingBalanceSchema.safeParse(body);
@@ -79,7 +88,7 @@ const handleSetOpeningBalance: AuthorizedRouteHandler<OpeningBalanceResponse> = 
         correlationId,
       },
       { status: 400 },
-    ) as NextResponse<OpeningBalanceResponse>;
+    );
   }
 
   const { year, amount } = validation.data;
@@ -136,7 +145,7 @@ const handleSetOpeningBalance: AuthorizedRouteHandler<OpeningBalanceResponse> = 
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
-    ) as NextResponse<OpeningBalanceResponse>;
+    );
   }
 };
 

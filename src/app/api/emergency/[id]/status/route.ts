@@ -10,17 +10,14 @@
  * @see Requirements 10.3, 10.5
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import {
-  withPermission,
-  type AuthorizedRouteHandler,
-} from '@infrastructure/middleware/authorization/requirePermission';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
+import { withPermission } from '@infrastructure/middleware/authorization';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { UpdateEmergencyStatusUseCase } from '@core/domains/emergency/usecases';
 
 // ---------------------------------------------------------------------------
@@ -42,10 +39,10 @@ const updateStatusSchema = z.object({
  * Only users with `emergency:manage` permission and ACTIVE membership can use this.
  */
 const handleUpdateEmergencyStatus: AuthorizedRouteHandler<unknown> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-  routeContext?: { params?: Promise<Record<string, string>> },
-): Promise<NextResponse> => {
+  request,
+  authContext,
+  routeContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 

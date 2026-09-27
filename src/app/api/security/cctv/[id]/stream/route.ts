@@ -11,7 +11,7 @@
  * @see Permission Mapping: GET /api/security/cctv/:id/stream → security:read
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
@@ -32,7 +32,18 @@ const handleGetStreamUrl: AuthorizedRouteHandler<unknown> = async (
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
   // 1. Extract camera ID from route params
-  const { id: cameraId } = await routeContext!.params!;
+  const params = await routeContext!.params!;
+  const cameraId = params.id;
+  if (!cameraId) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Camera ID is required',
+        correlationId,
+      },
+      { status: 400 },
+    );
+  }
 
   // 2. Find camera (repository returns decrypted RTSP URL)
   try {

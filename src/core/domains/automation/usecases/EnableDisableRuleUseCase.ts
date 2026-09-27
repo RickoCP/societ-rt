@@ -10,9 +10,10 @@
  * @see Requirements 39.7, 39.13
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { fail, ok } from '@core/utils';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { AutomationRepository } from '../repositories/AutomationRepository';
 import type { AutomationRule } from '../entities';
 import { AUTOMATION_MAX_ACTIVE_RULES_PER_TENANT } from '../entities';
@@ -29,7 +30,7 @@ export interface EnableDisableRuleInput {
 
 export interface EnableDisableRuleUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: EnableDisableRuleInput;
   }): Promise<DomainResult<AutomationRule>>;
 }

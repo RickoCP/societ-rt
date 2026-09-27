@@ -9,7 +9,9 @@
  * @see Requirements 14.1, 14.2
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { EventRepository } from '../repositories/EventRepository';
@@ -21,7 +23,7 @@ import type { CommunityEvent, CreateEventInput } from '../entities';
 
 export interface CreateEventUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreateEventInput;
   }): Promise<DomainResult<CommunityEvent>>;
 }
@@ -38,11 +40,14 @@ export const CreateEventUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): CreateEventUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+    
     // 1. Create event via repository
     const result = await eventRepository.createEvent(
-      authContext.tenantId,
+      tenantId,
       data,
-      authContext.userId,
+      userId,
     );
 
     if (!result.success) {
@@ -54,8 +59,8 @@ export const CreateEventUseCaseImpl = ({
     // 2. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'event_created',
         resourceType: 'community_event',
         resourceId: event.id,

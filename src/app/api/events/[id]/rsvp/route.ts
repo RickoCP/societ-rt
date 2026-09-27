@@ -47,6 +47,15 @@ interface RsvpResponse {
   };
 }
 
+interface ErrorResponse {
+  code: string;
+  message?: string;
+  fields?: Record<string, string>;
+  correlationId: string;
+}
+
+type RsvpApiResponse = RsvpResponse | ErrorResponse;
+
 // ---------------------------------------------------------------------------
 // POST handler — Submit RSVP
 // ---------------------------------------------------------------------------
@@ -66,11 +75,11 @@ interface RsvpResponse {
  *
  * @see Permission Mapping: POST /api/events/[id]/rsvp → announcement:read
  */
-const handleSubmitRsvp: AuthorizedRouteHandler<RsvpResponse> = async (
+const handleSubmitRsvp: AuthorizedRouteHandler<RsvpApiResponse> = async (
   request: NextRequest,
   authContext: AuthorizationContext,
   context?: { params?: Promise<Record<string, string>> },
-): Promise<NextResponse<RsvpResponse>> => {
+): Promise<NextResponse<RsvpApiResponse>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -82,7 +91,7 @@ const handleSubmitRsvp: AuthorizedRouteHandler<RsvpResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Event ID is required',
         correlationId,
-      } as unknown as RsvpResponse,
+      },
       { status: 400 },
     );
   }
@@ -97,7 +106,7 @@ const handleSubmitRsvp: AuthorizedRouteHandler<RsvpResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      } as unknown as RsvpResponse,
+      },
       { status: 400 },
     );
   }
@@ -109,7 +118,7 @@ const handleSubmitRsvp: AuthorizedRouteHandler<RsvpResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         fields: formatZodErrors(validation.error),
         correlationId,
-      } as unknown as RsvpResponse,
+      },
       { status: 400 },
     );
   }
@@ -129,7 +138,7 @@ const handleSubmitRsvp: AuthorizedRouteHandler<RsvpResponse> = async (
         });
         if (attendingCount >= event.maxRsvp) {
           return NextResponse.json(
-            { code: 'EVENT_RSVP_FULL', message: 'Event has reached maximum capacity.', correlationId } as unknown as RsvpResponse,
+            { code: 'EVENT_RSVP_FULL', message: 'Event has reached maximum capacity.', correlationId },
             { status: 409 },
           );
         }
@@ -149,7 +158,7 @@ const handleSubmitRsvp: AuthorizedRouteHandler<RsvpResponse> = async (
 
   // 4. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<RsvpResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const rsvp = result.data;

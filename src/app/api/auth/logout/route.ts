@@ -23,9 +23,17 @@ import type { LogoutUseCase } from '@core/domains/auth/usecases';
 // Response Types
 // ---------------------------------------------------------------------------
 
-interface LogoutSuccessResponse {
+interface LogoutSuccessData {
   data: { message: string };
 }
+
+interface ErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+}
+
+type LogoutSuccessResponse = LogoutSuccessData | ErrorResponse;
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -60,10 +68,7 @@ const handleLogout: AuthorizedRouteHandler<LogoutSuccessResponse> = async (
 
   // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(
-      result.error,
-      correlationId,
-    ) as NextResponse<LogoutSuccessResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   // 4. Clear auth cookie and return success

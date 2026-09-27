@@ -10,11 +10,12 @@
  * @see Requirements 33.6, 33.8
  */
 
-import type { AuthContext } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { fail } from '@core/utils';
 import type { GateRepository } from '../repositories/GateRepository';
 import type { GateAnalytics } from '../entities';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -28,7 +29,7 @@ export interface GetGateAnalyticsInput {
 
 export interface GetGateAnalyticsUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: GetGateAnalyticsInput;
   }): Promise<DomainResult<GateAnalytics>>;
 }
@@ -43,8 +44,10 @@ export const GetGateAnalyticsUseCaseImpl = ({
   gateRepository: GateRepository;
 }): GetGateAnalyticsUseCase => ({
   execute: async ({ authContext, data }) => {
+    const tenantId = getTenantId(authContext);
+
     const result = await gateRepository.getGateAnalytics(
-      authContext.tenantId,
+      tenantId,
       data.gateId,
       data.from,
       data.to,

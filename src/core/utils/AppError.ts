@@ -39,7 +39,7 @@ export interface AppError {
 export function validationError(
   code: string,
   message: string,
-  options?: Pick<AppError, 'userMessage' | 'cause'>,
+  options?: Pick<AppError, 'userMessage' | 'retryable' | 'cause'>,
 ): AppError {
   return { type: 'validation', code, message, retryable: false, ...options };
 }
@@ -55,7 +55,7 @@ export function businessError(
 export function authenticationError(
   code: string,
   message: string,
-  options?: Pick<AppError, 'userMessage' | 'cause'>,
+  options?: Pick<AppError, 'userMessage' | 'retryable' | 'cause'>,
 ): AppError {
   return {
     type: 'authentication',
@@ -69,7 +69,7 @@ export function authenticationError(
 export function authorizationError(
   code: string,
   message: string,
-  options?: Pick<AppError, 'userMessage' | 'cause'>,
+  options?: Pick<AppError, 'userMessage' | 'retryable' | 'cause'>,
 ): AppError {
   return {
     type: 'authorization',
@@ -83,7 +83,7 @@ export function authorizationError(
 export function notFoundError(
   code: string,
   message: string,
-  options?: Pick<AppError, 'userMessage' | 'cause'>,
+  options?: Pick<AppError, 'userMessage' | 'retryable' | 'cause'>,
 ): AppError {
   return { type: 'not_found', code, message, retryable: false, ...options };
 }
@@ -99,7 +99,7 @@ export function technicalError(
 export function unexpectedError(
   code: string,
   message: string,
-  options?: Pick<AppError, 'userMessage' | 'cause'>,
+  options?: Pick<AppError, 'userMessage' | 'retryable' | 'cause'>,
 ): AppError {
   return { type: 'unexpected', code, message, retryable: false, ...options };
 }

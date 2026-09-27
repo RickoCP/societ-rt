@@ -505,7 +505,7 @@ export const AuthorizationConcurrencyServiceImpl = ({
   /**
    * Wait for a specified duration.
    */
-  const delay = (ms: number): Promise<void> =>
+  const _delay = (ms: number): Promise<void> =>
     new Promise(resolve => setTimeout(resolve, ms));
 
   // ---------------------------------------------------------------------------

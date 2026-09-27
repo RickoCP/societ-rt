@@ -9,17 +9,16 @@
  * @see Requirements 33.1, 33.7
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
 } from '@infrastructure/middleware/authorization';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RegisterGateUseCase } from '@core/domains/gate/usecases';
 import type { GateRepository } from '@core/domains/gate/repositories/GateRepository';
 
@@ -81,10 +80,10 @@ interface GateListResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with gates list or error
  */
-const handleListGates: AuthorizedRouteHandler<GateListResponse> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-): Promise<NextResponse<GateListResponse>> => {
+const handleListGates: AuthorizedRouteHandler<GateListResponse | ErrorResponseBody> = async (
+  request,
+  authContext,
+): Promise<NextResponse<GateListResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -94,7 +93,7 @@ const handleListGates: AuthorizedRouteHandler<GateListResponse> = async (
   const result = await gateRepository.findByTenant(authContext.tenantId);
 
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<GateListResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   return NextResponse.json(
@@ -129,10 +128,10 @@ const handleListGates: AuthorizedRouteHandler<GateListResponse> = async (
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with created gate or error
  */
-const handleRegisterGate: AuthorizedRouteHandler<GateResponse> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-): Promise<NextResponse<GateResponse>> => {
+const handleRegisterGate: AuthorizedRouteHandler<GateResponse | ErrorResponseBody> = async (
+  request,
+  authContext,
+): Promise<NextResponse<GateResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -146,7 +145,7 @@ const handleRegisterGate: AuthorizedRouteHandler<GateResponse> = async (
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid JSON body',
         correlationId,
-      } as unknown as GateResponse,
+      },
       { status: 400 },
     );
   }
@@ -156,9 +155,10 @@ const handleRegisterGate: AuthorizedRouteHandler<GateResponse> = async (
     return NextResponse.json(
       {
         code: 'COMMON_VALIDATION_FAILED',
+        message: 'Validation failed',
         fields: formatZodErrors(validation.error),
         correlationId,
-      } as unknown as GateResponse,
+      },
       { status: 400 },
     );
   }
@@ -172,7 +172,7 @@ const handleRegisterGate: AuthorizedRouteHandler<GateResponse> = async (
 
   // 3. Map result to safe response
   if (!result.success) {
-    return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<GateResponse>;
+    return mapAppErrorToHttpResponse(result.error, correlationId);
   }
 
   const gate = result.data;

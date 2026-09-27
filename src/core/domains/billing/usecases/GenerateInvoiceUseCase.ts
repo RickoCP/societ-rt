@@ -12,9 +12,10 @@
  * @see Requirements 29.1, 29.2
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
 import type { BillingRepository } from '../repositories/BillingRepository';
 import type { Invoice, CreateInvoiceInput } from '../entities';
 
@@ -24,7 +25,7 @@ import type { Invoice, CreateInvoiceInput } from '../entities';
 
 export interface GenerateInvoiceUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     data: CreateInvoiceInput;
   }): Promise<DomainResult<Invoice>>;
 }

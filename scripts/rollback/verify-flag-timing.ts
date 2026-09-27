@@ -197,7 +197,7 @@ class MockCutoverFlagResolver {
  * Measure the execution time of an async operation
  */
 async function measureTime<T>(
-  operation: string,
+  _operation: string,
   fn: () => Promise<T>,
 ): Promise<{ result: T; durationMs: number }> {
   const startTime = performance.now();
@@ -278,7 +278,7 @@ async function verifyGlobalFlagRollback(resolver: MockCutoverFlagResolver): Prom
 /**
  * Test 2: Verify domain flag rollback timing
  */
-async function verifyDomainFlagRollback(resolver: MockCutoverFlagResolver): Promise<TimingResult> {
+async function verifyDomainFlagRollback(_resolver: MockCutoverFlagResolver): Promise<TimingResult> {
   console.log('\n📍 Test 2: Domain Flags Rollback Timing');
   console.log('  Measuring time to disable all domain flags...');
 
@@ -326,7 +326,7 @@ async function verifyDomainFlagRollback(resolver: MockCutoverFlagResolver): Prom
 /**
  * Test 3: Verify route flag rollback timing
  */
-async function verifyRouteFlagRollback(resolver: MockCutoverFlagResolver): Promise<TimingResult> {
+async function verifyRouteFlagRollback(_resolver: MockCutoverFlagResolver): Promise<TimingResult> {
   console.log('\n📍 Test 3: Route Flags Rollback Timing');
   console.log('  Measuring time to disable all route flags...');
 
@@ -374,7 +374,7 @@ async function verifyRouteFlagRollback(resolver: MockCutoverFlagResolver): Promi
 /**
  * Test 4: Verify hot-reload behavior (flag changes take effect immediately)
  */
-async function verifyHotReloadBehavior(resolver: MockCutoverFlagResolver): Promise<TimingResult> {
+async function verifyHotReloadBehavior(_resolver: MockCutoverFlagResolver): Promise<TimingResult> {
   console.log('\n📍 Test 4: Hot-Reload Behavior Verification');
   console.log('  Measuring time for flag change to take effect...');
 
@@ -427,7 +427,7 @@ async function verifyHotReloadBehavior(resolver: MockCutoverFlagResolver): Promi
 /**
  * Test 5: Verify full rollback timing (all flags)
  */
-async function verifyFullRollback(resolver: MockCutoverFlagResolver): Promise<TimingResult> {
+async function verifyFullRollback(_resolver: MockCutoverFlagResolver): Promise<TimingResult> {
   console.log('\n📍 Test 5: Full System Rollback Timing');
   console.log('  Measuring time for complete rollback (global + domain + route flags)...');
 

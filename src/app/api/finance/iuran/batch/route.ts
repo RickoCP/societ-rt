@@ -21,7 +21,7 @@ import type { PrismaClient } from '@/generated/prisma/client';
 // Response types
 // ---------------------------------------------------------------------------
 
-interface IuranStatusResponse {
+interface IuranStatusData {
   data: Array<{
     householdId: string;
     householdNumber: string;
@@ -33,12 +33,21 @@ interface IuranStatusResponse {
   year: string;
 }
 
-interface IuranToggleResponse {
+interface IuranToggleData {
   success: boolean;
   householdId: string;
   month: string;
   paid: boolean;
 }
+
+interface ErrorResponse {
+  code: string;
+  message: string;
+  correlationId: string;
+}
+
+type IuranStatusResponse = IuranStatusData | ErrorResponse;
+type IuranToggleResponse = IuranToggleData | ErrorResponse;
 
 // ---------------------------------------------------------------------------
 // Input schemas
@@ -121,7 +130,7 @@ const handleGetIuranStatuses: AuthorizedRouteHandler<IuranStatusResponse> = asyn
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
-    ) as NextResponse<IuranStatusResponse>;
+    );
   }
 };
 
@@ -144,7 +153,7 @@ const handleToggleIuranStatus: AuthorizedRouteHandler<IuranToggleResponse> = asy
     return NextResponse.json(
       { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid JSON body', correlationId },
       { status: 400 },
-    ) as NextResponse<IuranToggleResponse>;
+    );
   }
 
   const validation = toggleSchema.safeParse(body);
@@ -152,7 +161,7 @@ const handleToggleIuranStatus: AuthorizedRouteHandler<IuranToggleResponse> = asy
     return NextResponse.json(
       { code: 'COMMON_VALIDATION_FAILED', message: 'Invalid input', correlationId },
       { status: 400 },
-    ) as NextResponse<IuranToggleResponse>;
+    );
   }
 
   const { householdId, month, paid, amount, householdNumber } = validation.data;
@@ -263,7 +272,7 @@ const handleToggleIuranStatus: AuthorizedRouteHandler<IuranToggleResponse> = asy
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },
-    ) as NextResponse<IuranToggleResponse>;
+    );
   }
 };
 

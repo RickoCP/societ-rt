@@ -11,17 +11,14 @@
  * @see Requirements 10.1, 10.3
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import {
-  withPermission,
-  type AuthorizedRouteHandler,
-} from '@infrastructure/middleware/authorization/requirePermission';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
+import { withPermission } from '@infrastructure/middleware/authorization';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { TriggerEmergencyAlertUseCase } from '@core/domains/emergency/usecases';
 import type { PrismaClient } from '@/generated/prisma/client';
 
@@ -45,9 +42,9 @@ const triggerAlertSchema = z.object({
  * to ensure suspended users can still trigger emergencies.
  */
 const handleTriggerEmergency: AuthorizedRouteHandler<unknown> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-): Promise<NextResponse> => {
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -128,9 +125,9 @@ const handleTriggerEmergency: AuthorizedRouteHandler<unknown> = async (
  * to ensure suspended users can view emergency status.
  */
 const handleListEmergencies: AuthorizedRouteHandler<unknown> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-): Promise<NextResponse> => {
+  request,
+  authContext,
+) => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 

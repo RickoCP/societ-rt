@@ -82,7 +82,7 @@ export const AUTH_ERROR_CODES = {
     code: 'AUTH_INVALID_CREDENTIALS',
     type: 'authentication',
     httpStatus: 401,
-    description: 'Invalid username or password',
+    description: 'Authentication failed',
     retryable: true,
     i18nKey: 'error.auth.invalidCredentials',
   },
@@ -639,7 +639,7 @@ export const VAL_ERROR_CODES = {
     code: 'VAL_INVALID_PASSWORD',
     type: 'validation',
     httpStatus: 400,
-    description: 'Password does not meet requirements',
+    description: 'Credential does not meet security requirements',
     retryable: false,
     i18nKey: 'error.validation.invalidPassword',
   },
@@ -915,6 +915,15 @@ export const NOT_FOUND_ERROR_CODES = {
     description: 'User not found',
     retryable: false,
     i18nKey: 'error.user.notFound',
+  },
+  /** Tenant not found */
+  TENANT_NOT_FOUND: {
+    code: 'TENANT_NOT_FOUND',
+    type: 'not_found',
+    httpStatus: 404,
+    description: 'Tenant not found',
+    retryable: false,
+    i18nKey: 'error.tenant.notFound',
   },
   /** OrgUnit not found */
   ORGUNIT_NOT_FOUND: {

@@ -152,7 +152,7 @@ describe('HouseholdIsolationService', () => {
       }
       expect(mockRepository.findById).toHaveBeenCalledWith(TEST_HOUSEHOLD_ID, TEST_TENANT_ID);
       expect(mockAuditEmitter.emittedEvents).toHaveLength(1);
-      expect(mockAuditEmitter.emittedEvents[0].type).toBe(
+      expect(mockAuditEmitter.emittedEvents[0]!.type).toBe(
         HouseholdIsolationAuditEventType.TENANT_OWNERSHIP_VALIDATED,
       );
     });
@@ -167,7 +167,7 @@ describe('HouseholdIsolationService', () => {
         expect(result.error.code).toBe('HOUSEHOLD_NOT_FOUND');
       }
       expect(mockAuditEmitter.emittedEvents).toHaveLength(1);
-      expect(mockAuditEmitter.emittedEvents[0].type).toBe(
+      expect(mockAuditEmitter.emittedEvents[0]!.type).toBe(
         HouseholdIsolationAuditEventType.TENANT_OWNERSHIP_FAILED,
       );
     });
@@ -618,7 +618,7 @@ describe('HouseholdIsolationService', () => {
       const result = await service.getUserHouseholds(TEST_USER_ID, TEST_TENANT_ID);
 
       expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(TEST_HOUSEHOLD_ID);
+      expect(result[0]!.id).toBe(TEST_HOUSEHOLD_ID);
     });
 
     it('should return empty array when user has no households', async () => {

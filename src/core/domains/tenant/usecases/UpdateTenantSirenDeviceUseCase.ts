@@ -11,13 +11,15 @@
  * 5. Return ok(tenant)
  */
 
-import type { AuditQueueProtocol, AuthContext } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import { UserRole } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { TenantRepository } from '../repositories/TenantRepository';
 import type { Tenant, UpdateTenantSirenInput } from '../entities';
 import { authInsufficientRole } from '@core/domains/auth/errors/authErrors';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { hasAllowedUserRole, getTenantId, getUserId, getImpersonatorId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Interface
@@ -25,7 +27,7 @@ import { authInsufficientRole } from '@core/domains/auth/errors/authErrors';
 
 export interface UpdateTenantSirenDeviceUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     input: UpdateTenantSirenInput;
   }): Promise<DomainResult<Tenant>>;
 }
@@ -51,8 +53,12 @@ export const UpdateTenantSirenDeviceUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): UpdateTenantSirenDeviceUseCase => ({
   execute: async ({ authContext, input }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+    const impersonatorId = getImpersonatorId(authContext);
+
     // 1. Check role
-    if (!ALLOWED_ROLES.has(authContext.role)) {
+    if (!hasAllowedUserRole(authContext, ALLOWED_ROLES)) {
       return fail(authInsufficientRole());
     }
 
@@ -61,7 +67,7 @@ export const UpdateTenantSirenDeviceUseCaseImpl = ({
     const sirenDeviceId = trimmed.length > 0 ? trimmed : null;
 
     // 3. Update tenant. tenantId comes from the (route-overridden) auth context.
-    const updateResult = await tenantRepository.update(authContext.tenantId, {
+    const updateResult = await tenantRepository.update(tenantId, {
       sirenDeviceId,
     });
     if (!updateResult.success) {
@@ -74,15 +80,15 @@ export const UpdateTenantSirenDeviceUseCaseImpl = ({
     //    is not a secret, but we record only presence-relevant metadata.
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'tenant_siren_device_updated',
         resourceType: 'tenant',
         resourceId: tenant.id,
         details: {
           sirenConfigured: sirenDeviceId !== null,
         },
-        impersonatorId: authContext.impersonatorId,
+        impersonatorId,
       })
       .catch(() => {
         /* audit must not block the response */

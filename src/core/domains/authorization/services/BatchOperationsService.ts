@@ -32,7 +32,6 @@ import { ok, fail } from '@core/utils';
 import type { MembershipRole, MembershipStatus } from '@core/domains/membership/types';
 import {
   batchOperationFailed,
-  batchPartialFailure,
   batchSizeLimitExceeded,
   batchTransactionFailed,
   batchEmptyItems,
@@ -645,6 +644,7 @@ export const BatchOperationsServiceImpl = ({
         for (let i = 0; i < permissions.length; i++) {
           const itemStartTime = currentConfig.enableItemTiming ? Date.now() : undefined;
           const permReq = permissions[i];
+          if (!permReq) continue;
 
           try {
             // Simulate permission check logic
@@ -727,14 +727,16 @@ export const BatchOperationsServiceImpl = ({
 
         // Process each membership update
         for (let i = 0; i < updates.length; i++) {
+          const update = updates[i];
+          if (!update) continue;
+
           // In ATOMIC mode, skip remaining items if any failed
           if (transactionMode === BatchTransactionMode.ATOMIC && encounteredError) {
-            itemResults.push(skippedItem(i, updates[i].membershipId));
+            itemResults.push(skippedItem(i, update.membershipId));
             continue;
           }
 
           const itemStartTime = currentConfig.enableItemTiming ? Date.now() : undefined;
-          const update = updates[i];
 
           try {
             // Simulate membership update
@@ -762,9 +764,10 @@ export const BatchOperationsServiceImpl = ({
           // In production, actual transaction rollback would happen here
           // Mark previously successful items as rolled back by updating their status
           for (let i = 0; i < itemResults.length; i++) {
-            if (itemResults[i].status === BatchItemStatus.SUCCESS) {
+            const itemResult = itemResults[i];
+            if (itemResult && itemResult.status === BatchItemStatus.SUCCESS) {
               itemResults[i] = {
-                ...itemResults[i],
+                ...itemResult,
                 status: BatchItemStatus.SKIPPED,
                 errorCode: 'ROLLED_BACK',
                 errorMessage: 'Transaction rolled back due to other failures',
@@ -828,6 +831,7 @@ export const BatchOperationsServiceImpl = ({
         for (let i = 0; i < queries.length; i++) {
           const itemStartTime = currentConfig.enableItemTiming ? Date.now() : undefined;
           const query = queries[i];
+          if (!query) continue;
 
           try {
             // Simulate authorization query
@@ -897,6 +901,7 @@ export const BatchOperationsServiceImpl = ({
         for (let i = 0; i < requests.length; i++) {
           const itemStartTime = currentConfig.enableItemTiming ? Date.now() : undefined;
           const request = requests[i];
+          if (!request) continue;
 
           try {
             // Simulate cache invalidation

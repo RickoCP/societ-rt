@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ok, fail } from '@core/utils';
+import { ok } from '@core/utils';
 import type { Membership } from '@core/domains/membership/entities';
 import { MembershipRole, MembershipStatus } from '@core/domains/membership/types';
 import {

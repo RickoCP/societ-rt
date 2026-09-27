@@ -19,16 +19,85 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type {
-  BenchmarkSuiteResult,
-  BenchmarkResult,
-  PerformanceThresholds,
-  LatencyStats,
-} from './performance-benchmarks';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+/**
+ * Latency statistics for benchmark results.
+ */
+export interface LatencyStats {
+  min: number;
+  max: number;
+  mean: number;
+  median: number;
+  p50: number;
+  p75: number;
+  p90: number;
+  p95: number;
+  p99: number;
+  standardDeviation: number;
+  samples: number;
+}
+
+/**
+ * Performance thresholds for different benchmark types.
+ */
+export interface PerformanceThresholds {
+  authContextResolution: {
+    p50: number;
+    p95: number;
+    p99: number;
+  };
+  permissionCheck: {
+    p99: number;
+  };
+  rlsOverhead: {
+    maxPercentage: number;
+  };
+}
+
+/**
+ * Environment information captured during benchmark execution.
+ */
+export interface BenchmarkEnvironment {
+  nodeVersion: string;
+  platform: string;
+  arch: string;
+  memory: number;
+  cpus: number;
+}
+
+/**
+ * Individual benchmark result with detailed statistics.
+ */
+export interface BenchmarkResult {
+  name: string;
+  description: string;
+  passed: boolean;
+  actualValue: number;
+  thresholdValue: number;
+  thresholdTarget: string;
+  percentageOfTarget: number;
+  latencyStats: LatencyStats;
+  additionalMetrics?: Record<string, number>;
+}
+
+/**
+ * Complete benchmark suite result containing all benchmark runs.
+ */
+export interface BenchmarkSuiteResult {
+  passed: boolean;
+  totalBenchmarks: number;
+  passedBenchmarks: number;
+  failedBenchmarks: number;
+  durationMs: number;
+  executedAt: string;
+  environment: BenchmarkEnvironment;
+  thresholds: PerformanceThresholds;
+  results: BenchmarkResult[];
+}
 
 /**
  * Input for comparison report generation
@@ -38,35 +107,6 @@ export interface ComparisonReportInput {
   currentResults: BenchmarkSuiteResult;
   /** Path to baseline results (optional) */
   baselinePath?: string;
-}
-
-/**
- * Metric comparison data
- */
-interface MetricComparison {
-  name: string;
-  current: number;
-  baseline?: number;
-  threshold: number;
-  unit: string;
-  passed: boolean;
-  changePercent?: number;
-  changeDirection?: 'improved' | 'degraded' | 'unchanged';
-}
-
-/**
- * Detailed benchmark comparison
- */
-interface BenchmarkComparison {
-  name: string;
-  description: string;
-  currentPassed: boolean;
-  baselinePassed?: boolean;
-  metrics: MetricComparison[];
-  latencyComparison?: {
-    current: LatencyStats;
-    baseline?: LatencyStats;
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -237,6 +277,17 @@ function generateLegacyVsNewSection(
   const metrics = legacyVsNew.additionalMetrics;
   const status = getStatusEmoji(legacyVsNew.passed);
 
+  // Safe access to metrics with defaults
+  const legacyP50 = metrics.legacy_p50_ms ?? 0;
+  const legacyP95 = metrics.legacy_p95_ms ?? 0;
+  const legacyP99 = metrics.legacy_p99_ms ?? 0;
+  const legacyMean = metrics.legacy_mean_ms ?? 0;
+  const newP50 = metrics.new_p50_ms ?? 0;
+  const newP95 = metrics.new_p95_ms ?? 0;
+  const newP99 = metrics.new_p99_ms ?? 0;
+  const newMean = metrics.new_mean_ms ?? 0;
+  const overheadPct = metrics.overhead_percentage ?? 0;
+
   let section = `## Legacy vs New Authorization Comparison
 
 ${status} **Status: ${legacyVsNew.passed ? 'PASSED' : 'FAILED'}**
@@ -247,17 +298,17 @@ This comparison shows the latency difference between the legacy \`resolveAuthCon
 
 | Metric | Legacy (Old) | New | Difference | Status |
 |--------|--------------|-----|------------|--------|
-| **p50** | ${formatNumber(metrics.legacy_p50_ms)}ms | ${formatNumber(metrics.new_p50_ms)}ms | ${formatNumber(metrics.new_p50_ms - metrics.legacy_p50_ms)}ms | ${metrics.new_p50_ms < currentResults.thresholds.authContextResolution.p50 ? '✅' : '❌'} |
-| **p95** | ${formatNumber(metrics.legacy_p95_ms)}ms | ${formatNumber(metrics.new_p95_ms)}ms | ${formatNumber(metrics.new_p95_ms - metrics.legacy_p95_ms)}ms | ${metrics.new_p95_ms < currentResults.thresholds.authContextResolution.p95 ? '✅' : '❌'} |
-| **p99** | ${formatNumber(metrics.legacy_p99_ms)}ms | ${formatNumber(metrics.new_p99_ms)}ms | ${formatNumber(metrics.new_p99_ms - metrics.legacy_p99_ms)}ms | ${metrics.new_p99_ms < currentResults.thresholds.authContextResolution.p99 ? '✅' : '❌'} |
-| **Mean** | ${formatNumber(metrics.legacy_mean_ms)}ms | ${formatNumber(metrics.new_mean_ms)}ms | ${formatNumber(metrics.new_mean_ms - metrics.legacy_mean_ms)}ms | - |
+| **p50** | ${formatNumber(legacyP50)}ms | ${formatNumber(newP50)}ms | ${formatNumber(newP50 - legacyP50)}ms | ${newP50 < currentResults.thresholds.authContextResolution.p50 ? '✅' : '❌'} |
+| **p95** | ${formatNumber(legacyP95)}ms | ${formatNumber(newP95)}ms | ${formatNumber(newP95 - legacyP95)}ms | ${newP95 < currentResults.thresholds.authContextResolution.p95 ? '✅' : '❌'} |
+| **p99** | ${formatNumber(legacyP99)}ms | ${formatNumber(newP99)}ms | ${formatNumber(newP99 - legacyP99)}ms | ${newP99 < currentResults.thresholds.authContextResolution.p99 ? '✅' : '❌'} |
+| **Mean** | ${formatNumber(legacyMean)}ms | ${formatNumber(newMean)}ms | ${formatNumber(newMean - legacyMean)}ms | - |
 
 ### Overhead Analysis
 
 | Metric | Value |
 |--------|-------|
-| **Overhead Percentage** | ${formatNumber(metrics.overhead_percentage)}% |
-| **Acceptable** | ${metrics.overhead_percentage < 50 ? 'Yes' : 'No (consider optimization)'} |
+| **Overhead Percentage** | ${formatNumber(overheadPct)}% |
+| **Acceptable** | ${overheadPct < 50 ? 'Yes' : 'No (consider optimization)'} |
 
 `;
 
@@ -269,17 +320,15 @@ This comparison shows the latency difference between the legacy \`resolveAuthCon
     );
     if (baselineLegacyVsNew?.additionalMetrics) {
       const baselineMetrics = baselineLegacyVsNew.additionalMetrics;
-      const p99Change = calculateChangePercent(
-        metrics.new_p99_ms,
-        baselineMetrics.new_p99_ms,
-      );
+      const baselineNewP99 = baselineMetrics.new_p99_ms ?? 0;
+      const p99Change = calculateChangePercent(newP99, baselineNewP99);
 
       section += `
 ### Comparison with Previous Run
 
 | Metric | Previous p99 | Current p99 | Change |
 |--------|--------------|-------------|--------|
-| **New Auth** | ${formatNumber(baselineMetrics.new_p99_ms)}ms | ${formatNumber(metrics.new_p99_ms)}ms | ${getChangeEmoji(p99Change.direction)} ${formatNumber(p99Change.percent)}% |
+| **New Auth** | ${formatNumber(baselineNewP99)}ms | ${formatNumber(newP99)}ms | ${getChangeEmoji(p99Change.direction)} ${formatNumber(p99Change.percent)}% |
 
 `;
     }
@@ -392,6 +441,11 @@ function generateRlsOverheadSection(
   const metrics = rlsOverhead.additionalMetrics;
   const status = getStatusEmoji(rlsOverhead.passed);
 
+  // Safe access to metrics with defaults
+  const nonRlsMean = metrics.non_rls_mean_ms ?? 0;
+  const rlsMean = metrics.rls_mean_ms ?? 0;
+  const overheadMs = metrics.overhead_ms ?? 0;
+
   return `## RLS Query Overhead Analysis
 
 ${status} **Status: ${rlsOverhead.passed ? 'PASSED' : 'FAILED'}**
@@ -402,9 +456,9 @@ Row-Level Security (RLS) adds a small overhead to database queries. This benchma
 
 | Query Type | Mean Latency | Notes |
 |------------|--------------|-------|
-| **Non-RLS (Baseline)** | ${formatNumber(metrics.non_rls_mean_ms)}ms | Queries without RLS filtering |
-| **With RLS** | ${formatNumber(metrics.rls_mean_ms)}ms | Queries with tenant isolation |
-| **Overhead** | ${formatNumber(metrics.overhead_ms)}ms | Additional latency from RLS |
+| **Non-RLS (Baseline)** | ${formatNumber(nonRlsMean)}ms | Queries without RLS filtering |
+| **With RLS** | ${formatNumber(rlsMean)}ms | Queries with tenant isolation |
+| **Overhead** | ${formatNumber(overheadMs)}ms | Additional latency from RLS |
 
 ### Overhead Percentage
 

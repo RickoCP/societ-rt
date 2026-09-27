@@ -29,8 +29,6 @@ import { MembershipStatus } from '@core/domains/membership/types/MembershipStatu
 import {
   SafetyCriticalOperationCode,
   isSafetyCriticalOperationCode,
-  EMERGENCY_ALLOWED_STATUSES,
-  EMERGENCY_DENIED_STATUSES,
 } from '../types';
 import type {
   SafetyCriticalOperationRequest,
@@ -339,7 +337,7 @@ export function createSafetyCriticalProtectionService(
         });
       }
 
-      const { status: membershipStatus, membershipId } = membershipInfo;
+      const { status: membershipStatus, membershipId: _membershipId } = membershipInfo;
 
       // Step 3: Apply Emergency_Policy based on membership status (AC 10)
       const emergencyPolicy = getEmergencyPolicyForStatus(membershipStatus);
@@ -418,7 +416,7 @@ export function createSafetyCriticalProtectionService(
 
       const {
         allowed,
-        requiresElevatedAudit,
+        requiresElevatedAudit: _requiresElevatedAudit,
         alertBillingTeam,
         alertAdminTeam,
         membershipStatus,

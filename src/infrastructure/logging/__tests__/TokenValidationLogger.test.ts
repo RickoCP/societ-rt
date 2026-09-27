@@ -17,7 +17,7 @@
  * @see Design: Observability and Audit Logging
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import {
   TokenValidationLoggerImpl,
   type ITokenValidationLogger,
@@ -41,7 +41,14 @@ const TEST_METHOD = 'GET';
 // Mock Setup
 // ---------------------------------------------------------------------------
 
-const mockLogger: Logger = {
+interface MockLogger extends Logger {
+  info: Mock<[message: string, context?: Record<string, unknown>], void>;
+  warn: Mock<[message: string, context?: Record<string, unknown>], void>;
+  error: Mock<[message: string, context?: Record<string, unknown>], void>;
+  debug: Mock<[message: string, context?: Record<string, unknown>], void>;
+}
+
+const mockLogger: MockLogger = {
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
@@ -94,7 +101,8 @@ describe('TokenValidationLogger', () => {
 
       logger.logSuccess(TEST_CORRELATION_ID, TEST_USER_ID, TEST_TOKEN_VERSION, context);
 
-      const [message, logContext] = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.info.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       // Verify required fields per Requirement 15.3
       expect(logContext.correlation_id).toBe(TEST_CORRELATION_ID);
@@ -112,7 +120,8 @@ describe('TokenValidationLogger', () => {
 
       logger.logSuccess(TEST_CORRELATION_ID, TEST_USER_ID, TEST_TOKEN_VERSION, context);
 
-      const [, logContext] = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.info.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       expect(logContext.route).toBe(TEST_ROUTE);
       expect(logContext.method).toBe(TEST_METHOD);
@@ -124,7 +133,8 @@ describe('TokenValidationLogger', () => {
 
       logger.logSuccess(TEST_CORRELATION_ID, TEST_USER_ID, TEST_TOKEN_VERSION);
 
-      const [message] = mockLogger.info.mock.calls[0] as [string];
+      const call = mockLogger.info.mock.calls[0]!;
+      const message = call[0];
 
       expect(message).toContain('Token validation successful');
       expect(message).toContain(TEST_USER_ID);
@@ -152,7 +162,8 @@ describe('TokenValidationLogger', () => {
 
       logger.logInvalid(TEST_CORRELATION_ID, context);
 
-      const [, logContext] = mockLogger.warn.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.warn.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       expect(logContext.validation_result).toBe('INVALID');
       expect(logContext.failure_reason).toBe('AUTH_TOKEN_INVALID');
@@ -163,7 +174,8 @@ describe('TokenValidationLogger', () => {
 
       logger.logInvalid(TEST_CORRELATION_ID);
 
-      const [, logContext] = mockLogger.warn.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.warn.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       expect(logContext.user_id).toBeUndefined();
       expect(logContext.token_version_claimed).toBeUndefined();
@@ -175,7 +187,8 @@ describe('TokenValidationLogger', () => {
 
       logger.logInvalid(TEST_CORRELATION_ID);
 
-      const [message] = mockLogger.warn.mock.calls[0] as [string];
+      const call = mockLogger.warn.mock.calls[0]!;
+      const message = call[0];
 
       expect(message).toContain('Token validation failed');
       expect(message).toContain('invalid token');
@@ -202,7 +215,8 @@ describe('TokenValidationLogger', () => {
 
       logger.logExpired(TEST_CORRELATION_ID, TEST_USER_ID, TEST_TOKEN_VERSION);
 
-      const [, logContext] = mockLogger.warn.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.warn.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       expect(logContext.validation_result).toBe('EXPIRED');
       expect(logContext.failure_reason).toBe('AUTH_TOKEN_EXPIRED');
@@ -213,7 +227,8 @@ describe('TokenValidationLogger', () => {
 
       logger.logExpired(TEST_CORRELATION_ID, TEST_USER_ID, TEST_TOKEN_VERSION);
 
-      const [, logContext] = mockLogger.warn.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.warn.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       expect(logContext.user_id).toBe(TEST_USER_ID);
       expect(logContext.token_version_claimed).toBe(TEST_TOKEN_VERSION);
@@ -226,7 +241,9 @@ describe('TokenValidationLogger', () => {
 
       logger.logExpired(TEST_CORRELATION_ID, null, null);
 
-      const [message, logContext] = mockLogger.warn.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.warn.mock.calls[0]!;
+      const message = call[0];
+      const logContext = call[1] as Record<string, unknown>;
 
       expect(logContext.user_id).toBeUndefined();
       expect(logContext.token_version_claimed).toBeUndefined();
@@ -267,7 +284,8 @@ describe('TokenValidationLogger', () => {
         currentVersion,
       );
 
-      const [, logContext] = mockLogger.warn.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.warn.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       expect(logContext.validation_result).toBe('VERSION_MISMATCH');
       expect(logContext.failure_reason).toBe('AUTH_TOKEN_VERSION_MISMATCH');
@@ -284,7 +302,8 @@ describe('TokenValidationLogger', () => {
         currentVersion,
       );
 
-      const [, logContext] = mockLogger.warn.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.warn.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       expect(logContext.token_version_claimed).toBe(TEST_TOKEN_VERSION);
       expect(logContext.token_version_current).toBe(currentVersion);
@@ -301,7 +320,8 @@ describe('TokenValidationLogger', () => {
         currentVersion,
       );
 
-      const [message] = mockLogger.warn.mock.calls[0] as [string];
+      const call = mockLogger.warn.mock.calls[0]!;
+      const message = call[0];
 
       expect(message).toContain('version mismatch');
       expect(message).toContain(TEST_USER_ID);
@@ -392,7 +412,9 @@ describe('TokenValidationLogger', () => {
 
       logger.logSuccess(TEST_CORRELATION_ID, TEST_USER_ID, TEST_TOKEN_VERSION);
 
-      const [message, logContext] = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.info.mock.calls[0]!;
+      const message = call[0];
+      const logContext = call[1] as Record<string, unknown>;
 
       // Verify no token strings in log
       expect(message).not.toContain('Bearer');
@@ -408,7 +430,8 @@ describe('TokenValidationLogger', () => {
 
       logger.logSuccess(TEST_CORRELATION_ID, TEST_USER_ID, TEST_TOKEN_VERSION);
 
-      const [, logContext] = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.info.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       expect(logContext.event_type).toBe('TOKEN_VALIDATION');
     });
@@ -423,11 +446,12 @@ describe('TokenValidationLogger', () => {
       logger.logVersionMismatch(TEST_CORRELATION_ID, TEST_USER_ID, 1, 2);
 
       // Verify all calls have correlationId
-      const infoCall = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
-      expect(infoCall[1].correlation_id).toBe(TEST_CORRELATION_ID);
+      const infoCall = mockLogger.info.mock.calls[0]!;
+      const infoContext = infoCall[1] as Record<string, unknown>;
+      expect(infoContext.correlation_id).toBe(TEST_CORRELATION_ID);
 
       mockLogger.warn.mock.calls.forEach((call) => {
-        const [, context] = call as [string, Record<string, unknown>];
+        const context = call[1] as Record<string, unknown>;
         expect(context.correlation_id).toBe(TEST_CORRELATION_ID);
       });
     });
@@ -451,7 +475,8 @@ describe('TokenValidationLogger', () => {
         createTestContext(),
       );
 
-      const [, logContext] = mockLogger.warn.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.warn.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       // All required fields per Requirement 15.3
       expect(logContext).toHaveProperty('correlation_id', TEST_CORRELATION_ID);
@@ -468,7 +493,8 @@ describe('TokenValidationLogger', () => {
       logger.logSuccess(TEST_CORRELATION_ID, TEST_USER_ID, TEST_TOKEN_VERSION);
 
       // Verify we're passing an object that can be JSON serialized
-      const [, logContext] = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.info.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
 
       expect(() => JSON.stringify(logContext)).not.toThrow();
     });
@@ -491,7 +517,8 @@ describe('CorrelationId Integration (Requirements 15.8)', () => {
 
     logger.logSuccess(customCorrelationId, TEST_USER_ID, TEST_TOKEN_VERSION);
 
-    const [, logContext] = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
+    const call = mockLogger.info.mock.calls[0]!;
+    const logContext = call[1] as Record<string, unknown>;
     expect(logContext.correlation_id).toBe(customCorrelationId);
     expect(logContext.correlation_id_generated).toBe(false);
   });
@@ -509,7 +536,8 @@ describe('CorrelationId Integration (Requirements 15.8)', () => {
 
     logger.log(input);
 
-    const [, logContext] = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
+    const call = mockLogger.info.mock.calls[0]!;
+    const logContext = call[1] as Record<string, unknown>;
     
     // Should have a valid UUID format
     expect(logContext.correlation_id).toBeDefined();
@@ -536,7 +564,8 @@ describe('CorrelationId Integration (Requirements 15.8)', () => {
 
     logger.log(input);
 
-    const [, logContext] = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
+    const call = mockLogger.info.mock.calls[0]!;
+    const logContext = call[1] as Record<string, unknown>;
     
     // Should have a valid UUID format
     const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -556,7 +585,8 @@ describe('CorrelationId Integration (Requirements 15.8)', () => {
       vi.clearAllMocks();
       logger.logSuccess(externalId, TEST_USER_ID, TEST_TOKEN_VERSION);
 
-      const [, logContext] = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.info.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
       expect(logContext.correlation_id).toBe(externalId);
       expect(logContext.correlation_id_generated).toBe(false);
     }
@@ -579,7 +609,8 @@ describe('CorrelationId Integration (Requirements 15.8)', () => {
 
       logger.log(input);
 
-      const [, logContext] = mockLogger.info.mock.calls[0] as [string, Record<string, unknown>];
+      const call = mockLogger.info.mock.calls[0]!;
+      const logContext = call[1] as Record<string, unknown>;
       generatedIds.push(logContext.correlation_id as string);
     }
 

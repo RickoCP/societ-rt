@@ -9,7 +9,9 @@
  * @see Requirements 5.8, 5.9, 6.1, 6.2, 6.3
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
 import type { ResidentRepository } from '../repositories/ResidentRepository';
@@ -21,7 +23,7 @@ import type { CsvImportResult } from '../entities';
 
 export interface ImportResidentCsvUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     csvContent: string;
   }): Promise<DomainResult<CsvImportResult>>;
 }
@@ -38,9 +40,12 @@ export const ImportResidentCsvUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): ImportResidentCsvUseCase => ({
   execute: async ({ authContext, csvContent }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Import CSV via repository
     const result = await residentRepository.importFromCsv(
-      authContext.tenantId,
+      tenantId,
       csvContent,
     );
 
@@ -53,11 +58,11 @@ export const ImportResidentCsvUseCaseImpl = ({
     // 2. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'residents_imported',
         resourceType: 'resident',
-        resourceId: authContext.tenantId,
+        resourceId: tenantId,
         details: {
           createdCount: importResult.createdCount,
           skippedCount: importResult.skippedRows.length,

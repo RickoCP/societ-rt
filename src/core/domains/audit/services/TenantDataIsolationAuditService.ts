@@ -27,7 +27,7 @@
 
 import type { DomainResult } from '@core/utils';
 import { ok, fail } from '@core/utils';
-import { businessError, technicalError, validationError } from '@core/utils';
+import { validationError, technicalError } from '@core/utils';
 import type { AuditEvent, CreateAuditEventInput, IAuditTrailRepository } from './AuditTrailService';
 import { AuditEventType } from './AuditTrailService';
 
@@ -955,7 +955,7 @@ export const TenantDataIsolationAuditServiceImpl = ({
    * Calculate compliance score based on violation counts.
    */
   const calculateComplianceScore = (
-    totalEvents: number,
+    _totalEvents: number,
     criticalViolations: number,
     highViolations: number,
     warningViolations: number,
@@ -1443,8 +1443,8 @@ export const TenantDataIsolationAuditServiceImpl = ({
     },
 
     async getRecentViolations(
-      tenantId: string | null,
-      limit: number,
+      _tenantId: string | null,
+      _limit: number,
     ): Promise<DomainResult<readonly IsolationViolationSummary[]>> {
       // This would query the audit trail for recent violations
       // For now, return empty array
@@ -1453,14 +1453,13 @@ export const TenantDataIsolationAuditServiceImpl = ({
 
     async getComplianceScore(
       tenantId: string,
-      periodDays: number,
+      _periodDays: number,
     ): Promise<DomainResult<number>> {
-      const validation = validateTenantId(tenantId);
-      if (!validation.success) {
-        return validation as DomainResult<number>;
+      // Validate tenant ID
+      if (!tenantId || tenantId.trim() === '') {
+        return fail(validationError('AUDIT_INVALID_TENANT_ID', 'Tenant ID cannot be empty'));
       }
-
-      // This would calculate based on actual events
+      // This would calculate compliance score based on violation history
       // For now, return a perfect score
       return ok(100);
     },

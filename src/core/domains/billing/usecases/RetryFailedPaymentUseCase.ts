@@ -13,11 +13,13 @@
  * @see Requirements 29.5, 29.6
  */
 
-import type { AuthContext, AuditQueueProtocol } from '@core/protocols';
+import type { AuditQueueProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, businessError } from '@core/utils';
 import type { BillingRepository } from '../repositories/BillingRepository';
 import type { Invoice } from '../entities';
+import type { AuthContextCompat } from '@core/domains/authorization/types';
+import { getTenantId, getUserId } from '@core/domains/authorization/types';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -31,7 +33,7 @@ const MAX_RETRY_COUNT = 2;
 
 export interface RetryFailedPaymentUseCase {
   execute(params: {
-    authContext: AuthContext;
+    authContext: AuthContextCompat;
     invoiceId: string;
   }): Promise<DomainResult<Invoice>>;
 }
@@ -48,9 +50,12 @@ export const RetryFailedPaymentUseCaseImpl = ({
   auditQueueProtocol: AuditQueueProtocol;
 }): RetryFailedPaymentUseCase => ({
   execute: async ({ authContext, invoiceId }) => {
+    const tenantId = getTenantId(authContext);
+    const userId = getUserId(authContext);
+
     // 1. Get current invoices to check retry count
     const invoicesResult = await billingRepository.findInvoicesByTenant(
-      authContext.tenantId,
+      tenantId,
       'failed',
     );
 
@@ -80,7 +85,7 @@ export const RetryFailedPaymentUseCaseImpl = ({
 
     // 3. Increment retry count
     const incrementResult = await billingRepository.incrementRetryCount(
-      authContext.tenantId,
+      tenantId,
       invoiceId,
     );
 
@@ -97,8 +102,8 @@ export const RetryFailedPaymentUseCaseImpl = ({
     // 5. Enqueue audit log (fire-and-forget)
     auditQueueProtocol
       .enqueueAudit({
-        tenantId: authContext.tenantId,
-        actorUserId: authContext.userId,
+        tenantId,
+        actorUserId: userId,
         actionType: 'payment_retry_attempted',
         resourceType: 'invoice',
         resourceId: invoiceId,

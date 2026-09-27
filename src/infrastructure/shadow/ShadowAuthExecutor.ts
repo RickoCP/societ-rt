@@ -278,9 +278,9 @@ export const ShadowAuthExecutorImpl = ({
       const roleMapping: Record<string, MembershipRole> = {
         Super_Admin: MembershipRole.PLATFORM_ADMIN,
         Ketua_RT: MembershipRole.RT_ADMIN,
-        Pengurus: MembershipRole.RT_STAFF,
+        Pengurus: MembershipRole.ORG_ADMIN,
         Warga: MembershipRole.RESIDENT,
-        Security_Guard: MembershipRole.SECURITY_GUARD,
+        Security_Guard: MembershipRole.SECURITY,
       };
 
       const membershipRole =

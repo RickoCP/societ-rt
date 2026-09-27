@@ -37,11 +37,11 @@ import {
   permissionSyncFailed,
   permissionSyncConflict,
   permissionSyncValidationFailed,
-  permissionSyncTimeout,
-  permissionSyncSourceUnavailable,
+  permissionSyncTimeout as _permissionSyncTimeout,
+  permissionSyncSourceUnavailable as _permissionSyncSourceUnavailable,
 } from '../errors';
 import {
-  PERMISSION_REGISTRY,
+  PERMISSION_REGISTRY as _PERMISSION_REGISTRY,
   getPermissionsForRole,
   validatePermissionRegistry,
 } from '../permissions/PermissionRegistry';

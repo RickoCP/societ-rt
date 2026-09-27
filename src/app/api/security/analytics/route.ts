@@ -8,17 +8,21 @@
  * @see Requirements 31.6, 31.9
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
-import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
 import {
   withPermission,
   type AuthorizedRouteHandler,
 } from '@infrastructure/middleware/authorization';
-import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GetSecurityAnalyticsUseCase } from '@core/domains/securityCenter/usecases';
+import type {
+  IncidentCountBySeverity,
+  IncidentCountByCategory,
+  DeviceEventFrequency,
+} from '@core/domains/securityCenter/entities';
 
 // ---------------------------------------------------------------------------
 // Query schema
@@ -34,11 +38,11 @@ const querySchema = z.object({
 
 interface SecurityAnalyticsResponse {
   data: {
-    incidentsBySeverity: Record<string, number>;
+    incidentsBySeverity: IncidentCountBySeverity[];
     averageResponseTime: number;
-    incidentsByCategory: Record<string, number>;
+    incidentsByCategory: IncidentCountByCategory[];
     patrolCoveragePercentage: number;
-    deviceEventFrequency: Record<string, number>;
+    deviceEventFrequency: DeviceEventFrequency[];
     timeRange: {
       start: string;
       end: string;
@@ -60,10 +64,10 @@ interface SecurityAnalyticsResponse {
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
  * @returns NextResponse with analytics data or error
  */
-const handleGetAnalytics: AuthorizedRouteHandler<SecurityAnalyticsResponse> = async (
-  request: NextRequest,
-  authContext: AuthorizationContext,
-): Promise<NextResponse<SecurityAnalyticsResponse>> => {
+const handleGetAnalytics: AuthorizedRouteHandler<SecurityAnalyticsResponse | ErrorResponseBody> = async (
+  request,
+  authContext,
+): Promise<NextResponse<SecurityAnalyticsResponse | ErrorResponseBody>> => {
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
@@ -80,7 +84,7 @@ const handleGetAnalytics: AuthorizedRouteHandler<SecurityAnalyticsResponse> = as
         code: 'COMMON_VALIDATION_FAILED',
         message: 'Invalid query parameters',
         correlationId,
-      } as unknown as SecurityAnalyticsResponse,
+      },
       { status: 400 },
     );
   }
@@ -97,7 +101,7 @@ const handleGetAnalytics: AuthorizedRouteHandler<SecurityAnalyticsResponse> = as
 
     // 3. Map result to safe response
     if (!result.success) {
-      return mapAppErrorToHttpResponse(result.error, correlationId) as NextResponse<SecurityAnalyticsResponse>;
+      return mapAppErrorToHttpResponse(result.error, correlationId);
     }
 
     const analytics = result.data;
@@ -124,7 +128,7 @@ const handleGetAnalytics: AuthorizedRouteHandler<SecurityAnalyticsResponse> = as
         code: 'COMMON_UNEXPECTED_ERROR',
         message: 'Internal server error',
         correlationId,
-      } as unknown as SecurityAnalyticsResponse,
+      },
       { status: 500 },
     );
   }

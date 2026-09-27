@@ -417,10 +417,8 @@ export const DelegationMatrixServiceImpl = ({
       // Check 2: Target role must be delegatable (Req 25 AC 4, AC 5)
       // PLATFORM_ADMIN and TENANT_OWNER cannot be granted through delegation
       if (!canBeGranted(targetRole)) {
-        const reason =
-          targetRole === MembershipRole.PLATFORM_ADMIN
-            ? 'PLATFORM_ADMIN can only be assigned through system provisioning'
-            : 'TENANT_OWNER can only be assigned through ownership transfer flow';
+        // Note: PLATFORM_ADMIN can only be assigned through system provisioning
+        // TENANT_OWNER can only be assigned through ownership transfer flow
 
         return ok(buildValidationResult(
           false,
