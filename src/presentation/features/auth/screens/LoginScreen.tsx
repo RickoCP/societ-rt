@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,23 +15,31 @@ const DEMO_ACCOUNTS: ReadonlyArray<{
   role: string;
   email: string;
   subdomain: string;
+  membershipRole?: string;
 }> = [
-  { tenant: 'Platform', role: 'Super Admin', email: 'admin@societ-rt.com', subdomain: 'platform' },
+  // Platform Admin (existing)
   { tenant: 'Platform', role: 'Super Admin', email: 'superadmin@societ.app', subdomain: 'platform' },
-  { tenant: 'Platform', role: 'Operator', email: 'operator@societ.app', subdomain: 'platform' },
-  { tenant: 'RT 01', role: 'Ketua RT', email: 'ketua@rt01.societ.app', subdomain: 'rt01' },
-  { tenant: 'RT 01', role: 'Sekretaris', email: 'sekretaris@rt01.societ.app', subdomain: 'rt01' },
-  { tenant: 'RT 01', role: 'Bendahara', email: 'bendahara@rt01.societ.app', subdomain: 'rt01' },
-  { tenant: 'RT 01', role: 'Warga', email: 'ahmad@rt01.societ.app', subdomain: 'rt01' },
-  { tenant: 'RT 01', role: 'Warga', email: 'warga2@rt01.societ.app', subdomain: 'rt01' },
-  { tenant: 'RT 01', role: 'Satpam', email: 'satpam@rt01.societ.app', subdomain: 'rt01' },
-  { tenant: 'RT 01', role: 'Satpam', email: 'satpam2@rt01.societ.app', subdomain: 'rt01' },
-  { tenant: 'RT 02', role: 'Ketua RT', email: 'ketua@rt02.societ.app', subdomain: 'rt02' },
-  { tenant: 'RT 02', role: 'Bendahara', email: 'bendahara@rt02.societ.app', subdomain: 'rt02' },
-  { tenant: 'RT 02', role: 'Sekretaris', email: 'sekretaris@rt02.societ.app', subdomain: 'rt02' },
-  { tenant: 'RT 02', role: 'Warga', email: 'rizki@rt02.societ.app', subdomain: 'rt02' },
-  { tenant: 'RT 02', role: 'Warga', email: 'warga2@rt02.societ.app', subdomain: 'rt02' },
-  { tenant: 'RT 02', role: 'Satpam', email: 'satpam@rt02.societ.app', subdomain: 'rt02' },
+  { tenant: 'Platform', role: 'Admin', email: 'admin@societ-rt.com', subdomain: 'platform' },
+
+  // Tenant: Kelurahan Menteng (Enterprise Plan)
+  { tenant: 'Menteng', role: 'Ketua RT', email: 'budi@menteng.societ-rt.id', subdomain: 'menteng', membershipRole: 'TENANT_OWNER' },
+  { tenant: 'Menteng', role: 'Pengurus', email: 'siti@menteng.societ-rt.id', subdomain: 'menteng', membershipRole: 'ORG_ADMIN' },
+  { tenant: 'Menteng', role: 'Ketua RT', email: 'ahmad@menteng.societ-rt.id', subdomain: 'menteng', membershipRole: 'RT_ADMIN' },
+  { tenant: 'Menteng', role: 'Security', email: 'dewi@menteng.societ-rt.id', subdomain: 'menteng', membershipRole: 'SECURITY' },
+  { tenant: 'Menteng', role: 'Warga', email: 'eko@menteng.societ-rt.id', subdomain: 'menteng', membershipRole: 'RESIDENT' },
+  { tenant: 'Menteng', role: 'Warga', email: 'fitri@menteng.societ-rt.id', subdomain: 'menteng', membershipRole: 'RESIDENT' },
+
+  // Tenant: Kelurahan Kemang (Pro Plan)
+  { tenant: 'Kemang', role: 'Ketua RT', email: 'gunawan@kemang.societ-rt.id', subdomain: 'kemang', membershipRole: 'TENANT_OWNER' },
+  { tenant: 'Kemang', role: 'Pengurus', email: 'hesti@kemang.societ-rt.id', subdomain: 'kemang', membershipRole: 'ORG_ADMIN' },
+  { tenant: 'Kemang', role: 'Ketua RT', email: 'irfan@kemang.societ-rt.id', subdomain: 'kemang', membershipRole: 'RT_ADMIN' },
+  { tenant: 'Kemang', role: 'Security', email: 'joko@kemang.societ-rt.id', subdomain: 'kemang', membershipRole: 'SECURITY' },
+  { tenant: 'Kemang', role: 'Warga', email: 'kartika@kemang.societ-rt.id', subdomain: 'kemang', membershipRole: 'RESIDENT' },
+
+  // Tenant: Kelurahan Sudirman (Free Plan)
+  { tenant: 'Sudirman', role: 'Ketua RT', email: 'lukman@sudirman.societ-rt.id', subdomain: 'sudirman', membershipRole: 'TENANT_OWNER' },
+  { tenant: 'Sudirman', role: 'Ketua RT', email: 'maya@sudirman.societ-rt.id', subdomain: 'sudirman', membershipRole: 'RT_ADMIN' },
+  { tenant: 'Sudirman', role: 'Warga', email: 'nanda@sudirman.societ-rt.id', subdomain: 'sudirman', membershipRole: 'RESIDENT' },
 ];
 
 export function LoginScreen() {
@@ -43,20 +51,18 @@ export function LoginScreen() {
   });
 
   const onSubmit = methods.handleSubmit(data => {
-    // Login manual memakai subdomain dari host (atau default env).
+    console.log('[LoginScreen] Manual submit:', data);
     login(data);
   });
 
   const loginWithDemoAccount = (email: string, subdomain: string) => {
+    console.log('[LoginScreen] Demo account clicked:', { email, subdomain, isPending });
     methods.setValue('email', email, { shouldValidate: true });
     methods.setValue('password', DEMO_PASSWORD, { shouldValidate: true });
-    // Login langsung dengan subdomain akun tersebut agar tenant ter-resolve
-    // dengan benar meski diakses via localhost (tanpa subdomain host).
+    console.log('[LoginScreen] Form values set, calling login...');
     login({ email, password: DEMO_PASSWORD, subdomain });
   };
 
-  // Tampilkan panel akun demo di non-production, atau saat flag diaktifkan
-  // secara eksplisit (mis. lingkungan staging demo).
   const showDemoCredentials =
     process.env.NODE_ENV !== 'production' ||
     process.env.NEXT_PUBLIC_SHOW_DEMO_CREDENTIALS === 'true';
@@ -127,22 +133,31 @@ export function LoginScreen() {
                 </code>
               </p>
             </div>
-            <ul className="flex max-h-52 flex-col divide-y divide-amber-100 overflow-y-auto dark:divide-amber-900/30">
+            <ul className="flex max-h-64 flex-col divide-y divide-amber-100 overflow-y-auto dark:divide-amber-900/30">
               {DEMO_ACCOUNTS.map(account => (
-                <li key={account.email}>
+                <li key={account.email} >
                   <button
                     type="button"
                     disabled={isPending}
-                    onClick={() =>
-                      loginWithDemoAccount(account.email, account.subdomain)
-                    }
+                    onClick={(e) => {
+                      console.log('test')
+                      e.preventDefault();
+                      e.stopPropagation();
+                      alert('Clicked: ' + account.email); console.log('[LoginScreen] Button onClick fired for:', account.email);
+                      loginWithDemoAccount(account.email, account.subdomain);
+                    }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-amber-100/70 disabled:opacity-50 dark:hover:bg-amber-900/30">
-                    <span className="inline-flex w-11 shrink-0 justify-center rounded-md bg-amber-200/70 px-1 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                    <span className="inline-flex w-16 shrink-0 justify-center rounded-md bg-amber-200/70 px-1 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
                       {account.tenant}
                     </span>
                     <span className="w-20 shrink-0 font-medium text-amber-900 dark:text-amber-100">
                       {account.role}
                     </span>
+                    {account.membershipRole && (
+                      <span className="w-24 shrink-0 rounded bg-gray-200/70 px-1 py-0.5 text-[9px] text-gray-600 dark:bg-gray-700/50 dark:text-gray-300">
+                        {account.membershipRole}
+                      </span>
+                    )}
                     <span className="truncate font-mono text-amber-700 dark:text-amber-300">
                       {account.email}
                     </span>
@@ -156,3 +171,4 @@ export function LoginScreen() {
     </FormProvider>
   );
 }
+

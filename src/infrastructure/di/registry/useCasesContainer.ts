@@ -1,5 +1,5 @@
-/**
- * Use Cases Container — Registers use case implementations.
+﻿/**
+ * Use Cases Container â€” Registers use case implementations.
  *
  * All use cases are registered as singletons (stateless factory functions).
  */
@@ -10,6 +10,7 @@ import {
   RegisterUseCaseImpl,
   LogoutUseCaseImpl,
   CreateInvitationUseCaseImpl,
+  SwitchContextUseCaseImpl,
 } from '@core/domains/auth/usecases';
 import {
   AssignRoleUseCaseImpl,
@@ -23,7 +24,17 @@ import {
   ImportTenantSirenCsvUseCaseImpl,
   SuspendTenantUseCaseImpl,
   ReactivateTenantUseCaseImpl,
+  // Multi-Tenant Admin UI â€” Tenant Settings Use Cases (Task 18.2, Requirements 11-13)
+  GetTenantSettingsUseCaseImpl,
+  UpdateTenantProfileUseCaseImpl,
+  UpdateTenantConfigUseCaseImpl,
+  ManageTenantLifecycleUseCaseImpl,
 } from '@core/domains/tenant/usecases';
+import {
+  GetSubscriptionUseCaseImpl,
+  ChangePlanUseCaseImpl,
+  GetBillingHistoryUseCaseImpl,
+} from '@core/domains/subscription/usecases';
 import {
   CreateHouseholdUseCaseImpl,
   AddResidentUseCaseImpl,
@@ -111,6 +122,13 @@ import {
   EndImpersonationUseCaseImpl,
   GetTenantHealthUseCaseImpl,
 } from '@core/domains/operational/usecases';
+import {
+  GetPlatformMetricsUseCaseImpl,
+  GetTenantsOverviewUseCaseImpl,
+  GetSecurityEventsUseCaseImpl,
+  ImpersonateTenantUseCaseImpl,
+  EndImpersonationUseCaseImpl as EndPlatformImpersonationUseCaseImpl,
+} from '@core/domains/platform/usecases';
 import {
   PairDeviceUseCaseImpl,
   SendDeviceCommandUseCaseImpl,
@@ -200,6 +218,19 @@ import {
   AdminMembershipServiceImpl,
 } from '@core/domains/membership/services';
 import {
+  ListMembersUseCaseImpl,
+  ChangeMemberRoleUseCaseImpl,
+  InviteMemberUseCaseImpl,
+  BulkMemberOperationUseCaseImpl,
+} from '@core/domains/membership/usecases';
+import {
+  GetOrgUnitTreeUseCaseImpl,
+  CreateOrgUnitUseCaseImpl,
+  UpdateOrgUnitUseCaseImpl,
+  DeleteOrgUnitUseCaseImpl,
+  MoveOrgUnitUseCaseImpl,
+} from '@core/domains/orgunit/usecases';
+import {
   TenantTransferServiceImpl,
 } from '@core/domains/transfer/services';
 import {
@@ -233,6 +264,9 @@ import {
   AuthorizationErrorHandlerServiceImpl,
 } from '@core/domains/authorization/services';
 import {
+  ContextSwitchServiceImpl,
+} from '@core/domains/context';
+import {
   CrossTenantPreventionServiceImpl,
 } from '@core/domains/authorization/services';
 import {
@@ -255,6 +289,11 @@ import {
   TenantDataIsolationAuditServiceImpl,
 } from '@core/domains/audit/services';
 import {
+  QueryAuditLogsUseCaseImpl,
+  ExportAuditLogsUseCaseImpl,
+} from '@core/domains/audit/usecases';
+// Duplicate import removed - ImpersonateTenantUseCaseImpl already imported above
+import {
   NotificationSecurityServiceImpl,
 } from '@core/domains/notification/services';
 import {
@@ -268,6 +307,8 @@ export function registerUseCases(container: AwilixContainer): void {
     registerUseCase: asFunction(RegisterUseCaseImpl).singleton(),
     logoutUseCase: asFunction(LogoutUseCaseImpl).singleton(),
     createInvitationUseCase: asFunction(CreateInvitationUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Context Switch UseCase (Task 3.5)
+    switchContextUseCase: asFunction(SwitchContextUseCaseImpl).singleton(),
     // RBAC
     assignRoleUseCase: asFunction(AssignRoleUseCaseImpl).singleton(),
     checkPermissionUseCase: asFunction(CheckPermissionUseCaseImpl).singleton(),
@@ -414,69 +455,119 @@ export function registerUseCases(container: AwilixContainer): void {
     createEmergencyContactUseCase: asFunction(CreateEmergencyContactUseCaseImpl).singleton(),
     updateEmergencyContactUseCase: asFunction(UpdateEmergencyContactUseCaseImpl).singleton(),
     deleteEmergencyContactUseCase: asFunction(DeleteEmergencyContactUseCaseImpl).singleton(),
-    // FASE 1.17 — Subscription Management (Task 44)
+    // FASE 1.17 â€” Subscription Management (Task 44)
     subscriptionPlanService: asFunction(createSubscriptionPlanService).singleton(),
     subscriptionStatusService: asFunction(createSubscriptionStatusService).singleton(),
-    // FASE 1.17 — Entitlement Enforcement (Task 45)
+    // FASE 1.17 â€” Entitlement Enforcement (Task 45)
     entitlementService: asFunction(createEntitlementService).singleton(),
-    // FASE 1.17 — Billing and Payment Integration (Task 47)
+    // FASE 1.17 â€” Billing and Payment Integration (Task 47)
     billingService: asFunction(createBillingService).singleton(),
-    // FASE 1.18 — Membership Lifecycle Management (Task 50)
+    // FASE 1.18 â€” Membership Lifecycle Management (Task 50)
     membershipEventEmitter: asFunction(LoggingMembershipEventEmitter).singleton(),
     membershipLifecycleService: asFunction(MembershipLifecycleServiceImpl).singleton(),
-    // FASE 1.18 — Delegation Matrix (Task 51)
+    // FASE 1.18 â€” Delegation Matrix (Task 51)
     // NOTE: key must be `auditEmitter` to match the destructured parameter in
     // DelegationMatrixServiceImpl under Awilix PROXY injection mode.
     auditEmitter: asFunction(LoggingDelegationAuditEmitter).singleton(),
     delegationMatrixService: asFunction(DelegationMatrixServiceImpl).singleton(),
-    // FASE 1.18 — Tenant Ownership Transfer (Task 52)
+    // FASE 1.18 â€” Tenant Ownership Transfer (Task 52)
     // NOTE: transferAuditEmitter key used for TenantTransferService dependency
     transferAuditEmitter: asFunction(LoggingTransferAuditEmitter).singleton(),
     tenantTransferService: asFunction(TenantTransferServiceImpl).singleton(),
-    // FASE 1.18 — Membership Invitation Flow (Task 53)
+    // FASE 1.18 â€” Membership Invitation Flow (Task 53)
     invitationEventEmitter: asFunction(LoggingInvitationEventEmitter).singleton(),
     membershipInvitationService: asFunction(MembershipInvitationServiceImpl).singleton(),
-    // FASE 1.18 — Admin Membership Management (Task 54)
+    // FASE 1.18 â€” Admin Membership Management (Task 54)
     adminMembershipAuditEmitter: asFunction(LoggingAdminMembershipAuditEmitter).singleton(),
     adminMembershipService: asFunction(AdminMembershipServiceImpl).singleton(),
-    // FASE 1.18 — Household Isolation Enforcement (Task 55, INV-HOUSEHOLD-001)
+    // FASE 1.18 â€” Household Isolation Enforcement (Task 55, INV-HOUSEHOLD-001)
     householdIsolationAuditEmitter: asFunction(LoggingHouseholdIsolationAuditEmitter).singleton(),
     householdIsolationService: asFunction(HouseholdIsolationServiceImpl).singleton(),
-    // FASE 1.18 — Tenant Onboarding Flow (Task 49)
+    // FASE 1.18 â€” Tenant Onboarding Flow (Task 49)
     onboardingEventEmitter: asFunction(LoggingOnboardingEventEmitter).singleton(),
     tenantOnboardingService: asFunction(TenantOnboardingServiceImpl).singleton(),
-    // FASE 1.19 — OrgUnit Management Service (Task 57)
+    // FASE 1.19 â€” OrgUnit Management Service (Task 57)
     orgUnitEventEmitter: asFunction(LoggingOrgUnitEventEmitter).singleton(),
     orgUnitManagementService: asFunction(OrgUnitManagementServiceImpl).singleton(),
-    // FASE 1.19 — OrgUnit Hierarchy and CRUD Services (Task 58)
+    // FASE 1.19 â€” OrgUnit Hierarchy and CRUD Services (Task 58)
     orgUnitHierarchyReader: asFunction(OrgUnitHierarchyReaderImpl).singleton(),
     orgUnitScopeAuthorizer: asFunction(OrgUnitScopeAuthorizerImpl).singleton(),
     orgUnitCrudService: asFunction(OrgUnitCrudServiceImpl).singleton(),
-    // FASE 1.19 — Multi-Cluster Support (Task 59)
+    // FASE 1.19 â€” Multi-Cluster Support (Task 59)
     multiClusterService: asFunction(MultiClusterServiceImpl).singleton(),
-    // FASE 1.19 — IoT Device Isolation Enforcement (Task 60, INV-IOT-001)
+    // FASE 1.19 â€” IoT Device Isolation Enforcement (Task 60, INV-IOT-001)
     iotDeviceIsolationAuditEmitter: asFunction(LoggingIoTDeviceIsolationAuditEmitter).singleton(),
     iotDeviceIsolationService: asFunction(IoTDeviceIsolationServiceImpl).singleton(),
-    // FASE 1.20 — Audit Trail Implementation (Task 62)
+    // FASE 1.20 â€” Audit Trail Implementation (Task 62)
     auditTrailEmitter: asFunction(LoggingAuditTrailEmitter).singleton(),
     auditTrailService: asFunction(AuditTrailServiceImpl).singleton(),
-    // FASE 1.20 — Authorization Concurrency Handling (Task 63, Req 28)
+    // FASE 1.20 â€” Authorization Concurrency Handling (Task 63, Req 28)
     authorizationConcurrencyService: asFunction(AuthorizationConcurrencyServiceImpl).singleton(),
-    // FASE 1.20 — Cache Invalidation Strategy (Task 64, Req 29)
+    // FASE 1.20 â€” Cache Invalidation Strategy (Task 64, Req 29)
     cacheInvalidationService: asFunction(CacheInvalidationServiceImpl).singleton(),
-    // FASE 1.20 — Audit Security Events (Task 65, Req 30)
+    // FASE 1.20 â€” Audit Security Events (Task 65, Req 30)
     auditSecurityEventsService: asFunction(AuditSecurityEventsServiceImpl).singleton(),
-    // FASE 1.20 — Batch Operations Support (Task 66, Req 33)
+    // FASE 1.20 â€” Batch Operations Support (Task 66, Req 33)
     batchOperationsService: asFunction(BatchOperationsServiceImpl).singleton(),
-    // FASE 1.20 — Permission Sync Mechanism (Task 67, Req 35)
+    // FASE 1.20 â€” Permission Sync Mechanism (Task 67, Req 35)
     permissionSyncService: asFunction(PermissionSyncServiceImpl).singleton(),
-    // FASE 1.20 — Tenant Data Isolation Audit (Task 68, Req 38)
+    // FASE 1.20 â€” Tenant Data Isolation Audit (Task 68, Req 38)
     tenantDataIsolationAuditService: asFunction(TenantDataIsolationAuditServiceImpl).singleton(),
-    // FASE 1.20 — Authorization Error Handling (Task 69, Req 39)
+    // FASE 1.20 â€” Authorization Error Handling (Task 69, Req 39)
     authorizationErrorHandler: asFunction(AuthorizationErrorHandlerServiceImpl).singleton(),
-    // FASE 1.20 — Notification Security (Task 71, Req 56)
+    // FASE 1.20 â€” Notification Security (Task 71, Req 56)
     notificationSecurityService: asFunction(NotificationSecurityServiceImpl).singleton(),
-    // FASE 1.20 — Cross-Tenant Prevention (Task 72, Req 59, Tenant Isolation)
+    // FASE 1.20 â€” Cross-Tenant Prevention (Task 72, Req 59, Tenant Isolation)
     crossTenantPreventionService: asFunction(CrossTenantPreventionServiceImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Context Switch (Task 3.3, Requirements 1.5-1.7)
+    contextSwitchService: asFunction(ContextSwitchServiceImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Membership Use Cases (Task 5.2)
+    listMembersUseCase: asFunction(ListMembersUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Change Member Role Use Case (Requirements 5.6-5.10)
+    changeMemberRoleUseCase: asFunction(ChangeMemberRoleUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Invite Member Use Case (Task 6.1, Requirements 3.8-3.11)
+    inviteMemberUseCase: asFunction(InviteMemberUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Bulk Member Operation Use Case (Task 8.1, Requirements 6.6-6.7)
+    bulkMemberOperationUseCase: asFunction(BulkMemberOperationUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” OrgUnit Use Cases (Task 10.2)
+    getOrgUnitTreeUseCase: asFunction(GetOrgUnitTreeUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Create OrgUnit Use Case (Task 11.1, Requirements 8.4)
+    createOrgUnitUseCase: asFunction(CreateOrgUnitUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Update OrgUnit Use Case (Task 11.1, Requirements 8.7, 8.8)
+    updateOrgUnitUseCase: asFunction(UpdateOrgUnitUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Delete OrgUnit Use Case (Task 11.4, Requirements 8.9, 8.10)
+    deleteOrgUnitUseCase: asFunction(DeleteOrgUnitUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Move OrgUnit Use Case (Task 13.1, Requirements 10.4, 10.7, 10.8)
+    moveOrgUnitUseCase: asFunction(MoveOrgUnitUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Tenant Settings Use Cases (Task 18.2)
+    // @see Requirements 11.1-11.4 (Tenant Settings Screen)
+    getTenantSettingsUseCase: asFunction(GetTenantSettingsUseCaseImpl).singleton(),
+    // @see Requirements 11.5-11.10 (Tenant Profile)
+    updateTenantProfileUseCase: asFunction(UpdateTenantProfileUseCaseImpl).singleton(),
+    // @see Requirements 12.2-12.10 (Tenant Configuration)
+    updateTenantConfigUseCase: asFunction(UpdateTenantConfigUseCaseImpl).singleton(),
+    // @see Requirements 13.5-13.9 (Tenant Lifecycle Management)
+    manageTenantLifecycleUseCase: asFunction(ManageTenantLifecycleUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Subscription Use Cases (Task 20.2)
+    // @see Requirements 14.1-14.9 (Subscription Overview)
+    getSubscriptionUseCase: asFunction(GetSubscriptionUseCaseImpl).singleton(),
+    // @see Requirements 15.5-15.9 (Plan Change - Upgrade/Downgrade/Trial Conversion)
+    changePlanUseCase: asFunction(ChangePlanUseCaseImpl).singleton(),
+    // @see Requirements 16.1-16.11 (Billing History)
+    getBillingHistoryUseCase: asFunction(GetBillingHistoryUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Audit Use Cases (Task 24.2)
+    // @see Requirements 17.1-17.13 (Audit Log Viewer)
+    queryAuditLogsUseCase: asFunction(QueryAuditLogsUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Audit Export Use Case (Task 25.1)
+    // @see Requirements 18.1-18.10 (Audit Log Export)
+    exportAuditLogsUseCase: asFunction(ExportAuditLogsUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI â€” Platform Admin Use Cases (Requirements 19-21)
+    getPlatformMetricsUseCase: asFunction(GetPlatformMetricsUseCaseImpl).singleton(),
+    getTenantsOverviewUseCase: asFunction(GetTenantsOverviewUseCaseImpl).singleton(),
+    getSecurityEventsUseCase: asFunction(GetSecurityEventsUseCaseImpl).singleton(),
+    // @see Requirements 20.3-20.5 (Tenant Impersonation)
+    impersonateTenantUseCase: asFunction(ImpersonateTenantUseCaseImpl).singleton(),
+    endTenantImpersonationUseCase: asFunction(EndPlatformImpersonationUseCaseImpl).singleton(),
   });
 }
+
