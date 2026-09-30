@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Security headers (FASE 0 hardening).
  *
  * Central definition of HTTP security headers applied by middleware to every
@@ -25,8 +25,10 @@
 function buildContentSecurityPolicy(): string {
   const directives: Record<string, string[]> = {
     'default-src': ["'self'"],
-    // No inline/eval scripts. SW registration is an external static file.
-    'script-src': ["'self'"],
+    // In development, Next.js requires 'unsafe-inline' and 'unsafe-eval' for hot reload
+    'script-src': process.env.NODE_ENV === 'production' 
+      ? ["'self'"] 
+      : ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
     // Inline styles required by Next.js/Leaflet (residual hardening item).
     'style-src': ["'self'", "'unsafe-inline'"],
     'img-src': [

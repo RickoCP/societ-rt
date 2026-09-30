@@ -1,18 +1,24 @@
 /**
- * Next.js Middleware â€” Auth, tenant resolution, security headers, and rate limiting.
+ * Next.js Middleware — Auth, tenant resolution, security headers, rate limiting,
+ * and route protection for admin/platform routes.
  *
  * Middleware chain order:
  *   1. Correlation ID (generate or extract)
  *   2. Security headers
  *   3. Rate limiter (login endpoint only)
- *   4. JWT validation (via jose â€” Edge-compatible)
- *   5. Tenant context resolution (set headers for downstream route handlers)
- *   6. Feature flag check (placeholder)
+ *   4. JWT validation (via jose — Edge-compatible)
+ *   5. Route authorization (admin/platform routes)
+ *   6. Tenant context resolution (set headers for downstream route handlers)
+ *   7. Feature flag check (placeholder)
  *
  * Public paths skip auth: /api/auth/login, /api/auth/register, /api/health,
  * /login, /register, /_next, /favicon.ico
  *
- * @see Requirements 1.3, 1.4, 1.5, 21.3, 21.4, 21.6, 25.2
+ * Protected routes:
+ *   - /admin/* routes require authentication
+ *   - /admin/platform/*, /admin/tenants/*, /admin/security/* require PLATFORM_ADMIN role
+ *
+ * @see Requirements 1.3, 1.4, 1.5, 21.3, 21.4, 21.6, 22.6, 25.2, 25.7, 25.8
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -35,6 +41,8 @@ const PUBLIC_PATHS = [
   '/api/health',
   '/login',
   '/register',
+  '/unauthorized', // Accessible when redirected for insufficient permissions
+  '/api/debug', // Debug endpoint - REMOVE IN PRODUCTION
 ];
 
 /** Prefixes that are always public (static assets, Next.js internals). */
@@ -46,6 +54,25 @@ const LOGIN_PATH = '/api/auth/login';
 /** Rate limit: 10 requests per minute per IP for login. */
 const LOGIN_RATE_LIMIT_MAX = 10;
 const LOGIN_RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+
+/**
+ * Routes that require PLATFORM_ADMIN role.
+ * These are platform-level administration routes that should only be accessible
+ * by users with the PLATFORM_ADMIN role.
+ *
+ * @see Requirements 19.1, 19.2, 20.1, 21.1, 22.6, 25.7
+ */
+const PLATFORM_ADMIN_ROUTES = [
+  '/admin/platform',
+  '/admin/tenants',
+  '/admin/security',
+];
+
+/** The role required for platform admin routes */
+const PLATFORM_ADMIN_ROLE = 'PLATFORM_ADMIN';
+
+/** Unauthorized page path for redirects when user lacks permission */
+const UNAUTHORIZED_PATH = '/unauthorized';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -77,6 +104,35 @@ function generateCorrelationId(): string {
 }
 
 /**
+ * Check if a path requires PLATFORM_ADMIN role.
+ * Routes: /admin/platform/*, /admin/tenants/*, /admin/security/*
+ *
+ * @see Requirements 19.1, 19.2, 20.1, 21.1, 22.6
+ */
+function requiresPlatformAdminRole(pathname: string): boolean {
+  return PLATFORM_ADMIN_ROUTES.some(
+    route => pathname === route || pathname.startsWith(`${route}/`),
+  );
+}
+
+/**
+ * Create an unauthorized redirect response.
+ * Redirects the user to the unauthorized page for insufficient permissions.
+ *
+ * @see Requirements 25.8
+ */
+function createUnauthorizedRedirect(
+  request: NextRequest,
+  correlationId: string,
+): NextResponse {
+  const unauthorizedUrl = new URL(UNAUTHORIZED_PATH, request.url);
+  unauthorizedUrl.searchParams.set('from', request.nextUrl.pathname);
+  const redirectResponse = NextResponse.redirect(unauthorizedUrl);
+  setSecurityHeaders(redirectResponse, correlationId);
+  return redirectResponse;
+}
+
+/**
  * Set standard security headers on the response.
  */
 function setSecurityHeaders(
@@ -91,7 +147,7 @@ function setSecurityHeaders(
 }
 
 // ---------------------------------------------------------------------------
-// JWT payload type (Edge-side â€” lightweight)
+// JWT payload type (Edge-side — lightweight)
 // ---------------------------------------------------------------------------
 
 interface MiddlewareJwtPayload {
@@ -108,13 +164,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // ------------------------------------------------------------------
-  // 1. Correlation ID â€” extract from header or generate new
+  // 1. Correlation ID — extract from header or generate new
   // ------------------------------------------------------------------
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
   // ------------------------------------------------------------------
-  // 2. Public paths â€” skip auth but still set security headers
+  // 2. Public paths — skip auth but still set security headers
   // ------------------------------------------------------------------
   if (isPublicPath(pathname)) {
     const response = NextResponse.next();
@@ -123,7 +179,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // ------------------------------------------------------------------
-  // 3. Rate limiter â€” login endpoint only
+  // 3. Rate limiter — login endpoint only
   // ------------------------------------------------------------------
   if (pathname === LOGIN_PATH) {
     const ip = getClientIp(request);
@@ -148,7 +204,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // ------------------------------------------------------------------
-  // 4. JWT validation â€” extract from cookie, verify with jose
+  // 4. JWT validation — extract from cookie, verify with jose
   // ------------------------------------------------------------------
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
@@ -213,7 +269,36 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // ------------------------------------------------------------------
-  // 5. Tenant context resolution â€” set auth headers for route handlers
+  // 5. Route authorization — check role-based access for admin/platform routes
+  // ------------------------------------------------------------------
+
+  // Check platform admin routes require PLATFORM_ADMIN role
+  if (requiresPlatformAdminRole(pathname)) {
+    if (payload.role !== PLATFORM_ADMIN_ROLE) {
+      // For page requests, redirect to unauthorized page
+      if (!pathname.startsWith('/api/')) {
+        return createUnauthorizedRedirect(request, correlationId);
+      }
+
+      // For API requests, return 403 Forbidden
+      const errorResponse = NextResponse.json(
+        {
+          code: 'AUTH_UNAUTHORIZED',
+          message: 'Access denied. PLATFORM_ADMIN role is required.',
+          correlationId,
+        },
+        { status: 403 },
+      );
+      setSecurityHeaders(errorResponse, correlationId);
+      return errorResponse;
+    }
+  }
+
+  // Note: All /admin/* routes require authentication (already validated above)
+  // Additional permission checks can be added here for specific admin routes
+
+  // ------------------------------------------------------------------
+  // 6. Tenant context resolution — set auth headers for route handlers
   // ------------------------------------------------------------------
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-user-id', payload.userId);
@@ -226,7 +311,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   });
 
   // ------------------------------------------------------------------
-  // 6. Feature flag check â€” placeholder for future implementation
+  // 7. Feature flag check — placeholder for future implementation
   // ------------------------------------------------------------------
   // TODO: Check feature flags based on tenant's subscription plan.
   // This will be implemented when the FeatureFlag domain is built.
@@ -240,7 +325,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 }
 
 // ---------------------------------------------------------------------------
-// Matcher â€” exclude static files and Next.js internals
+// Matcher — exclude static files and Next.js internals
 // ---------------------------------------------------------------------------
 
 export const config = {
