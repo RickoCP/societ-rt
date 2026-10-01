@@ -10,6 +10,7 @@
  *
  * @see FASE 1.6 Task 6: OrgUnit Hierarchy Read Support
  * @see Requirements 1 (AC 6), 6 (AC 1-2, 5), 21, 46
+ * @see Requirements 7.2-7.12, 8.1-8.11, 10.1-10.11 (Multi-Tenant Admin UI)
  */
 
 // Entity types
@@ -18,6 +19,16 @@ export type {
   CreateOrgUnitInput,
   UpdateOrgUnitInput,
   PathValidationResult,
+  OrgUnitNode,
+  OrgUnitListItem,
+  OrgUnitSummary,
+} from './entities';
+
+// Entity helper functions
+export {
+  hasChildren,
+  isLeafNode,
+  getDisplayPath,
 } from './entities';
 
 // Type enums and helpers
@@ -26,15 +37,27 @@ export {
   ALL_ORGUNIT_TYPES,
   TYPICAL_ORGUNIT_DEPTH,
   MAX_ORGUNIT_DEPTH,
+  ORGUNIT_TYPE_HIERARCHY,
   isValidOrgUnitType,
   getHierarchyIndex,
   canBeParent,
+  getValidChildTypes,
+  canMoveToParent,
+  isLeafType,
+  isRootType,
 } from './types';
 
-// Repository interface
+// Repository interfaces
 export type {
   IOrgUnitRepository,
   OrgUnitQueryOptions,
+  OrgUnitRepository,
+  OrgUnitFilters,
+  TreeQueryOptions,
+  MoveValidationResult,
+  CreateOrgUnitRequest,
+  UpdateOrgUnitRequest,
+  MoveOrgUnitRequest,
 } from './repositories';
 
 // Service interface and implementation
@@ -44,6 +67,34 @@ export type {
 } from './services';
 
 export { OrgUnitHierarchyReaderImpl } from './services';
+
+// Use cases (Multi-Tenant Admin UI - Task 10.2)
+export type {
+  GetOrgUnitTreeInput,
+  GetOrgUnitTreeUseCase,
+  GetOrgUnitTreeUseCaseType,
+} from './usecases';
+
+export { GetOrgUnitTreeUseCaseImpl } from './usecases';
+
+// Use cases (Multi-Tenant Admin UI - Task 11.1)
+export type {
+  CreateOrgUnitUseCaseInput,
+  CreateOrgUnitUseCase,
+  CreateOrgUnitUseCaseType,
+  UpdateOrgUnitUseCaseInput,
+  UpdateOrgUnitUseCase,
+  UpdateOrgUnitUseCaseType,
+  DeleteOrgUnitUseCaseInput,
+  DeleteOrgUnitUseCase,
+  DeleteOrgUnitUseCaseType,
+} from './usecases';
+
+export {
+  CreateOrgUnitUseCaseImpl,
+  UpdateOrgUnitUseCaseImpl,
+  DeleteOrgUnitUseCaseImpl,
+} from './usecases';
 
 // Error factory functions
 export {

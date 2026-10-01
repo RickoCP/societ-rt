@@ -16,7 +16,7 @@ import {
   type AuthorizedRouteHandler,
 } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Response types

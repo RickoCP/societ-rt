@@ -7,7 +7,7 @@
  * @see Requirements 19.1, 19.2, 19.3, 19.4, 19.5
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { CacheProtocol } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';

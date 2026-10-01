@@ -8,7 +8,7 @@
  * @see Requirements 4.1, 4.2, 4.3
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { UserRole } from '@core/protocols';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError, notFoundError } from '@core/utils';

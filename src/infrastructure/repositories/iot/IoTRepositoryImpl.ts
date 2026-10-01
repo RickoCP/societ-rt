@@ -8,7 +8,7 @@
  * @see Requirements 37.1, 37.4, 38.4, 38.8
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError, notFoundError } from '@core/utils';
 import type { IoTRepository } from '@core/domains/iot/repositories/IoTRepository';

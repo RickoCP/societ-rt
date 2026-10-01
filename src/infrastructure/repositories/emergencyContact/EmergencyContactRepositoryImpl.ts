@@ -3,7 +3,7 @@
  * EmergencyContactRepository. Tenant-scoped via createTenantScopedRepository.
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import { ok, fail, technicalError, notFoundError } from '@core/utils';
 import type { EmergencyContactRepository } from '@core/domains/emergencyContact/repositories';
 import type {

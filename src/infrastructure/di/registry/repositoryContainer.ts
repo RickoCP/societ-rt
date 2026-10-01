@@ -23,6 +23,7 @@ import { BillingRepositoryImpl } from '@infrastructure/repositories/billing/Bill
 import { FeatureFlagRepositoryImpl } from '@infrastructure/repositories/featureFlag/FeatureFlagRepositoryImpl';
 import { NotificationRepositoryImpl } from '@infrastructure/repositories/notification/NotificationRepositoryImpl';
 import { AuditRepositoryImpl } from '@infrastructure/repositories/audit/AuditRepositoryImpl';
+import { AuditAdminRepositoryImpl } from '@infrastructure/repositories/audit/AuditAdminRepositoryImpl';
 import { DashboardRepositoryImpl } from '@infrastructure/repositories/dashboard/DashboardRepositoryImpl';
 import { FileStorageRepositoryImpl } from '@infrastructure/repositories/fileStorage/FileStorageRepositoryImpl';
 import { PrivacyRepositoryImpl } from '@infrastructure/repositories/privacy/PrivacyRepositoryImpl';
@@ -42,11 +43,16 @@ import { PrismaMembershipRepositoryImpl } from '@infrastructure/repositories/mem
 import { PrismaMembershipWriteRepositoryImpl } from '@infrastructure/repositories/membership/PrismaMembershipWriteRepository';
 import { PrismaMembershipInvitationRepositoryImpl } from '@infrastructure/repositories/membership/PrismaMembershipInvitationRepository';
 import { PrismaAdminMembershipRepositoryImpl } from '@infrastructure/repositories/membership/PrismaAdminMembershipRepository';
+import { MembershipAdminRepositoryImpl } from '@infrastructure/repositories/membership/MembershipAdminRepositoryImpl';
 import { RefreshTokenRepositoryImpl } from '@infrastructure/repositories/auth/RefreshTokenRepositoryImpl';
+import { ContextSwitchRepositoryImpl } from '@infrastructure/repositories/auth/ContextSwitchRepositoryImpl';
 import { PrismaSubscriptionPlanRepositoryImpl } from '@infrastructure/repositories/subscription/PrismaSubscriptionPlanRepository';
 import { PrismaSubscriptionRepositoryImpl } from '@infrastructure/repositories/subscription/PrismaSubscriptionRepository';
-import { PrismaOrgUnitRepositoryImpl, PrismaOrgUnitWriteRepositoryImpl } from '@infrastructure/repositories/orgunit';
+import { SubscriptionAdminRepositoryImpl } from '@infrastructure/repositories/subscription/SubscriptionAdminRepositoryImpl';
+import { PrismaOrgUnitRepositoryImpl, PrismaOrgUnitWriteRepositoryImpl, OrgUnitRepositoryImpl } from '@infrastructure/repositories/orgunit';
 import { AuditTrailRepositoryImpl } from '@infrastructure/repositories/audit/AuditTrailRepositoryImpl';
+import { TenantSettingsRepositoryImpl } from '@infrastructure/repositories/tenant/TenantSettingsRepositoryImpl';
+import { PlatformRepositoryImpl } from '@infrastructure/repositories/platform/PlatformRepositoryImpl';
 
 
 export function registerRepositories(container: AwilixContainer): void {
@@ -87,15 +93,29 @@ export function registerRepositories(container: AwilixContainer): void {
     membershipWriteRepository: asFunction(PrismaMembershipWriteRepositoryImpl).singleton(),
     membershipInvitationRepository: asFunction(PrismaMembershipInvitationRepositoryImpl).singleton(),
     adminMembershipRepository: asFunction(PrismaAdminMembershipRepositoryImpl).singleton(),
+    // Admin UI Membership Repository (Multi-Tenant Admin UI)
+    membershipAdminRepository: asFunction(MembershipAdminRepositoryImpl).singleton(),
     refreshTokenRepository: asFunction(RefreshTokenRepositoryImpl).singleton(),
+    // Multi-Tenant Admin UI — Context Switch Repository (Task 3.5)
+    contextSwitchRepository: asFunction(ContextSwitchRepositoryImpl).singleton(),
     // FASE 1.17 — Subscription Management (Task 44)
     subscriptionPlanRepository: asFunction(PrismaSubscriptionPlanRepositoryImpl).singleton(),
     subscriptionRepository: asFunction(PrismaSubscriptionRepositoryImpl).singleton(),
+    // Multi-Tenant Admin UI — Subscription Admin Repository (overview, plans, billing history)
+    subscriptionAdminRepository: asFunction(SubscriptionAdminRepositoryImpl).singleton(),
     // FASE 1.19 — OrgUnit Management (Task 57-58)
     orgUnitRepository: asFunction(PrismaOrgUnitRepositoryImpl).singleton(),
     orgUnitWriteRepository: asFunction(PrismaOrgUnitWriteRepositoryImpl).singleton(),
+    // Multi-Tenant Admin UI — OrgUnit Admin Repository (Task 10.2)
+    orgUnitAdminRepository: asFunction(OrgUnitRepositoryImpl).singleton(),
     // FASE 1.20 — Audit Trail Implementation (Task 62)
     auditTrailRepository: asFunction(AuditTrailRepositoryImpl).singleton(),
+    // Multi-Tenant Admin UI — Tenant Settings Repository (Profile, Configuration, Lifecycle)
+    tenantSettingsRepository: asFunction(TenantSettingsRepositoryImpl).singleton(),
+    // Multi-Tenant Admin UI — Audit Admin Repository (Task 24.2, Requirements 17.4-17.7)
+    auditAdminRepository: asFunction(AuditAdminRepositoryImpl).singleton(),
+    // Multi-Tenant Admin UI — Platform Admin Repository (Requirements 19.1-19.11, 21.1-21.10)
+    platformRepository: asFunction(PlatformRepositoryImpl).singleton(),
 
   });
 }

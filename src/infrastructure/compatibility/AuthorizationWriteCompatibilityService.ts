@@ -25,8 +25,8 @@
  * @see Requirements 8, 9, 45
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
-import type { MembershipRole as PrismaMembershipRole } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
+import type { MembershipRole as PrismaMembershipRole } from '@prisma/client';
 import crypto from 'crypto';
 import type {
   IAuthorizationWriteCompatibilityService,

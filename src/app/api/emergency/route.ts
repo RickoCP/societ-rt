@@ -20,7 +20,7 @@ import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { TriggerEmergencyAlertUseCase } from '@core/domains/emergency/usecases';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas

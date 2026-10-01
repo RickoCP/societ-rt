@@ -16,7 +16,7 @@ import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { SendDeviceCommandUseCase } from '@core/domains/iot/usecases';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schema

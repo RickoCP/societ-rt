@@ -18,7 +18,7 @@ import type { IQuarantineValidator } from '../QuarantineValidator';
 import type { IRoleMappingService } from '../RoleMappingService';
 import type { IRemediationReportGenerator } from '../RemediationReportGenerator';
 import { RemediationError } from '../types';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Test Constants

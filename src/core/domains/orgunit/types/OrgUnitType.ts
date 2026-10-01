@@ -120,3 +120,87 @@ export function canBeParent(
   // Child must be exactly one level below parent (strict adjacency)
   return childIndex === parentIndex + 1;
 }
+
+/**
+ * ORGUNIT_TYPE_HIERARCHY — Valid parent-child type relationships.
+ *
+ * Maps each OrgUnit type to an array of valid child types.
+ * Used for:
+ * - Type dropdown filtering in Create OrgUnit form
+ * - Move/reparent validation
+ * - Drag-and-drop target validation in OrgUnit Tree
+ *
+ * STRICT HIERARCHY:
+ * - ORGANIZATION can only have CLUSTER children
+ * - CLUSTER can only have RW children
+ * - RW can only have RT children
+ * - RT cannot have children (leaf node)
+ *
+ * @see Requirements 8.3 (OrgUnit CRUD Operations)
+ * @see Requirements 10.4 (OrgUnit Reparenting validation)
+ * @see Design Property 15, Property 18
+ */
+export const ORGUNIT_TYPE_HIERARCHY: Readonly<Record<OrgUnitType, readonly OrgUnitType[]>> = {
+  [OrgUnitType.ORGANIZATION]: [OrgUnitType.CLUSTER] as const,
+  [OrgUnitType.CLUSTER]: [OrgUnitType.RW] as const,
+  [OrgUnitType.RW]: [OrgUnitType.RT] as const,
+  [OrgUnitType.RT]: [] as const, // Leaf node - no children allowed
+} as const;
+
+/**
+ * Get valid child types for a given parent type.
+ *
+ * Used by the Create OrgUnit form to filter type dropdown options.
+ *
+ * @param parentType - The parent OrgUnit type
+ * @returns Array of valid child types (empty array for RT)
+ *
+ * @example
+ * getValidChildTypes(OrgUnitType.RW) // [OrgUnitType.RT]
+ * getValidChildTypes(OrgUnitType.RT) // [] (no children)
+ */
+export function getValidChildTypes(parentType: OrgUnitType): readonly OrgUnitType[] {
+  return ORGUNIT_TYPE_HIERARCHY[parentType] ?? [];
+}
+
+/**
+ * Check if a source type can be moved to a target parent type.
+ *
+ * Used for drag-and-drop validation and move operation validation.
+ *
+ * @param sourceType - The type of OrgUnit being moved
+ * @param targetParentType - The type of the target parent OrgUnit
+ * @returns true if the move is valid (source can be a child of target)
+ *
+ * @example
+ * canMoveToParent(OrgUnitType.RT, OrgUnitType.RW) // true
+ * canMoveToParent(OrgUnitType.RT, OrgUnitType.CLUSTER) // false (wrong level)
+ */
+export function canMoveToParent(
+  sourceType: OrgUnitType,
+  targetParentType: OrgUnitType,
+): boolean {
+  const validChildren = ORGUNIT_TYPE_HIERARCHY[targetParentType];
+  return validChildren?.includes(sourceType) ?? false;
+}
+
+/**
+ * Check if an OrgUnit type is a leaf type (cannot have children).
+ *
+ * @param type - The OrgUnit type to check
+ * @returns true if the type cannot have children
+ */
+export function isLeafType(type: OrgUnitType): boolean {
+  return ORGUNIT_TYPE_HIERARCHY[type].length === 0;
+}
+
+/**
+ * Check if an OrgUnit type is a root type (typically ORGANIZATION).
+ * Root types are at the top of the hierarchy.
+ *
+ * @param type - The OrgUnit type to check
+ * @returns true if the type is at the top of hierarchy
+ */
+export function isRootType(type: OrgUnitType): boolean {
+  return getHierarchyIndex(type) === 0;
+}

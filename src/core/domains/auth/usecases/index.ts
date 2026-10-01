@@ -9,3 +9,10 @@ export { LogoutUseCaseImpl } from './LogoutUseCase';
 
 export type { CreateInvitationUseCase } from './CreateInvitationUseCase';
 export { CreateInvitationUseCaseImpl } from './CreateInvitationUseCase';
+
+export type {
+  SwitchContextUseCase,
+  SwitchContextInput,
+  SwitchContextOutput,
+} from './SwitchContextUseCase';
+export { SwitchContextUseCaseImpl } from './SwitchContextUseCase';

@@ -16,7 +16,7 @@ import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { IncidentRepository } from '@core/domains/incident/repositories/IncidentRepository';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // GET handler — Get incident detail

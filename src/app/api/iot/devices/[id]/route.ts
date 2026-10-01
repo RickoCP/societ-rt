@@ -17,7 +17,7 @@ import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authoriz
 import type { IoTRepository } from '@core/domains/iot/repositories/IoTRepository';
 import type { UnpairDeviceUseCase } from '@core/domains/iot/usecases';
 import type { IoTDevice } from '@core/domains/iot/entities';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Helper — Find device by ID within tenant

@@ -13,7 +13,7 @@
  * @see Requirements 24.5, 24.8
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Types

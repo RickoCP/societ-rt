@@ -7,7 +7,7 @@
  * @see Requirements 10.1, 10.2, 10.3, 10.4
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import { emergencyAlertNotFound } from '@core/domains/emergency/errors/emergencyErrors';

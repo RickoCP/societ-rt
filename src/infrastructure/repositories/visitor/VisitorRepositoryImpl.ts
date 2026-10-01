@@ -7,7 +7,7 @@
  * @see Requirements 15.1, 15.2, 15.3, 15.4
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import type { VisitorRepository } from '@core/domains/visitor/repositories/VisitorRepository';

@@ -10,7 +10,7 @@
  * @see Requirements 1.3, 1.4, 1.5, 2.1, 2.5
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import type { TenantRepository } from '@core/domains/tenant/repositories/TenantRepository';

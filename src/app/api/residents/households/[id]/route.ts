@@ -20,7 +20,7 @@ import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import { MembershipRole } from '@core/domains/membership/types';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 const EDIT_ROLES: readonly MembershipRole[] = [
   MembershipRole.PLATFORM_ADMIN,

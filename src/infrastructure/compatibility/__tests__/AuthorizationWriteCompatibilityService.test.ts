@@ -20,7 +20,7 @@ import {
   DualWriteErrorCodes,
 } from '../AuthorizationWriteCompatibilityService';
 import type { IQuarantineManifestService } from '@infrastructure/quarantine';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Mock Services

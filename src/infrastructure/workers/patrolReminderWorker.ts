@@ -14,7 +14,7 @@
  */
 
 import { Worker, type Job } from 'bullmq';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { NotificationQueueProtocol } from '@core/protocols';
 
 // ---------------------------------------------------------------------------

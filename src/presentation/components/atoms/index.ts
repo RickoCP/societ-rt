@@ -17,3 +17,6 @@ export { Spinner } from './Spinner';
 export type { SpinnerProps, SpinnerSize } from './Spinner';
 
 export { OfflineIndicator } from './OfflineIndicator';
+
+export { PermissionGuard } from './PermissionGuard';
+export type { PermissionGuardProps, PermissionGuardMode } from './PermissionGuard';

@@ -22,7 +22,7 @@ import {
   ORG_SCOPED_ROLES,
 } from '../RoleMappingService';
 import { RemediationError } from '../types';
-import type { MembershipRole, UserRole } from '@/generated/prisma/client';
+import type { MembershipRole, UserRole } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Test Constants

@@ -26,12 +26,12 @@
  * @see TPR-04: Status-Aware Membership Resolution
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type {
   Membership as PrismaMembership,
   MembershipRole as PrismaMembershipRole,
   MembershipStatus as PrismaMembershipStatus,
-} from '@/generated/prisma/client';
+} from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import type { IMembershipRepository } from '@core/domains/membership/repositories';

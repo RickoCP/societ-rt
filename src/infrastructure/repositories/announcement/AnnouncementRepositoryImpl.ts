@@ -7,7 +7,7 @@
  * @see Requirements 9.1, 9.2, 9.3
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import type { AnnouncementRepository, AnnouncementFilters } from '@core/domains/announcement/repositories/AnnouncementRepository';

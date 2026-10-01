@@ -32,7 +32,7 @@ import type {
   PrismaClient,
   Tenant,
   User,
-} from '@/generated/prisma/client';
+} from '@prisma/client';
 
 import { createQuarantineValidator, type IQuarantineValidator } from './QuarantineValidator';
 import { createRoleMappingService, type IRoleMappingService } from './RoleMappingService';

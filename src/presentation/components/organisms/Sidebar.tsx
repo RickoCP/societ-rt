@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { type NavItem, visibleNavItems } from './navItems';
 
-export type { NavItem };
-
 export interface SidebarProps {
   items: NavItem[];
   userRole: string;

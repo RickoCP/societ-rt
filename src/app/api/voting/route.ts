@@ -23,7 +23,7 @@ import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authoriz
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { CreateVoteUseCase } from '@core/domains/voting/usecases';
 import type { VotingRepository } from '@core/domains/voting/repositories/VotingRepository';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas

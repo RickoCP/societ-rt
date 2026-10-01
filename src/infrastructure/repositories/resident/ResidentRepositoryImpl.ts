@@ -10,7 +10,7 @@
  * @see Requirements 5.1, 5.2, 5.3, 5.7, 5.8, 5.9, 6.1
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError, validationError } from '@core/utils';
 import type { ResidentRepository } from '@core/domains/resident/repositories/ResidentRepository';

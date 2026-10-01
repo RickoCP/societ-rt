@@ -9,7 +9,7 @@
  * @see Requirements 16.1, 16.2, 16.6, 29.1
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError, notFoundError } from '@core/utils';
 import type { BillingRepository } from '@core/domains/billing/repositories/BillingRepository';

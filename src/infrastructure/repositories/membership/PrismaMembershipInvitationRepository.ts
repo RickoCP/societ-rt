@@ -12,11 +12,11 @@
  * @see Requirements 22 (AC 1-7), 25 (AC 1-9)
  */
 
-import type { PrismaClient, Prisma } from '@/generated/prisma/client';
+import type { PrismaClient, Prisma } from '@prisma/client';
 import type {
   MembershipInvitation as PrismaInvitation,
   MembershipInvitationStatus as PrismaInvitationStatus,
-} from '@/generated/prisma/client';
+} from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError, businessError } from '@core/utils';
 import type {

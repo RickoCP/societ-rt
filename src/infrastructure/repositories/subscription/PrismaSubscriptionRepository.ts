@@ -11,7 +11,7 @@
  * @see Requirements 18 (AC 1-7)
  */
 
-import type { PrismaClient, Prisma, SubscriptionStatusEnum } from '@/generated/prisma/client';
+import type { PrismaClient, Prisma, SubscriptionStatusEnum } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import type {

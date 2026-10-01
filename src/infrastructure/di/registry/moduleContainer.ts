@@ -21,8 +21,6 @@
 
 import { asFunction, type AwilixContainer } from 'awilix';
 import { initPrismaClient } from '@infrastructure/repositories/prismaClient';
-import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
 import { RedisAdapter } from '@infrastructure/networking/RedisAdapter';
 import { BullMQAdapter } from '@infrastructure/networking/BullMQAdapter';
 import { S3Adapter } from '@infrastructure/storage/S3Adapter';
@@ -52,6 +50,7 @@ import { TokenSecurityAuditServiceImpl } from '@infrastructure/auth/TokenSecurit
 import { StubPaymentGatewayImpl } from '@infrastructure/payment';
 import { ShadowAuthExecutorImpl } from '@infrastructure/shadow/ShadowAuthExecutor';
 import { CutoverFlagResolverImpl } from '@infrastructure/cutover/CutoverFlagResolver';
+import { JWTServiceImpl } from '@infrastructure/utils/jwtService';
 
 /**
  * Select the physical-alarm provider implementation.
@@ -135,13 +134,7 @@ function parseTokenEntropyEnvConfig() {
 
 export function registerModules(container: AwilixContainer): void {
   container.register({
-    prismaClient: asFunction(() => {
-      const pool = new pg.Pool({
-        connectionString: process.env.DATABASE_URL,
-      });
-      const adapter = new PrismaPg(pool);
-      return initPrismaClient({ adapter });
-    }).singleton(),
+    prismaClient: asFunction(() => initPrismaClient()).singleton(),
     cacheProtocol: asFunction(RedisAdapter).singleton(),
     queueProtocol: asFunction(BullMQAdapter).singleton(),
     fileStorageProtocol: asFunction(S3Adapter).singleton(),
@@ -238,5 +231,8 @@ export function registerModules(container: AwilixContainer): void {
     cutoverFlagResolver: asFunction(({ logger, shadowAuthExecutor }) =>
       CutoverFlagResolverImpl({ logger, shadowAuthExecutor }),
     ).singleton(),
+    // JWT Service (multi-tenant access token generation/validation)
+    // Stateless service for creating and validating JWT tokens with multi-tenant claims.
+    jwtService: asFunction(() => JWTServiceImpl()).singleton(),
   });
 }

@@ -7,6 +7,7 @@
  * @see FASE 1.6 — Membership Read Model / Repository
  * @see FASE 1.18 — Membership Lifecycle Management
  * @see Requirements 1, 2, 3, 22, 25
+ * @see Requirements 2.2-2.8 (Member List Screen - Admin UI)
  */
 
 // Entity types
@@ -14,6 +15,29 @@ export type {
   Membership,
   CreateMembershipInput,
   UpdateMembershipInput,
+} from './entities';
+
+// Admin UI Member entity (Task 5.1)
+export type {
+  Member,
+  MemberSummary,
+  RoleChangeHistory,
+  PaginatedMembers,
+} from './entities';
+
+// Admin UI Member filters (Task 5.1)
+export type {
+  MemberFilters,
+  MemberPaginationOptions,
+  MemberSortOptions,
+  MemberSortColumn,
+  MemberListQueryOptions,
+} from './entities';
+
+export {
+  VALID_PAGE_SIZES,
+  DEFAULT_PAGINATION,
+  DEFAULT_SORT,
 } from './entities';
 
 // Value objects and enums
@@ -62,6 +86,20 @@ export type {
   ResolvedQueryOptions,
 } from './repositories';
 export { resolveQueryOptions } from './repositories';
+
+// Admin UI Repository interface (Task 5.1)
+export type {
+  MembershipAdminRepository,
+  InviteMemberInput,
+  BulkInviteMemberInput,
+  BulkInviteResult,
+  ChangeMemberStatusInput,
+  ChangeMemberRoleInput,
+} from './repositories';
+export { BULK_OPERATION_LIMITS } from './repositories';
+
+// MembershipRepository alias (Task 5.1 - named export per spec)
+export type { MembershipRepository } from './repositories';
 
 // Error factory functions
 export {
@@ -142,3 +180,58 @@ export type {
 } from './services';
 
 export { DelegatedMembershipServiceImpl } from './services';
+
+// Use Cases (Multi-Tenant Admin UI)
+export type {
+  ListMembersUseCase,
+  ListMembersInput,
+} from './usecases';
+
+export { ListMembersUseCaseImpl } from './usecases';
+
+// Invite Member Use Case (Task 6.1)
+export type {
+  InviteMemberUseCase,
+  InviteSingleMemberInput,
+  InviteBulkMembersInput,
+  SingleInviteResult,
+} from './usecases';
+
+export {
+  InviteMemberUseCaseImpl,
+  BULK_INVITATION_LIMIT,
+  isValidEmail,
+  parseBulkEmails,
+} from './usecases';
+
+// Change Member Role Use Case (Task 7.1)
+export type {
+  ChangeMemberRoleUseCase,
+  ChangeMemberRoleUseCaseInput,
+} from './usecases';
+
+export { ChangeMemberRoleUseCaseImpl } from './usecases';
+
+// Bulk Member Operations Use Case (Task 8.1)
+export type {
+  BulkMemberOperationUseCase,
+  BulkOperationType,
+  BulkOperationProgress,
+  BulkOperationFailure,
+  BulkOperationResult,
+  BulkStatusChangeInput,
+  BulkRoleChangeInput,
+} from './usecases';
+
+export { BulkMemberOperationUseCaseImpl } from './usecases';
+
+// Assign Members to OrgUnit Use Case (Task 12.3)
+export type {
+  AssignMembersToOrgUnitUseCase,
+  AssignMembersToOrgUnitInput,
+  MemberAssignmentInfo,
+  SingleAssignmentResult,
+  AssignMembersToOrgUnitResult,
+} from './usecases';
+
+export { AssignMembersToOrgUnitUseCaseImpl, BULK_ASSIGNMENT_LIMIT } from './usecases';

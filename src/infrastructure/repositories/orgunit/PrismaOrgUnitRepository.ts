@@ -13,7 +13,7 @@
  * @see Requirements 21, 46
  */
 
-import type { PrismaClient, OrgUnit as PrismaOrgUnit, OrgUnitType as PrismaOrgUnitType } from '@/generated/prisma/client';
+import type { PrismaClient, OrgUnit as PrismaOrgUnit, OrgUnitType as PrismaOrgUnitType } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError, notFoundError, businessError } from '@core/utils';
 import type { IOrgUnitRepository, OrgUnitQueryOptions } from '@core/domains/orgunit/repositories/IOrgUnitRepository';

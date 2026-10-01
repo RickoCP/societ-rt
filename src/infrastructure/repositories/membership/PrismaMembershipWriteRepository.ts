@@ -18,12 +18,12 @@
  * @see Requirements 22 (AC 1-7)
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type {
   Membership as PrismaMembership,
   MembershipRole as PrismaMembershipRole,
   MembershipStatus as PrismaMembershipStatus,
-} from '@/generated/prisma/client';
+} from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError, businessError } from '@core/utils';
 import type {

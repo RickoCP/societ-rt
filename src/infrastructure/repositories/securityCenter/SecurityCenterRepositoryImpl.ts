@@ -9,7 +9,7 @@
  * @see Requirements 31.1, 31.3, 31.4, 31.6
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import type {

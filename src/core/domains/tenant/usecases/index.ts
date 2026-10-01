@@ -21,3 +21,33 @@ export { SuspendTenantUseCaseImpl } from './SuspendTenantUseCase';
 
 export type { ReactivateTenantUseCase } from './ReactivateTenantUseCase';
 export { ReactivateTenantUseCaseImpl } from './ReactivateTenantUseCase';
+
+// Admin UI Tenant Settings use cases
+export type {
+  GetTenantSettingsUseCase,
+  GetTenantSettingsInput,
+  GetTenantSettingsOutput,
+  GetTenantSettingsUseCaseType,
+} from './GetTenantSettingsUseCase';
+export { GetTenantSettingsUseCaseImpl } from './GetTenantSettingsUseCase';
+
+export type {
+  UpdateTenantProfileUseCase,
+  UpdateTenantProfileUseCaseInput,
+  UpdateTenantProfileUseCaseType,
+} from './UpdateTenantProfileUseCase';
+export { UpdateTenantProfileUseCaseImpl } from './UpdateTenantProfileUseCase';
+
+export type {
+  UpdateTenantConfigUseCase,
+  UpdateTenantConfigUseCaseInput,
+  UpdateTenantConfigUseCaseType,
+} from './UpdateTenantConfigUseCase';
+export { UpdateTenantConfigUseCaseImpl } from './UpdateTenantConfigUseCase';
+
+export type {
+  ManageTenantLifecycleUseCase,
+  ManageTenantLifecycleInput,
+  ManageTenantLifecycleUseCaseType,
+} from './ManageTenantLifecycleUseCase';
+export { ManageTenantLifecycleUseCaseImpl } from './ManageTenantLifecycleUseCase';

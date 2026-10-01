@@ -1,7 +1,23 @@
 'use client';
 
+/**
+ * Header — Application header with navigation, impersonation banner, tenant switcher,
+ * notifications, user avatar, and logout.
+ *
+ * Integrates with:
+ * - TenantSwitcher for multi-tenant context switching
+ * - Toast notifications for switch success/error feedback
+ *
+ * @see Requirements 1.5-1.7 (Tenant Switcher integration)
+ */
+
+import { useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Avatar } from '../atoms/Avatar';
 import { NotificationBell } from './NotificationBell';
+import { TenantSwitcher } from '@presentation/features/tenant-switcher/components/TenantSwitcher';
+import { useTenantSwitcherViewModel } from '@presentation/features/tenant-switcher/viewModel/useTenantSwitcherViewModel';
+import { showSuccessToast, showErrorToast } from '@infrastructure/stateManagement/toastStore';
 
 export interface HeaderProps {
   userName: string;
@@ -12,6 +28,12 @@ export interface HeaderProps {
   onNotificationClick?: () => void;
   onLogout?: () => void;
   onMenuToggle?: () => void;
+  /**
+   * Whether to show the tenant switcher in the header.
+   * When true, the header will render the TenantSwitcher component
+   * using the useTenantSwitcherViewModel hook.
+   */
+  showTenantSwitcher?: boolean;
   className?: string;
 }
 
@@ -24,8 +46,62 @@ export function Header({
   onNotificationClick,
   onLogout,
   onMenuToggle,
+  showTenantSwitcher = false,
   className = '',
 }: HeaderProps) {
+  const { t } = useTranslation();
+
+  // Only use the tenant switcher ViewModel when showTenantSwitcher is true
+  const tenantSwitcherVm = useTenantSwitcherViewModel();
+
+  // Track previous error state to show toast only on new errors
+  const previousErrorRef = useRef<string | null>(null);
+
+  // Show error toast when switch fails
+  useEffect(() => {
+    if (!showTenantSwitcher) return;
+
+    // Only show toast for new errors (not initial render or repeated errors)
+    if (
+      tenantSwitcherVm.error &&
+      tenantSwitcherVm.error !== previousErrorRef.current
+    ) {
+      showErrorToast(t('tenant_switcher.switch_error'));
+    }
+    previousErrorRef.current = tenantSwitcherVm.error;
+  }, [tenantSwitcherVm.error, showTenantSwitcher, t]);
+
+  /**
+   * Handle context switch with toast notifications.
+   * Success toast is shown before page reload via the ViewModel.
+   * Error toast is handled in useEffect above.
+   *
+   * @param tenantId - Target tenant ID
+   * @param orgUnitId - Target OrgUnit ID (null for tenant-level)
+   */
+  const handleContextSwitch = useCallback(
+    async (tenantId: string, orgUnitId: string | null) => {
+      try {
+        // Show success toast before the page reloads
+        // The ViewModel will call window.location.reload() on success
+        const tenantName =
+          tenantSwitcherVm.memberships.find(
+            m => m.tenantId === tenantId && m.orgUnitId === orgUnitId,
+          )?.tenantName ?? 'tenant';
+
+        // Pre-show success message (will be visible briefly before reload)
+        showSuccessToast(
+          t('tenant_switcher.switch_success', { tenantName }),
+        );
+
+        await tenantSwitcherVm.switchContext(tenantId, orgUnitId);
+      } catch {
+        // Error is handled in the ViewModel and through useEffect above
+      }
+    },
+    [tenantSwitcherVm, t],
+  );
+
   return (
     <header
       className={`flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-gray-700 dark:bg-gray-900 ${className}`}>
@@ -43,6 +119,7 @@ export function Header({
         </button>
       )}
 
+      {/* Impersonation banner */}
       {isImpersonating && (
         <div
           role="alert"
@@ -66,6 +143,23 @@ export function Header({
             {impersonatorName ? ` (by ${impersonatorName})` : ''}
           </span>
         </div>
+      )}
+
+      {/* Tenant Switcher - positioned after impersonation banner, before flex spacer */}
+      {showTenantSwitcher && (
+        <TenantSwitcher
+          currentContext={tenantSwitcherVm.currentContext}
+          memberships={tenantSwitcherVm.memberships}
+          isDropdownOpen={tenantSwitcherVm.isDropdownOpen}
+          isSwitching={tenantSwitcherVm.isSwitching}
+          isLoading={tenantSwitcherVm.isLoading}
+          canSwitch={tenantSwitcherVm.canSwitch}
+          error={tenantSwitcherVm.error}
+          onToggle={tenantSwitcherVm.toggleDropdown}
+          onSwitch={handleContextSwitch}
+          onClose={tenantSwitcherVm.closeDropdown}
+          className="ml-2"
+        />
       )}
 
       <div className="flex-1" />

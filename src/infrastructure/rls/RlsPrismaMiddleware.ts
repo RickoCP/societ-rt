@@ -18,7 +18,7 @@
  * @see Design Section 8: RLS Prisma Middleware
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { Logger } from '@infrastructure/logging/Logger';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';

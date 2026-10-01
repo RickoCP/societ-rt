@@ -7,7 +7,7 @@
  * @see Requirements 13.1, 13.2, 13.3, 13.4, 13.5
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError, notFoundError } from '@core/utils';
 import type {

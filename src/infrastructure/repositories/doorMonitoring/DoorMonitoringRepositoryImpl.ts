@@ -7,7 +7,7 @@
  * mirroring IoTRepositoryImpl.findByTuyaId.
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import { ok, fail, technicalError } from '@core/utils';
 import type {
   DoorMonitoringRepository,

@@ -11,7 +11,7 @@
  * @see Locked Decision L6: Non-admin RT users org-scoped to RT root
  */
 
-import type { MembershipRole, UserRole } from '@/generated/prisma/client';
+import type { MembershipRole, UserRole } from '@prisma/client';
 
 import type { RemediationClassification } from './types';
 import { RemediationError } from './types';

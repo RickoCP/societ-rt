@@ -7,7 +7,7 @@
  * @see Requirements 8.1, 8.2, 8.3, 8.4, 8.5, 8.6
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError, notFoundError } from '@core/utils';
 import type { VotingRepository } from '@core/domains/voting/repositories/VotingRepository';

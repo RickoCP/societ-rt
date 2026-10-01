@@ -13,12 +13,12 @@
  * @see Requirements 50 (Admin Membership Management)
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type {
   Membership as PrismaMembership,
   MembershipRole as PrismaMembershipRole,
   MembershipStatus as PrismaMembershipStatus,
-} from '@/generated/prisma/client';
+} from '@prisma/client';
 import type { Membership } from '@core/domains/membership/entities';
 import type { MembershipRole, MembershipStatus } from '@core/domains/membership/types';
 import type {

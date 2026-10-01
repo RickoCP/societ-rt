@@ -21,7 +21,7 @@ import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authoriz
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { CreateAnnouncementUseCase } from '@core/domains/announcement/usecases';
 import type { AnnouncementRepository } from '@core/domains/announcement/repositories/AnnouncementRepository';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas

@@ -7,7 +7,7 @@
  * @see Requirements 11.1, 11.2, 11.3, 11.4
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import type { MapRepository } from '@core/domains/map/repositories/MapRepository';

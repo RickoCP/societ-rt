@@ -7,7 +7,7 @@
  * @see Requirements 14.1, 14.2, 14.3, 14.4
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import type { EventRepository } from '@core/domains/event/repositories/EventRepository';

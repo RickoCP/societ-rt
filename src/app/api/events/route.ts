@@ -26,7 +26,7 @@ import {
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { CreateEventUseCase } from '@core/domains/event/usecases';
 import type { EventRepository } from '@core/domains/event/repositories/EventRepository';
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Input schemas

@@ -9,7 +9,7 @@
  * @see Requirements 7.1, 7.2, 7.3, 7.4, 7.5, 7.7, 7.9
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError, notFoundError } from '@core/utils';
 import type { FinanceRepository } from '@core/domains/finance/repositories/FinanceRepository';

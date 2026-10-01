@@ -7,7 +7,7 @@
  * @see Requirements 12.1, 12.2, 12.3, 12.4
  */
 
-import type { PrismaClient } from '@/generated/prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { DomainResult } from '@core/utils';
 import { ok, fail, technicalError } from '@core/utils';
 import type { SecurityRepository } from '@core/domains/security/repositories/SecurityRepository';
