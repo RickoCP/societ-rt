@@ -20,7 +20,10 @@ import { AdministrationRepositoryImpl } from '@infrastructure/repositories/admin
 import { EventRepositoryImpl } from '@infrastructure/repositories/event/EventRepositoryImpl';
 import { VisitorRepositoryImpl } from '@infrastructure/repositories/visitor/VisitorRepositoryImpl';
 import { BillingRepositoryImpl } from '@infrastructure/repositories/billing/BillingRepositoryImpl';
+import { InvoiceRepositoryImpl } from '@infrastructure/repositories/billing/InvoiceRepositoryImpl';
 import { FeatureFlagRepositoryImpl } from '@infrastructure/repositories/featureFlag/FeatureFlagRepositoryImpl';
+import { HouseholdRepositoryImpl } from '@infrastructure/repositories/household/HouseholdRepositoryImpl';
+import { TenantTransferRepositoryImpl } from '@infrastructure/repositories/transfer/TenantTransferRepositoryImpl';
 import { NotificationRepositoryImpl } from '@infrastructure/repositories/notification/NotificationRepositoryImpl';
 import { AuditRepositoryImpl } from '@infrastructure/repositories/audit/AuditRepositoryImpl';
 import { AuditAdminRepositoryImpl } from '@infrastructure/repositories/audit/AuditAdminRepositoryImpl';
@@ -29,6 +32,7 @@ import { FileStorageRepositoryImpl } from '@infrastructure/repositories/fileStor
 import { PrivacyRepositoryImpl } from '@infrastructure/repositories/privacy/PrivacyRepositoryImpl';
 import { OperationalRepositoryImpl } from '@infrastructure/repositories/operational/OperationalRepositoryImpl';
 import { IoTRepositoryImpl } from '@infrastructure/repositories/iot/IoTRepositoryImpl';
+import { IoTDeviceIsolationRepositoryImpl } from '@infrastructure/repositories/iot/IoTDeviceIsolationRepositoryImpl';
 import { IncidentRepositoryImpl } from '@infrastructure/repositories/incident/IncidentRepositoryImpl';
 import { GateRepositoryImpl } from '@infrastructure/repositories/gate/GateRepositoryImpl';
 import { CctvRepositoryImpl } from '@infrastructure/repositories/cctv/CctvRepositoryImpl';
@@ -79,6 +83,8 @@ export function registerRepositories(container: AwilixContainer): void {
     privacyRepository: asFunction(PrivacyRepositoryImpl).singleton(),
     operationalRepository: asFunction(OperationalRepositoryImpl).singleton(),
     iotRepository: asFunction(IoTRepositoryImpl).singleton(),
+    // Task 60 — IoT Device Isolation Enforcement (INV-IOT-001)
+    iotDeviceIsolationRepository: asFunction(IoTDeviceIsolationRepositoryImpl).singleton(),
     incidentRepository: asFunction(IncidentRepositoryImpl).singleton(),
     gateRepository: asFunction(GateRepositoryImpl).singleton(),
     cctvRepository: asFunction(CctvRepositoryImpl).singleton(),
@@ -116,6 +122,12 @@ export function registerRepositories(container: AwilixContainer): void {
     auditAdminRepository: asFunction(AuditAdminRepositoryImpl).singleton(),
     // Multi-Tenant Admin UI — Platform Admin Repository (Requirements 19.1-19.11, 21.1-21.10)
     platformRepository: asFunction(PlatformRepositoryImpl).singleton(),
+    // Task 55 — Household Isolation Enforcement (INV-HOUSEHOLD-001)
+    householdRepository: asFunction(HouseholdRepositoryImpl).singleton(),
+    // FASE 1.18 (Task 52) — Tenant Ownership Transfer
+    transferRepository: asFunction(TenantTransferRepositoryImpl).singleton(),
+    // Task 47 — Billing and Payment Integration (IInvoiceRepository)
+    invoiceRepository: asFunction(InvoiceRepositoryImpl).singleton(),
 
   });
 }
