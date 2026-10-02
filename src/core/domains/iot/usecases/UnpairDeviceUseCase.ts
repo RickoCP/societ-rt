@@ -60,9 +60,9 @@ export const UnpairDeviceUseCaseImpl = ({
     const userId = getUserId(authContext);
     const role = getMembershipRole(authContext);
 
-    // 1. Validate Home_Owner role (only Warga or Ketua_RT can unpair devices)
+    // 1. Validate Home_Owner role (only Resident or RT_ADMIN can unpair devices)
     if (
-      role !== MembershipRole.WARGA &&
+      role !== MembershipRole.RESIDENT &&
       role !== MembershipRole.RT_ADMIN
     ) {
       return fail(

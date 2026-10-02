@@ -56,7 +56,7 @@ const handleGetOrgUnitTree: AuthorizedRouteHandler<void> = async (
 
   return NextResponse.json(
     {
-      data: result.value,
+      data: result.data,
     },
     { status: 200 },
   ) as NextResponse<void>;

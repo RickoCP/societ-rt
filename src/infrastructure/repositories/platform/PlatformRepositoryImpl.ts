@@ -49,13 +49,12 @@ import type {
 import type {
   PlatformMetrics,
   SystemHealth,
-  TenantStatusCounts,
-  TenantLifecycleStatus,
+  TenantCountsByStatus as TenantStatusCounts,
 } from '@core/domains/platform/entities/PlatformMetrics';
+import type { LifecycleStatusValue as TenantLifecycleStatus } from '@core/domains/tenant/entities/TenantLifecycleStatus';
 import type {
   TenantOverview,
   PaginatedTenantOverviews,
-  SubscriptionTier,
 } from '@core/domains/platform/entities/TenantOverview';
 import type {
   SecurityEvent,
@@ -78,7 +77,7 @@ interface SystemHealthApiResponse {
   apiResponseTime: number;
   databaseLatency: number;
   errorRate: number;
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: 'healthy' | 'degraded' | 'critical';
 }
 
 /**
@@ -239,12 +238,11 @@ interface EndImpersonationApiResponse {
  */
 function mapTenantStatusCountsFromApi(api: Record<string, number>): TenantStatusCounts {
   return {
-    PROVISIONING: api.PROVISIONING ?? 0,
-    ACTIVE: api.ACTIVE ?? 0,
-    SUSPENDED: api.SUSPENDED ?? 0,
-    CLOSING: api.CLOSING ?? 0,
-    CLOSED: api.CLOSED ?? 0,
-    PURGED: api.PURGED ?? 0,
+    active: api.ACTIVE ?? 0,
+    suspended: api.SUSPENDED ?? 0,
+    closed: (api.CLOSING ?? 0) + (api.CLOSED ?? 0) + (api.PURGED ?? 0),
+    provisioning: api.PROVISIONING ?? 0,
+    total: (api.ACTIVE ?? 0) + (api.SUSPENDED ?? 0) + (api.CLOSING ?? 0) + (api.CLOSED ?? 0) + (api.PURGED ?? 0) + (api.PROVISIONING ?? 0),
   };
 }
 
@@ -253,10 +251,11 @@ function mapTenantStatusCountsFromApi(api: Record<string, number>): TenantStatus
  */
 function mapSystemHealthFromApi(api: SystemHealthApiResponse): SystemHealth {
   return {
-    apiResponseTime: api.apiResponseTime,
-    databaseLatency: api.databaseLatency,
-    errorRate: api.errorRate,
+    apiResponseTimeMs: api.apiResponseTime,
+    databaseLatencyMs: api.databaseLatency,
+    errorRatePercent: api.errorRate,
     status: api.status,
+    collectedAt: new Date(),
   };
 }
 
@@ -269,15 +268,8 @@ function mapPlatformMetricsFromApi(api: PlatformMetricsApiResponse): PlatformMet
     totalMembers: api.totalMembers,
     activeSessions: api.activeSessions,
     systemHealth: mapSystemHealthFromApi(api.systemHealth),
-    capturedAt: new Date(api.capturedAt),
-    alertCounts: api.alertCounts
-      ? {
-          failedPayments: api.alertCounts.failedPayments,
-          securityEvents: api.alertCounts.securityEvents,
-          rateLimitViolations: api.alertCounts.rateLimitViolations,
-          subscriptionsExpiringSoon: api.alertCounts.subscriptionsExpiringSoon,
-        }
-      : undefined,
+    lastRefreshedAt: new Date(api.capturedAt),
+    refreshIntervalSeconds: 60,
   };
 }
 
@@ -288,21 +280,26 @@ function mapTenantOverviewFromApi(api: TenantOverviewApiResponse): TenantOvervie
   return {
     id: api.id,
     name: api.name,
+    slug: api.name.toLowerCase().replace(/\s+/g, '-'),
     status: api.status as TenantLifecycleStatus,
     memberCount: api.memberCount,
-    subscriptionPlan: {
-      id: api.subscriptionPlan.id,
-      name: api.subscriptionPlan.name,
-      tier: api.subscriptionPlan.tier as SubscriptionTier,
+    activeMemberCount: api.memberCount, // Default to member count
+    subscription: {
+      planId: api.subscriptionPlan.id,
+      planName: api.subscriptionPlan.name,
+      status: 'ACTIVE', // Default status
+      isTrial: false,
+      trialDaysRemaining: null,
+      periodEndDate: null,
     },
     createdAt: new Date(api.createdAt),
     lastActivityAt: api.lastActivityAt ? new Date(api.lastActivityAt) : null,
-    logoUrl: api.logoUrl,
-    rtRwNumber: api.rtRwNumber,
-    region: api.region,
-    contactPerson: api.contactPerson,
-    contactEmail: api.contactEmail,
-    orgUnitCount: api.orgUnitCount,
+    logoUrl: api.logoUrl ?? null,
+    region: api.region ?? null,
+    contactPerson: api.contactPerson ?? null,
+    contactEmail: api.contactEmail ?? null,
+    hasPendingAlerts: false,
+    pendingAlertCount: 0,
   };
 }
 

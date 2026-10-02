@@ -18,10 +18,10 @@ export type {
   AllowedLogoType,
 } from './TenantProfile';
 export {
+  PROFILE_VALIDATION_RULES,
+  PROFILE_LIMITS,
   RT_RW_NUMBER_PATTERN,
   HEX_COLOR_PATTERN,
-  PROFILE_LIMITS,
-  ALLOWED_LOGO_TYPES,
   isValidRtRwNumber,
   isValidHexColor,
 } from './TenantProfile';
@@ -29,21 +29,31 @@ export {
 // Tenant Configuration entity
 export type {
   TenantConfiguration,
-  UpdateTenantConfigInput,
   NotificationChannels,
   SirenConnectionStatus,
-  SupportedLanguageCode,
+  SupportedLanguage as SupportedLanguageCode,
+  UpdateTenantConfigurationInput,
+  UpdateTenantConfigurationInput as UpdateTenantConfigInput,
 } from './TenantConfiguration';
 export {
-  ESCALATION_TIMEOUT_BOUNDS,
   COMMON_TIMEZONES,
   SUPPORTED_LANGUAGES,
-  DEFAULT_NOTIFICATION_CHANNELS,
-  DEFAULT_TENANT_CONFIG,
+  DEFAULT_CONFIGURATION as DEFAULT_NOTIFICATION_CHANNELS,
+  DEFAULT_CONFIGURATION as DEFAULT_TENANT_CONFIG,
+  DEFAULT_CONFIGURATION as DEFAULT_TENANT_CONFIGURATION,
+  CONFIGURATION_VALIDATION_RULES,
+  ESCALATION_TIMEOUT_BOUNDS,
   isValidEscalationTimeout,
   isValidTimezone,
   isSupportedLanguage,
 } from './TenantConfiguration';
+
+// Helper constants for siren status
+export const ALL_SIREN_CONNECTION_STATUSES = [
+  'connected',
+  'disconnected',
+  'unknown',
+] as const;
 
 // Tenant Lifecycle Status entity
 export type {
@@ -53,6 +63,10 @@ export type {
   LifecycleStatusValue,
   LifecycleActionValue,
 } from './TenantLifecycleStatus';
+
+// Alias types for backwards compatibility
+export type TenantLifecycleState = import('./TenantLifecycleStatus').TenantLifecycleStatus;
+
 export {
   LifecycleStatus,
   LifecycleAction,
@@ -65,47 +79,11 @@ export {
   requiresPlatformAdminForAction,
 } from './TenantLifecycleStatus';
 
-export type {
-  TenantProfile,
-  UpdateTenantProfileInput,
-} from './TenantProfile';
-export { PROFILE_VALIDATION_RULES } from './TenantProfile';
-
-export type {
-  TenantConfiguration,
-  NotificationChannels,
-  UpdateTenantConfigurationInput,
-} from './TenantConfiguration';
+// Alias exports for backwards compatibility
 export {
-  SirenConnectionStatus,
-  ALL_SIREN_CONNECTION_STATUSES,
-  CONFIGURATION_VALIDATION_RULES,
-  SUPPORTED_LANGUAGES,
-  DEFAULT_NOTIFICATION_CHANNELS,
-  DEFAULT_TENANT_CONFIGURATION,
-} from './TenantConfiguration';
-
-export type {
-  TenantLifecycleState,
-  LifecycleEvent,
-  SuspendTenantInput,
-  ReactivateTenantInput,
-  CloseTenantInput,
-} from './TenantLifecycleStatus';
-export {
-  TenantLifecycleStatus,
-  ALL_LIFECYCLE_STATUSES,
-  LIFECYCLE_TRANSITIONS,
-  OPERATIONAL_LIFECYCLE_STATUSES,
-  RESTRICTED_LIFECYCLE_STATUSES,
-  TERMINAL_LIFECYCLE_STATUSES,
-  LifecycleEventType,
-  isValidLifecycleTransition,
-  isOperationalLifecycleStatus,
-  isRestrictedLifecycleStatus,
-  isTerminalLifecycleStatus,
-  getAllowedLifecycleTransitions,
-  canSuspendTenant,
-  canReactivateTenant,
-  canCloseTenant,
+  LifecycleStatus as ALL_LIFECYCLE_STATUSES,
+  LifecycleAction as LifecycleEventType,
+  isOperationalStatus as isOperationalLifecycleStatus,
+  isTerminalStatus as isTerminalLifecycleStatus,
+  getAvailableActions as getAllowedLifecycleTransitions,
 } from './TenantLifecycleStatus';

@@ -132,7 +132,7 @@ export type {
 
 export {
   AuditTrailServiceImpl,
-  AuditEventType,
+  AuditEventType as AuditTrailEventType,
 } from './services';
 
 // ---------------------------------------------------------------------------

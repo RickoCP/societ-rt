@@ -10,9 +10,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@app/api/auth/[...nextauth]/route';
-import { getContainer } from '@infrastructure/di';
+import { container } from '@infrastructure/di/container';
+import { generateCorrelationId } from '@infrastructure/utils/correlationId';
+import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
+import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { OrgUnitRepository } from '@core/domains/orgunit/repositories/OrgUnitRepository';
 
 interface MoveRequestBody {
@@ -20,47 +23,18 @@ interface MoveRequestBody {
   newParentId: string;
 }
 
-export async function POST(request: NextRequest) {
+// ---------------------------------------------------------------------------
+// POST — Move/reparent an OrgUnit
+// ---------------------------------------------------------------------------
+
+const handleMoveOrgUnit: AuthorizedRouteHandler<unknown> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+): Promise<NextResponse> => {
+  const correlationId =
+    request.headers.get('x-correlation-id') ?? generateCorrelationId();
+
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        {
-          code: 'AUTH_UNAUTHORIZED',
-          message: 'Unauthorized',
-        },
-        { status: 401 },
-      );
-    }
-
-    const { tenantId, permissions } = session.user as {
-      tenantId?: string;
-      permissions?: string[];
-    };
-
-    if (!tenantId) {
-      return NextResponse.json(
-        {
-          code: 'AUTH_NO_TENANT',
-          message: 'No tenant context available',
-        },
-        { status: 403 },
-      );
-    }
-
-    // Check permission
-    const hasWritePermission = permissions?.includes('orgunit:write') ?? false;
-    if (!hasWritePermission) {
-      return NextResponse.json(
-        {
-          code: 'AUTH_FORBIDDEN',
-          message: 'You do not have permission to move OrgUnits',
-        },
-        { status: 403 },
-      );
-    }
-
     // Parse request body
     const body = (await request.json()) as MoveRequestBody;
     const { orgUnitId, newParentId } = body;
@@ -70,14 +44,17 @@ export async function POST(request: NextRequest) {
         {
           code: 'VALIDATION_ERROR',
           message: 'orgUnitId and newParentId are required',
+          correlationId,
         },
         { status: 400 },
       );
     }
 
+    const tenantId = authContext.tenantId;
+
     // Get repository from DI
-    const container = getContainer();
-    const orgUnitRepository = container.resolve<OrgUnitRepository>('orgUnitAdminRepository');
+    const orgUnitRepository =
+      container.resolve<OrgUnitRepository>('orgUnitAdminRepository');
 
     // Validate the move first
     const validation = await orgUnitRepository.validateMove(
@@ -91,6 +68,7 @@ export async function POST(request: NextRequest) {
         {
           code: validation.errorKey ?? 'ORGUNIT_MOVE_INVALID',
           message: validation.errorDetails ?? 'Move validation failed',
+          correlationId,
         },
         { status: 400 },
       );
@@ -103,13 +81,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!result.success) {
-      return NextResponse.json(
-        {
-          code: result.error?.code ?? 'ORGUNIT_MOVE_FAILED',
-          message: result.error?.message ?? 'Failed to move OrgUnit',
-        },
-        { status: 500 },
-      );
+      return mapAppErrorToHttpResponse(result.error, correlationId);
     }
 
     return NextResponse.json({
@@ -124,8 +96,15 @@ export async function POST(request: NextRequest) {
       {
         code: 'INTERNAL_ERROR',
         message: 'An unexpected error occurred',
+        correlationId,
       },
       { status: 500 },
     );
   }
-}
+};
+
+// ---------------------------------------------------------------------------
+// Export wrapped handler with permission check
+// ---------------------------------------------------------------------------
+
+export const POST = withPermission(handleMoveOrgUnit, 'orgunit:write');

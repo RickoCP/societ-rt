@@ -36,7 +36,8 @@
       "@assets/*": ["./src/assets/*"],
       "@locales/*": ["./src/presentation/locales/*"],
       "@localization/*": ["./src/infrastructure/localization/*"],
-      "@utils/*": ["./src/infrastructure/utils/*"]
+      "@utils/*": ["./src/infrastructure/utils/*"],
+      "@prisma/client": ["./src/generated/prisma/client.ts"]
     }
   },
   "include": [

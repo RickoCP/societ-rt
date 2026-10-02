@@ -1,0 +1,26 @@
+{
+  "project_type": "Next.js 16 + Clean Architecture + DDD + Prisma ORM + TypeScript strict mode",
+  "language": "TypeScript",
+  "build_system": "npm + Next.js build, Prisma generate for client",
+  "test_framework": "vitest",
+  "build_command": "npm run build",
+  "test_command": "npm run test",
+  "verification_instructions": "Run npx tsc --noEmit to verify TypeScript compilation passes without errors. This is the primary verification for this task as it's focused on fixing broken connections/types.",
+  "snapshot_or_generated_files": "src/generated/prisma/ contains Prisma client generated files (created via npx prisma generate). Do not modify these directly.",
+  "environment_constraints": "Use path aliases (@core/*, @infrastructure/*, etc.) as defined in tsconfig.json. Never use long relative paths (../../..). All repositories must return DomainResult<T> pattern.",
+  "contribution_requirements": "Follow Clean Architecture: core has no external dependencies, infrastructure implements core interfaces, DI via Awilix factory functions. All repositories must be stateless singletons. Error handling uses AppError types with stable error codes.",
+  "key_patterns": "Repository implementations use factory function pattern: export const XxxRepositoryImpl = ({ prismaClient }: { prismaClient: PrismaClient }): IXxxRepository => { ... }. Map Prisma models to domain entities via mapper functions. Return DomainResult<T> using ok() and fail() helpers from @core/utils.",
+  "relevant_files": [
+    "src/infrastructure/repositories/membership/PrismaMembershipRepository.ts - comprehensive repository pattern example",
+    "src/infrastructure/repositories/resident/ResidentRepositoryImpl.ts - simpler pattern example with mappers",
+    "src/infrastructure/di/registry/repositoryContainer.ts - DI registration pattern",
+    "src/core/utils/DomainResult.ts - DomainResult type and helpers",
+    "src/core/utils/AppError.ts - error factory functions",
+    "src/core/domains/household/repositories/IHouseholdRepository.ts - interface to implement",
+    "src/core/domains/transfer/repositories/ITenantTransferRepository.ts - interface to implement", 
+    "src/core/domains/iot/repositories/IIoTDeviceIsolationRepository.ts - interface to implement",
+    "src/core/domains/billing/repositories/IInvoiceRepository.ts - interface to implement",
+    "src/presentation/features/tenant-settings/screens/TenantSettingsScreen.tsx - JSX error location"
+  ],
+  "directory_structure": "src/core/ - domain layer (entities, interfaces, types), src/infrastructure/ - implementation layer (repositories, DI, adapters), src/presentation/ - UI layer (features, components, viewModels), src/app/ - Next.js App Router pages, prisma/ - schema and migrations"
+}

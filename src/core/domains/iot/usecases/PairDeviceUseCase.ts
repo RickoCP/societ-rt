@@ -64,9 +64,9 @@ export const PairDeviceUseCaseImpl = ({
     const userId = getUserId(authContext);
     const role = getMembershipRole(authContext);
 
-    // 1. Validate Home_Owner role (only Warga or Ketua_RT can pair devices)
+    // 1. Validate Home_Owner role (only Resident or RT_ADMIN can pair devices)
     if (
-      role !== MembershipRole.WARGA &&
+      role !== MembershipRole.RESIDENT &&
       role !== MembershipRole.RT_ADMIN
     ) {
       return fail(

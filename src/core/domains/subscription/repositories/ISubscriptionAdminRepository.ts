@@ -25,8 +25,10 @@ import type {
 } from '../entities/BillingEntry';
 import type {
   SubscriptionOverview,
-  UsageLimitCheck,
 } from '../usecases/GetSubscriptionUseCase';
+import type {
+  UsageLimitCheck,
+} from '../usecases/ChangePlanUseCase';
 
 // ---------------------------------------------------------------------------
 // Types

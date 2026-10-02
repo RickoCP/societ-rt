@@ -179,3 +179,53 @@ export const PROFILE_VALIDATION_RULES = {
     maxLength: 20,
   },
 } as const;
+
+// ---------------------------------------------------------------------------
+// Validation Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Profile limits for validation.
+ */
+export const PROFILE_LIMITS = {
+  NAME_MAX_LENGTH: 100,
+  ADDRESS_MAX_LENGTH: 500,
+  CONTACT_PERSON_MAX_LENGTH: 100,
+  CONTACT_EMAIL_MAX_LENGTH: 254,
+  CONTACT_PHONE_MAX_LENGTH: 20,
+  LOGO_MAX_SIZE_BYTES: 2 * 1024 * 1024, // 2MB
+} as const;
+
+/**
+ * Allowed logo MIME types.
+ */
+export type AllowedLogoType = 'image/jpeg' | 'image/png';
+
+/**
+ * Pattern for validating RT/RW number format.
+ */
+export const RT_RW_NUMBER_PATTERN = /^RT\d{3}\/RW\d{3}$/;
+
+/**
+ * Pattern for validating hex color codes.
+ */
+export const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
+
+/**
+ * Validates RT/RW number format.
+ * @param value The RT/RW number to validate
+ * @returns true if valid
+ */
+export function isValidRtRwNumber(value: string): boolean {
+  return RT_RW_NUMBER_PATTERN.test(value);
+}
+
+/**
+ * Validates hex color code format.
+ * @param value The hex color to validate (e.g., #FFFFFF)
+ * @returns true if valid
+ */
+export function isValidHexColor(value: string | null | undefined): boolean {
+  if (value === null || value === undefined) return true;
+  return HEX_COLOR_PATTERN.test(value);
+}

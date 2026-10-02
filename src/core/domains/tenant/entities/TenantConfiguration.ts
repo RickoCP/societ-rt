@@ -208,3 +208,42 @@ export const DEFAULT_CONFIGURATION = {
     email: true,
   },
 } as const;
+
+// ---------------------------------------------------------------------------
+// Validation Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Escalation timeout bounds.
+ */
+export const ESCALATION_TIMEOUT_BOUNDS = {
+  MIN: 1,
+  MAX: 10,
+} as const;
+
+/**
+ * Validates that an escalation timeout is within valid bounds.
+ * @param timeout The timeout value to validate
+ * @returns true if valid
+ */
+export function isValidEscalationTimeout(timeout: number): boolean {
+  return timeout >= ESCALATION_TIMEOUT_BOUNDS.MIN && timeout <= ESCALATION_TIMEOUT_BOUNDS.MAX;
+}
+
+/**
+ * Validates that a timezone is a valid IANA timezone string.
+ * @param timezone The timezone to validate
+ * @returns true if valid (in the common timezones list)
+ */
+export function isValidTimezone(timezone: string): boolean {
+  return (COMMON_TIMEZONES as readonly string[]).includes(timezone);
+}
+
+/**
+ * Checks if a language code is supported.
+ * @param language The language code to check
+ * @returns true if supported
+ */
+export function isSupportedLanguage(language: string): language is SupportedLanguage {
+  return SUPPORTED_LANGUAGES.some((l) => l.code === language);
+}

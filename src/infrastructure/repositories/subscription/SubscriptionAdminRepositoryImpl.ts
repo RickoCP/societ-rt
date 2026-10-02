@@ -43,8 +43,10 @@ import type { CurrencyCode } from '@core/domains/subscription/entities/AdminSubs
 import type {
   SubscriptionOverview,
   UsageMetrics,
-  UsageLimitCheck,
 } from '@core/domains/subscription/usecases/GetSubscriptionUseCase';
+import type {
+  UsageLimitCheck,
+} from '@core/domains/subscription/usecases/ChangePlanUseCase';
 import type { SubscriptionStatus } from '@core/domains/subscription/types';
 import type { HttpProtocol } from '@core/protocols';
 
