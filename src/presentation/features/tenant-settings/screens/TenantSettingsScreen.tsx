@@ -264,7 +264,6 @@ function TenantSettingsError({
       <Button variant="primary" size="sm" onClick={onRetry} className="mt-4">
         {t('tenant_settings.retry', 'Retry')}
       </Button>
-      </Button>
     </div>
   );
 }
