@@ -74,9 +74,9 @@ const handleListHouseholds: AuthorizedRouteHandler = async (
         include: {
           _count: { select: { residents: true } },
           residents: {
-            take: 1,
+            where: { deletedAt: null },
             orderBy: { createdAt: 'asc' },
-            select: { name: true },
+            select: { id: true, name: true },
           },
         },
       }),
@@ -84,20 +84,32 @@ const handleListHouseholds: AuthorizedRouteHandler = async (
     ]);
 
     return NextResponse.json({
-      data: households.map(h => ({
-        id: h.id,
-        householdNumber: h.householdNumber,
-        address: h.address,
-        block: h.block ?? '',
-        headOfHousehold: h.residents[0]?.name ?? '-',
-        residentCount: h._count.residents,
-        createdAt: h.createdAt.toISOString(),
-      })),
+      data: households.map(h => {
+        // Get head name from headOfHouseholdId, or fallback to first resident
+        const headResident = h.headOfHouseholdId
+          ? h.residents.find(r => r.id === h.headOfHouseholdId)
+          : h.residents[0];
+        return {
+          id: h.id,
+          householdNumber: h.householdNumber,
+          address: h.address,
+          block: h.block ?? '',
+          headOfHousehold: headResident?.name ?? '-',
+          residentCount: h._count.residents,
+          createdAt: h.createdAt.toISOString(),
+        };
+      }),
       total,
       page,
       totalPages: Math.ceil(total / pageSize),
     });
-  } catch {
+  } catch (error) {
+    // Log error for observability but don't expose details to client
+    console.error('[households] Failed to fetch households', {
+      correlationId,
+      tenantId: authContext.tenantId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
     return NextResponse.json(
       { code: 'COMMON_UNEXPECTED_ERROR', message: 'Internal server error', correlationId },
       { status: 500 },

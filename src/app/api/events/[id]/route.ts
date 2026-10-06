@@ -52,6 +52,7 @@ interface EventDetailResponse {
     location: string;
     maxRsvp: number | null;
     createdBy: string;
+    organizerName: string;
     rsvpCount: number;
     createdAt: string;
     myRsvpStatus: string | null;
@@ -140,13 +141,18 @@ const handleGetEvent: AuthorizedRouteHandler<EventDetailResponse> = async (
 
     // Get user names for attendees
     const userIds = event.rsvps.map(r => r.userId);
-    const users = userIds.length > 0
+    // Include creator/organizer in user lookup
+    const allUserIds = [...new Set([...userIds, event.createdBy])];
+    const users = allUserIds.length > 0
       ? await prisma.user.findMany({
-          where: { id: { in: userIds } },
+          where: { id: { in: allUserIds } },
           select: { id: true, name: true },
         })
       : [];
     const userMap = new Map(users.map(u => [u.id, u.name]));
+
+    // Get organizer name
+    const organizerName = userMap.get(event.createdBy) ?? 'Unknown';
 
     // Check if current user already RSVP'd
     const myRsvp = event.rsvps.find(r => r.userId === authContext.userId);
@@ -161,6 +167,7 @@ const handleGetEvent: AuthorizedRouteHandler<EventDetailResponse> = async (
         location: event.location,
         maxRsvp: event.maxRsvp,
         createdBy: event.createdBy,
+        organizerName,
         rsvpCount: event._count.rsvps,
         createdAt: event.createdAt.toISOString(),
         myRsvpStatus: myRsvp?.response ?? null,

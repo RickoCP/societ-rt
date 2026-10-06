@@ -234,15 +234,16 @@ model InvitationToken {
 
 /// Household represents a family unit (Kartu Keluarga) within a tenant's community.
 model Household {
-  id              String   @id @default(uuid()) @map("id")
-  tenantId        String   @map("tenant_id")
-  householdNumber String   @map("household_number")
-  address         String   @map("address")
-  block           String?  @map("block")
-  latitude        Float?   @map("latitude")
-  longitude       Float?   @map("longitude")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                 String   @id @default(uuid()) @map("id")
+  tenantId           String   @map("tenant_id")
+  householdNumber    String   @map("household_number")
+  address            String   @map("address")
+  block              String?  @map("block")
+  latitude           Float?   @map("latitude")
+  longitude          Float?   @map("longitude")
+  headOfHouseholdId  String?  @map("head_of_household_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   tenant        Tenant        @relation(fields: [tenantId], references: [id])
   residents     Resident[]

@@ -33,7 +33,8 @@ import { ok, fail } from '@core/utils';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import { getMissingPermissions, getPermissionsForRole } from '@core/domains/authorization/permissions/PermissionRegistry';
 import { authInsufficientPermission } from '@core/domains/membership/errors';
-import { MembershipRole, MembershipStatus } from '@core/domains/membership/types';
+import { MembershipRole, MembershipStatus, mapLegacyRole } from '@core/domains/membership/types';
+import { UserRole } from '@core/protocols';
 import { container } from '@infrastructure/di/container';
 import type { Logger } from '@infrastructure/logging/Logger';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
@@ -509,12 +510,23 @@ async function resolveAuthContextFromRequest(
     return null;
   }
 
-  // Validate role is a valid MembershipRole
-  if (!Object.values(MembershipRole).includes(role as MembershipRole)) {
-    return null;
+  // Resolve role: could be MembershipRole or legacy UserRole
+  let resolvedRole: MembershipRole;
+  
+  // First check if it's already a valid MembershipRole
+  if (Object.values(MembershipRole).includes(role as MembershipRole)) {
+    resolvedRole = role as MembershipRole;
+  } else {
+    // Try to map from legacy UserRole
+    const mappedRole = mapLegacyRole(role as UserRole);
+    if (!mappedRole) {
+      console.warn('[resolveAuthContext] Unknown role, cannot map:', role);
+      return null;
+    }
+    resolvedRole = mappedRole;
   }
 
-  const permissions = getPermissionsForRole(role as MembershipRole);
+  const permissions = getPermissionsForRole(resolvedRole);
   const orgUnitId = request.headers.get('x-org-unit-id');
   const tokenVersion = parseInt(request.headers.get('x-token-version') ?? '0', 10);
   const membershipId = request.headers.get('x-membership-id') ?? 'legacy-unknown';
@@ -526,7 +538,7 @@ async function resolveAuthContextFromRequest(
     tenantId,
     membershipId,
     orgUnitId,
-    role: role as MembershipRole,
+    role: resolvedRole,
     permissions,
     tokenVersion,
     isAuthoritative: true, // Assume active for legacy compatibility
@@ -537,7 +549,7 @@ async function resolveAuthContextFromRequest(
       userId,
       tenantId,
       orgUnitId,
-      role: role as MembershipRole,
+      role: resolvedRole,
       status: MembershipStatus.ACTIVE,
       createdAt: new Date(),
       updatedAt: new Date(),

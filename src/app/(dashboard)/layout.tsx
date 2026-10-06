@@ -6,16 +6,9 @@ import { Sidebar } from '@components/organisms/Sidebar';
 import { Header } from '@components/organisms/Header';
 import { BottomNav } from '@components/organisms/BottomNav';
 import { NAV_ITEMS } from '@components/organisms/navItems';
+import { usePermissions, invalidatePermissionsCache } from '@presentation/hooks/usePermissions';
 
 const navItems = NAV_ITEMS;
-
-interface CurrentUser {
-  userId: string;
-  name: string;
-  email: string;
-  role: string;
-  tenantId: string;
-}
 
 export default function DashboardLayout({
   children,
@@ -24,39 +17,40 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Use shared permission hook with caching (calls /api/auth/me only once)
+  const { userContext, isLoading, isError } = usePermissions();
 
   // On mobile, the home screen renders its own app-style header, so the shared
   // top Header is hidden there. Other pages keep it for the hamburger menu.
   const isHome = pathname === '/';
 
+  // Redirect to login if not authenticated (after loading completes)
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => {
-        if (!res.ok) {
-          router.push('/login');
-          return null;
-        }
-        return res.json();
-      })
-      .then(json => {
-        if (json?.data) {
-          setCurrentUser(json.data);
-        }
-      })
-      .catch(() => {
-        router.push('/login');
-      });
-  }, [router]);
+    if (!isLoading && !userContext && isError) {
+      router.push('/login');
+    }
+  }, [isLoading, userContext, isError, router]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
+    // Invalidate the permissions cache on logout
+    invalidatePermissionsCache();
     router.push('/login');
   };
 
-  const userRole = currentUser?.role ?? 'Warga';
-  const userName = currentUser?.name ?? 'User';
+  // Show minimal loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  const userRole = userContext?.role ?? 'Warga';
+  const userName = userContext?.name ?? 'User';
 
   return (
     <div className="flex h-screen overflow-hidden">

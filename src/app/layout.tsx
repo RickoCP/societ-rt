@@ -4,7 +4,7 @@ import { OfflineIndicator } from '@components/atoms/OfflineIndicator';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'SocieT-RT — Community Management Platform',
+  title: 'SocieT-RT - Community Management Platform',
   description:
     'Multi-tenant SaaS platform for managing RT/RW communities. Manage residents, finances, voting, announcements, and more.',
   manifest: '/manifest.json',
@@ -45,9 +45,6 @@ export default function RootLayout({
           {children}
           <OfflineIndicator />
         </QueryProvider>
-        {/* External static script (not inline) so CSP script-src can stay
-            'self' without needing 'unsafe-inline'. */}
-        <script src="/sw-register.js" defer />
       </body>
     </html>
   );

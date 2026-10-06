@@ -1,4 +1,5 @@
 /**
+ * GET   /api/residents/:id — Get resident detail.
  * PATCH /api/residents/:id — Update a resident's residency status.
  * PUT   /api/residents/:id — Edit resident data.
  * DELETE /api/residents/:id — Remove a resident.
@@ -46,6 +47,25 @@ const updateResidentSchema = z.object({
 // Response Types
 // ---------------------------------------------------------------------------
 
+interface ResidentDetailResponse {
+  data: {
+    id: string;
+    householdId: string;
+    name: string;
+    nik: string;
+    dateOfBirth: string;
+    gender: string;
+    phone: string | null;
+    status: string;
+    categories: string[];
+    emergencyContactName: string | null;
+    emergencyContactPhone: string | null;
+    emergencyContactRelationship: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
 interface UpdateStatusResponse {
   data: {
     id: string;
@@ -74,6 +94,84 @@ interface UpdateResidentResponse {
     categories: string[];
   };
 }
+
+// ---------------------------------------------------------------------------
+// GET handler — Get resident detail
+// ---------------------------------------------------------------------------
+
+const handleGetResident: AuthorizedRouteHandler<ResidentDetailResponse | ErrorResponseBody> = async (
+  request: NextRequest,
+  authContext: AuthorizationContext,
+  routeContext?: { params?: Promise<Record<string, string>> },
+): Promise<NextResponse<ResidentDetailResponse | ErrorResponseBody>> => {
+  const correlationId =
+    request.headers.get('x-correlation-id') ?? generateCorrelationId();
+
+  const params = await routeContext?.params;
+  const residentId = params?.id;
+
+  if (!residentId) {
+    return NextResponse.json(
+      {
+        code: 'COMMON_VALIDATION_FAILED',
+        message: 'Resident ID is required',
+        correlationId,
+      },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const prisma = container.resolve<PrismaClient>('prismaClient');
+
+    const resident = await prisma.resident.findFirst({
+      where: {
+        id: residentId,
+        tenantId: authContext.tenantId,
+        deletedAt: null,
+      },
+    });
+
+    if (!resident) {
+      return NextResponse.json(
+        {
+          code: 'COMMON_NOT_FOUND',
+          message: 'Resident not found',
+          correlationId,
+        },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      data: {
+        id: resident.id,
+        householdId: resident.householdId,
+        name: resident.name,
+        nik: resident.nik,
+        dateOfBirth: resident.dateOfBirth.toISOString(),
+        gender: resident.gender,
+        phone: resident.phone,
+        status: resident.status,
+        categories: resident.categories,
+        emergencyContactName: resident.emergencyContactName,
+        emergencyContactPhone: resident.emergencyContactPhone,
+        emergencyContactRelationship: resident.emergencyContactRelationship,
+        createdAt: resident.createdAt.toISOString(),
+        updatedAt: resident.updatedAt.toISOString(),
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      {
+        code: 'COMMON_UNEXPECTED_ERROR',
+        message: 'Internal server error',
+        correlationId,
+      },
+      { status: 500 },
+    );
+  }
+};
 
 // ---------------------------------------------------------------------------
 // PATCH handler — Update resident status
@@ -329,6 +427,11 @@ const handlePutResident: AuthorizedRouteHandler<UpdateResidentResponse | ErrorRe
 };
 
 // Export wrapped handlers with required permissions
+export const GET = withPermission(
+  { permissions: ['resident:read'] },
+  handleGetResident,
+);
+
 export const PATCH = withPermission(
   { permissions: ['resident:write'] },
   handlePatchStatus,

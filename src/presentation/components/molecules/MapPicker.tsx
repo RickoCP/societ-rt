@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 
 interface MapPickerProps {
   latitude: number;
@@ -8,18 +9,56 @@ interface MapPickerProps {
   onLocationChange: (lat: number, lng: number) => void;
 }
 
+// Dynamically import the map component to avoid SSR issues with Leaflet
+const MapPickerInternal = dynamic(
+  () => import('./MapPickerInternal').then((mod) => mod.MapPickerInternal),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-80 w-full items-center justify-center rounded-md border border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800">
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Memuat peta...</p>
+        </div>
+      </div>
+    ),
+  }
+);
+
 /**
  * MapPicker — Interactive map with draggable marker and address search.
- * Uses Leaflet via CDN (no npm package needed).
+ * Uses react-leaflet for better integration with React.
  */
 export function MapPicker({ latitude, longitude, onLocationChange }: MapPickerProps) {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<unknown>(null);
-  const markerRef = useRef<unknown>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  
+  // Use props directly for controlled behavior, with fallback defaults
+  const effectiveLat = latitude || -6.2;
+  const effectiveLng = longitude || 106.8;
+  
+  // Internal state only for GPS/search updates that need to trigger re-center
+  const [overrideCenter, setOverrideCenter] = useState<[number, number] | null>(null);
+  
+  // Computed values
+  const markerPosition: [number, number] = [effectiveLat, effectiveLng];
+  const mapCenter: [number, number] = overrideCenter ?? [effectiveLat, effectiveLng];
+
+  const handleMarkerDrag = useCallback(
+    (lat: number, lng: number) => {
+      onLocationChange(lat, lng);
+    },
+    [onLocationChange]
+  );
+
+  const handleMapClick = useCallback(
+    (lat: number, lng: number) => {
+      onLocationChange(lat, lng);
+    },
+    [onLocationChange]
+  );
 
   const handleUseGps = () => {
     if (!navigator.geolocation) {
@@ -32,122 +71,44 @@ export function MapPicker({ latitude, longitude, onLocationChange }: MapPickerPr
       (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
+        setOverrideCenter([lat, lng]);
         onLocationChange(lat, lng);
-        if (markerRef.current) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (markerRef.current as any).setLatLng([lat, lng]);
-        }
-        if (mapInstanceRef.current) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (mapInstanceRef.current as any).setView([lat, lng], 17);
-        }
         setGpsLoading(false);
       },
       (err) => {
-        setGpsError(err.message === 'User denied Geolocation' ? 'Akses lokasi ditolak' : 'Gagal mendapatkan lokasi GPS');
+        setGpsError(
+          err.message === 'User denied Geolocation'
+            ? 'Akses lokasi ditolak'
+            : 'Gagal mendapatkan lokasi GPS'
+        );
         setGpsLoading(false);
       },
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
-
-  useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
-
-    // Load Leaflet CSS
-    if (!document.getElementById('leaflet-css')) {
-      const link = document.createElement('link');
-      link.id = 'leaflet-css';
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
-
-    // Load Leaflet JS
-    const loadLeaflet = () => {
-      return new Promise<void>((resolve) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((window as any).L) {
-          resolve();
-          return;
-        }
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-        script.onload = () => resolve();
-        document.head.appendChild(script);
-      });
-    };
-
-    loadLeaflet().then(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const L = (window as any).L;
-
-      const map = L.map(mapRef.current).setView([latitude || -6.2, longitude || 106.8], 15);
-      mapInstanceRef.current = map;
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-      }).addTo(map);
-
-      const marker = L.marker([latitude || -6.2, longitude || 106.8], { draggable: true }).addTo(map);
-      markerRef.current = marker;
-
-      marker.on('dragend', () => {
-        const pos = marker.getLatLng();
-        onLocationChange(pos.lat, pos.lng);
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      map.on('click', (e: any) => {
-        marker.setLatLng(e.latlng);
-        onLocationChange(e.latlng.lat, e.latlng.lng);
-      });
-    });
-
-    return () => {
-      if (mapInstanceRef.current) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (mapInstanceRef.current as any).remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Update marker position when props change externally
-  useEffect(() => {
-    if (markerRef.current && latitude && longitude) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (markerRef.current as any).setLatLng([latitude, longitude]);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (mapInstanceRef.current as any)?.setView([latitude, longitude], 15);
-    }
-  }, [latitude, longitude]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setSearching(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          searchQuery
+        )}&limit=1`
       );
       const results = await res.json();
       if (results.length > 0) {
         const { lat, lon } = results[0];
         const newLat = parseFloat(lat);
         const newLng = parseFloat(lon);
+        setOverrideCenter([newLat, newLng]);
         onLocationChange(newLat, newLng);
-        if (markerRef.current) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (markerRef.current as any).setLatLng([newLat, newLng]);
-        }
-        if (mapInstanceRef.current) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (mapInstanceRef.current as any).setView([newLat, newLng], 17);
-        }
       }
-    } catch { /* ignore search errors */ }
-    finally { setSearching(false); }
+    } catch {
+      /* ignore search errors */
+    } finally {
+      setSearching(false);
+    }
   };
 
   return (
@@ -157,8 +118,8 @@ export function MapPicker({ latitude, longitude, onLocationChange }: MapPickerPr
         <input
           type="text"
           value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSearch()}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           placeholder="Cari alamat..."
           className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
         />
@@ -182,13 +143,15 @@ export function MapPicker({ latitude, longitude, onLocationChange }: MapPickerPr
       </div>
       {gpsError && <p className="text-xs text-red-600">{gpsError}</p>}
       {/* Map container */}
-      <div
-        ref={mapRef}
-        className="h-80 w-full rounded-md border border-gray-300 dark:border-gray-600"
-        style={{ minHeight: '320px' }}
+      <MapPickerInternal
+        center={mapCenter}
+        markerPosition={markerPosition}
+        onMarkerDrag={handleMarkerDrag}
+        onMapClick={handleMapClick}
       />
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        Klik pada peta atau geser marker untuk memilih lokasi. Gunakan pencarian untuk menemukan alamat.
+        Klik pada peta atau geser marker untuk memilih lokasi. Gunakan pencarian
+        untuk menemukan alamat.
       </p>
     </div>
   );

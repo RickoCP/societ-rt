@@ -122,7 +122,7 @@ export function EventDetailScreen({ id }: { id: string }) {
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Organizer</dt>
-            <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{event.createdBy}</dd>
+            <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{event.organizerName}</dd>
           </div>
           <div className="sm:col-span-2">
             <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</dt>

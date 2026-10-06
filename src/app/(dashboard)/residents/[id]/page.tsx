@@ -29,6 +29,7 @@ interface HouseholdData {
   block: string | null;
   latitude: number | null;
   longitude: number | null;
+  headOfHouseholdId: string | null;
   residents: ResidentData[];
 }
 
@@ -73,6 +74,23 @@ export default function HouseholdDetailPage() {
   const [resSaving, setResSaving] = useState(false);
   const [resMsg, setResMsg] = useState<string | null>(null);
 
+  // Add new resident form
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newResident, setNewResident] = useState({
+    name: '',
+    nik: '',
+    dateOfBirth: '',
+    gender: 'male' as 'male' | 'female',
+    phone: '',
+    status: 'tetap' as string,
+  });
+  const [addingSaving, setAddingSaving] = useState(false);
+  const [addingMsg, setAddingMsg] = useState<string | null>(null);
+
+  // Head of household
+  const [headSaving, setHeadSaving] = useState(false);
+  const [headMsg, setHeadMsg] = useState<string | null>(null);
+
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
@@ -108,6 +126,73 @@ export default function HouseholdDetailPage() {
 
   const startEditResident = (r: ResidentData) => {
     setEditingResidentId(r.id); setResForm({ ...r }); setResMsg(null);
+  };
+
+  const handleAddResident = async () => {
+    if (!newResident.name || !newResident.nik || !newResident.dateOfBirth) {
+      setAddingMsg('Nama, NIK, dan tanggal lahir wajib diisi');
+      return;
+    }
+    setAddingSaving(true);
+    setAddingMsg(null);
+    try {
+      const res = await fetch('/api/residents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          householdId,
+          name: newResident.name,
+          nik: newResident.nik,
+          dateOfBirth: newResident.dateOfBirth,
+          gender: newResident.gender,
+          phone: newResident.phone || undefined,
+          status: newResident.status,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setAddingMsg(json.message ?? json.code ?? 'Gagal menambahkan');
+        return;
+      }
+      setAddingMsg('Berhasil ditambahkan!');
+      setShowAddForm(false);
+      setNewResident({
+        name: '',
+        nik: '',
+        dateOfBirth: '',
+        gender: 'male',
+        phone: '',
+        status: 'tetap',
+      });
+      fetchData();
+    } catch (err) {
+      setAddingMsg(err instanceof Error ? err.message : 'Error');
+    } finally {
+      setAddingSaving(false);
+    }
+  };
+
+  const handleSetHeadOfHousehold = async (residentId: string) => {
+    setHeadSaving(true);
+    setHeadMsg(null);
+    try {
+      const res = await fetch(`/api/residents/households/${householdId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ headOfHouseholdId: residentId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setHeadMsg(json.message ?? 'Gagal mengubah kepala keluarga');
+        return;
+      }
+      setHeadMsg('Kepala keluarga berhasil diubah!');
+      fetchData();
+    } catch (err) {
+      setHeadMsg(err instanceof Error ? err.message : 'Error');
+    } finally {
+      setHeadSaving(false);
+    }
   };
 
   const handleSaveResident = async () => {
@@ -231,10 +316,106 @@ export default function HouseholdDetailPage() {
 
       {/* Residents */}
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">👥 Anggota Keluarga ({household.residents.length})</h2>
+          <Button 
+            variant={showAddForm ? 'secondary' : 'primary'} 
+            size="sm" 
+            onClick={() => { setShowAddForm(!showAddForm); setAddingMsg(null); }}
+          >
+            {showAddForm ? 'Batal' : '➕ Tambah Anggota'}
+          </Button>
         </div>
+
+        {/* Add New Resident Form */}
+        {showAddForm && (
+          <div className="border-b border-gray-200 bg-emerald-50/50 p-5 dark:border-gray-700 dark:bg-emerald-900/10">
+            <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Tambah Anggota Keluarga Baru</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Nama *</label>
+                <input 
+                  type="text" 
+                  value={newResident.name} 
+                  onChange={e => setNewResident(p => ({ ...p, name: e.target.value }))} 
+                  placeholder="Nama lengkap"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" 
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">NIK * (16 digit)</label>
+                <input 
+                  type="text" 
+                  value={newResident.nik} 
+                  onChange={e => setNewResident(p => ({ ...p, nik: e.target.value }))} 
+                  maxLength={16}
+                  placeholder="3201234567890001"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" 
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal Lahir *</label>
+                <input 
+                  type="date" 
+                  value={newResident.dateOfBirth} 
+                  onChange={e => setNewResident(p => ({ ...p, dateOfBirth: e.target.value }))} 
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" 
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Jenis Kelamin</label>
+                <select 
+                  value={newResident.gender} 
+                  onChange={e => setNewResident(p => ({ ...p, gender: e.target.value as 'male' | 'female' }))} 
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                >
+                  <option value="male">Laki-laki</option>
+                  <option value="female">Perempuan</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Telepon</label>
+                <input 
+                  type="text" 
+                  value={newResident.phone} 
+                  onChange={e => setNewResident(p => ({ ...p, phone: e.target.value }))} 
+                  placeholder="08123456789"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100" 
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                <select 
+                  value={newResident.status} 
+                  onChange={e => setNewResident(p => ({ ...p, status: e.target.value }))} 
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                >
+                  {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <Button onClick={handleAddResident} disabled={addingSaving} variant="primary" size="sm">
+                {addingSaving ? 'Menyimpan...' : '💾 Simpan'}
+              </Button>
+              <Button onClick={() => setShowAddForm(false)} variant="secondary" size="sm">Batal</Button>
+            </div>
+            {addingMsg && (
+              <p className={`mt-3 text-sm ${addingMsg.includes('Berhasil') ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                {addingMsg.includes('Berhasil') ? '✓' : '✗'} {addingMsg}
+              </p>
+            )}
+          </div>
+        )}
+
         {resMsg && <div className="px-5 pt-3"><p className="text-sm text-green-700 dark:text-green-400">✓ {resMsg}</p></div>}
+        {headMsg && (
+          <div className="px-5 pt-3">
+            <p className={`text-sm ${headMsg.includes('berhasil') ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              {headMsg.includes('berhasil') ? '✓' : '✗'} {headMsg}
+            </p>
+          </div>
+        )}
         <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {household.residents.map(r => (
             <div key={r.id} className="p-5">
@@ -284,6 +465,11 @@ export default function HouseholdDetailPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{r.name}</p>
+                      {household.headOfHouseholdId === r.id && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                          👑 Kepala Keluarga
+                        </span>
+                      )}
                       <Badge variant={statusVariant[r.status] ?? 'default'}>{r.status}</Badge>
                       {r.gender === 'male'
                         ? <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">♂ L</span>
@@ -302,11 +488,27 @@ export default function HouseholdDetailPage() {
                       </div>
                     )}
                   </div>
-                  <button type="button" onClick={() => startEditResident(r)} className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400" aria-label={`Edit ${r.name}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {household.headOfHouseholdId !== r.id && (
+                      <button
+                        type="button"
+                        onClick={() => handleSetHeadOfHousehold(r.id)}
+                        disabled={headSaving}
+                        className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400 disabled:opacity-50"
+                        aria-label={`Jadikan ${r.name} sebagai kepala keluarga`}
+                        title="Jadikan Kepala Keluarga"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 3l3.5 3.5L12 3l3.5 3.5L19 3v13a2 2 0 01-2 2H7a2 2 0 01-2-2V3z" />
+                        </svg>
+                      </button>
+                    )}
+                    <button type="button" onClick={() => startEditResident(r)} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400" aria-label={`Edit ${r.name}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

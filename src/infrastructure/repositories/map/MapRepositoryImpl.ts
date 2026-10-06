@@ -100,8 +100,7 @@ export const MapRepositoryImpl = ({
           include: {
             residents: {
               where: { deletedAt: null },
-              select: { name: true },
-              take: 1,
+              select: { id: true, name: true },
               orderBy: { createdAt: 'asc' },
             },
             _count: {
@@ -119,7 +118,9 @@ export const MapRepositoryImpl = ({
           longitude: h.longitude,
           residentCount: h._count?.residents ?? 0,
           headOfHousehold:
-            h.residents.length > 0 ? (h.residents[0]?.name ?? null) : null,
+            h.headOfHouseholdId
+              ? (h.residents.find(r => r.id === h.headOfHouseholdId)?.name ?? h.residents[0]?.name ?? null)
+              : (h.residents.length > 0 ? (h.residents[0]?.name ?? null) : null),
         }));
 
         return ok(markers);

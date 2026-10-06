@@ -103,7 +103,7 @@ export function PackageListScreen() {
               <select id="p-recipient" value={recipientHousehold} onChange={e => setRecipientHousehold(e.target.value)} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
                 <option value="">-- Pilih --</option>
                 {households.map(h => (
-                  <option key={h.id} value={h.id}>{h.householdNumber} — {h.address}</option>
+                  <option key={h.id} value={h.id}>{h.householdNumber} - {h.address}</option>
                 ))}
               </select>
             </div>

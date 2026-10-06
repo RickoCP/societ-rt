@@ -47,8 +47,9 @@ export type {
   PaginatedBillingHistory,
 } from './BillingEntry';
 
+export type { BillingStatus } from './BillingEntry';
+
 export {
-  BillingStatus,
   ALL_BILLING_STATUSES,
   canRetryPayment as canRetryBillingPayment,
   canDownloadInvoice as hasInvoiceDownload,
@@ -58,8 +59,6 @@ export {
   generateInvoiceFilename,
   DEFAULT_BILLING_PAGE_SIZE,
 } from './BillingEntry';
-
-export type { BillingStatus as BillingStatusType } from './BillingEntry';
 
 // AdminSubscriptionPlan (Admin UI plan display)
 export type {

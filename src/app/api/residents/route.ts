@@ -25,8 +25,15 @@ import type { ResidentCategory, ResidencyStatus } from '@core/domains/resident/e
 // Input schemas
 // ---------------------------------------------------------------------------
 
+// Custom UUID validation that accepts any UUID format including nil-variant UUIDs
+// Standard Zod .uuid() rejects UUIDs with version digit = 0 (like seed data)
+const uuidLike = z.string().regex(
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  'Invalid UUID format'
+);
+
 const addResidentSchema = z.object({
-  householdId: z.string().uuid('Invalid household ID'),
+  householdId: uuidLike,
   name: z.string().min(1, 'Name is required'),
   nik: z.string().length(16, 'NIK must be exactly 16 characters'),
   dateOfBirth: z.string().refine(

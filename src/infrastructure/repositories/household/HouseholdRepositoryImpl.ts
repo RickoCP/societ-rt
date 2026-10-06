@@ -163,8 +163,10 @@ export const HouseholdRepositoryImpl = ({
           return null;
         }
 
-        // Get the first resident as the head (or null if no residents)
-        const headResident = household.residents[0];
+        // Get head of household by headOfHouseholdId, fallback to first resident
+        const headResident = household.headOfHouseholdId
+          ? household.residents.find(r => r.id === household.headOfHouseholdId)
+          : household.residents[0];
 
         return {
           household: {
@@ -204,12 +206,12 @@ export const HouseholdRepositoryImpl = ({
           },
         });
 
-        return residents.map((resident: PrismaResident, index: number) => ({
+        return residents.map((resident: PrismaResident) => ({
           residentId: resident.id,
           userId: null, // User linkage would need additional schema/logic
           tenantId: resident.tenantId,
           householdId: resident.householdId,
-          isHead: index === 0, // First resident is considered the head
+          isHead: false, // This will be determined by household.headOfHouseholdId
         }));
       } catch (error) {
         console.error('[HouseholdRepository] getMembers error:', error);

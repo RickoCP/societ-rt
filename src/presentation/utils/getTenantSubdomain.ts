@@ -11,7 +11,7 @@ export function getTenantSubdomain(): string {
 
   const hostname = window.location.hostname;
 
-  // localhost or IP — use default
+  // localhost or IP - use default
   if (hostname === 'localhost' || hostname === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
     return process.env.NEXT_PUBLIC_DEFAULT_SUBDOMAIN ?? 'platform';
   }

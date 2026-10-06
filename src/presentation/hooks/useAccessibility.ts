@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * useAccessibility — Accessibility utilities for admin UI components.
+ * useAccessibility - Accessibility utilities for admin UI components.
  *
  * Provides:
  * - Focus trap management for modals/dialogs
@@ -52,7 +52,7 @@ export interface UseFocusTrapOptions {
 }
 
 /**
- * useFocusTrap — Traps focus within a container element.
+ * useFocusTrap - Traps focus within a container element.
  *
  * When enabled, Tab and Shift+Tab will cycle through focusable elements
  * within the container. Focus will not leave the container.
@@ -182,7 +182,7 @@ export interface UseAriaLiveOptions {
 }
 
 /**
- * useAriaLive — Announces dynamic content changes to screen readers.
+ * useAriaLive - Announces dynamic content changes to screen readers.
  *
  * Returns a function to announce messages via an ARIA live region.
  *

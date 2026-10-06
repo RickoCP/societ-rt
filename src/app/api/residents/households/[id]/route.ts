@@ -91,6 +91,7 @@ const handleGetHousehold: AuthorizedRouteHandler = async (
         block: household.block,
         latitude: household.latitude,
         longitude: household.longitude,
+        headOfHouseholdId: household.headOfHouseholdId,
         residents: household.residents.map(r => ({
           ...r,
           dateOfBirth: r.dateOfBirth.toISOString().slice(0, 10),
@@ -114,12 +115,20 @@ export const GET = withPermission(
 // PATCH — Update household
 // ---------------------------------------------------------------------------
 
+// Custom UUID validation that accepts any UUID format including nil-variant UUIDs
+// Standard Zod .uuid() rejects UUIDs with version digit = 0 (like seed data)
+const uuidLike = z.string().regex(
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  'Invalid UUID format'
+);
+
 const updateHouseholdSchema = z.object({
   householdNumber: z.string().min(1).optional(),
   address: z.string().min(1).optional(),
   block: z.string().optional(),
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),
+  headOfHouseholdId: uuidLike.optional().nullable(),
 });
 
 const handleUpdateHousehold: AuthorizedRouteHandler = async (

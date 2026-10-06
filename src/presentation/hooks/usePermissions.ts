@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * usePermissions — Hook for permission-based authorization in UI components.
+ * usePermissions - Hook for permission-based authorization in UI components.
  *
  * Fetches user permissions from the API and provides utility functions
  * to check if the user has required permissions.
@@ -185,7 +185,7 @@ export function invalidatePermissionsCache(): void {
 // ---------------------------------------------------------------------------
 
 /**
- * usePermissions — React hook for permission-based UI authorization.
+ * usePermissions - React hook for permission-based UI authorization.
  *
  * Usage:
  * ```tsx

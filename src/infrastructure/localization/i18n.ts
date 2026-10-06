@@ -1,5 +1,5 @@
 /**
- * i18next Configuration — Sets up internationalization with Indonesian (id)
+ * i18next Configuration - Sets up internationalization with Indonesian (id)
  * and English (en) translations.
  *
  * Usage in components:
@@ -18,13 +18,17 @@ const resources = {
   en: { translation: enTranslation },
 } as const;
 
-void i18n.use(initReactI18next).init({
-  resources,
-  lng: 'id',
-  fallbackLng: 'en',
-  interpolation: {
-    escapeValue: false,
-  },
-});
+// Guard against multiple initializations (fixes react-i18next warning)
+// This can happen in development with React Strict Mode or HMR
+if (!i18n.isInitialized) {
+  void i18n.use(initReactI18next).init({
+    resources,
+    lng: 'id',
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false,
+    },
+  });
+}
 
 export default i18n;

@@ -127,7 +127,7 @@ import {
   GetTenantsOverviewUseCaseImpl,
   GetSecurityEventsUseCaseImpl,
   ImpersonateTenantUseCaseImpl,
-  EndImpersonationUseCaseImpl as EndPlatformImpersonationUseCaseImpl,
+  EndTenantImpersonationUseCaseImpl,
 } from '@core/domains/platform/usecases';
 import {
   PairDeviceUseCaseImpl,
@@ -567,7 +567,7 @@ export function registerUseCases(container: AwilixContainer): void {
     getSecurityEventsUseCase: asFunction(GetSecurityEventsUseCaseImpl).singleton(),
     // @see Requirements 20.3-20.5 (Tenant Impersonation)
     impersonateTenantUseCase: asFunction(ImpersonateTenantUseCaseImpl).singleton(),
-    endTenantImpersonationUseCase: asFunction(EndPlatformImpersonationUseCaseImpl).singleton(),
+    endTenantImpersonationUseCase: asFunction(EndTenantImpersonationUseCaseImpl).singleton(),
   });
 }
 

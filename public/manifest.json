@@ -1,5 +1,5 @@
 {
-  "name": "SocieT-RT — Community Management Platform",
+  "name": "SocieT-RT - Community Management Platform",
   "short_name": "SocieT-RT",
   "description": "Platform manajemen komunitas RT/RW",
   "start_url": "/",
@@ -64,12 +64,12 @@
     {
       "name": "Dashboard",
       "url": "/",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96" }]
     },
     {
       "name": "Emergency",
       "url": "/emergency",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/icon-96x96.svg", "sizes": "96x96" }]
     }
   ]
 }

@@ -1,12 +1,12 @@
 /**
- * Next.js Middleware — Auth, tenant resolution, security headers, rate limiting,
+ * Next.js Proxy - Auth, tenant resolution, security headers, rate limiting,
  * and route protection for admin/platform routes.
  *
- * Middleware chain order:
+ * Proxy chain order:
  *   1. Correlation ID (generate or extract)
  *   2. Security headers
  *   3. Rate limiter (login endpoint only)
- *   4. JWT validation (via jose — Edge-compatible)
+ *   4. JWT validation (via jose - Edge-compatible)
  *   5. Route authorization (admin/platform routes)
  *   6. Tenant context resolution (set headers for downstream route handlers)
  *   7. Feature flag check (placeholder)
@@ -147,30 +147,30 @@ function setSecurityHeaders(
 }
 
 // ---------------------------------------------------------------------------
-// JWT payload type (Edge-side — lightweight)
+// JWT payload type (Edge-side - lightweight)
 // ---------------------------------------------------------------------------
 
-interface MiddlewareJwtPayload {
+interface ProxyJwtPayload {
   userId: string;
   tenantId: string;
   role: string;
 }
 
 // ---------------------------------------------------------------------------
-// Middleware
+// Proxy (Next.js 16+ - renamed from middleware)
 // ---------------------------------------------------------------------------
 
-export async function middleware(request: NextRequest): Promise<NextResponse> {
+export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // ------------------------------------------------------------------
-  // 1. Correlation ID — extract from header or generate new
+  // 1. Correlation ID - extract from header or generate new
   // ------------------------------------------------------------------
   const correlationId =
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
   // ------------------------------------------------------------------
-  // 2. Public paths — skip auth but still set security headers
+  // 2. Public paths - skip auth but still set security headers
   // ------------------------------------------------------------------
   if (isPublicPath(pathname)) {
     const response = NextResponse.next();
@@ -179,7 +179,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // ------------------------------------------------------------------
-  // 3. Rate limiter — login endpoint only
+  // 3. Rate limiter - login endpoint only
   // ------------------------------------------------------------------
   if (pathname === LOGIN_PATH) {
     const ip = getClientIp(request);
@@ -204,7 +204,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // ------------------------------------------------------------------
-  // 4. JWT validation — extract from cookie, verify with jose
+  // 4. JWT validation - extract from cookie, verify with jose
   // ------------------------------------------------------------------
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
@@ -229,7 +229,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return errorResponse;
   }
 
-  let payload: MiddlewareJwtPayload;
+  let payload: ProxyJwtPayload;
 
   try {
     const secretKey = getJwtSecretKey();
@@ -269,7 +269,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // ------------------------------------------------------------------
-  // 5. Route authorization — check role-based access for admin/platform routes
+  // 5. Route authorization - check role-based access for admin/platform routes
   // ------------------------------------------------------------------
 
   // Check platform admin routes require PLATFORM_ADMIN role
@@ -298,7 +298,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // Additional permission checks can be added here for specific admin routes
 
   // ------------------------------------------------------------------
-  // 6. Tenant context resolution — set auth headers for route handlers
+  // 6. Tenant context resolution - set auth headers for route handlers
   // ------------------------------------------------------------------
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-user-id', payload.userId);
@@ -311,7 +311,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   });
 
   // ------------------------------------------------------------------
-  // 7. Feature flag check — placeholder for future implementation
+  // 7. Feature flag check - placeholder for future implementation
   // ------------------------------------------------------------------
   // TODO: Check feature flags based on tenant's subscription plan.
   // This will be implemented when the FeatureFlag domain is built.
@@ -325,7 +325,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 }
 
 // ---------------------------------------------------------------------------
-// Matcher — exclude static files and Next.js internals
+// Matcher - exclude static files and Next.js internals
 // ---------------------------------------------------------------------------
 
 export const config = {

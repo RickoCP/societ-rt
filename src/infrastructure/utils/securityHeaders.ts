@@ -26,11 +26,13 @@ function buildContentSecurityPolicy(): string {
   const directives: Record<string, string[]> = {
     'default-src': ["'self'"],
     // In development, Next.js requires 'unsafe-inline' and 'unsafe-eval' for hot reload
+    // Leaflet loaded from unpkg.com needs to be whitelisted
     'script-src': process.env.NODE_ENV === 'production' 
-      ? ["'self'"] 
-      : ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      ? ["'self'", 'https://unpkg.com'] 
+      : ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://unpkg.com'],
     // Inline styles required by Next.js/Leaflet (residual hardening item).
-    'style-src': ["'self'", "'unsafe-inline'"],
+    // Leaflet CSS loaded from unpkg.com
+    'style-src': ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
     'img-src': [
       "'self'",
       'data:',

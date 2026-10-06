@@ -1,5 +1,5 @@
 /**
- * POST /api/auth/login — Authenticates a user and issues a session cookie.
+ * POST /api/auth/login - Authenticates a user and issues a session cookie.
  *
  * TEMPORARY: Using raw pg instead of Prisma due to Node.js 24 + Prisma 7.x bug.
  *

@@ -11,6 +11,7 @@ interface EventDetail {
   rsvpCount: number;
   maxRsvp: number | null;
   createdBy: string;
+  organizerName: string;
   createdAt: string;
   myRsvpStatus: string | null;
   attendees: Array<{ userName: string; response: string; respondedAt: string }>;
@@ -24,7 +25,7 @@ async function fetchEventDetail(id: string): Promise<EventDetail> {
     throw new Error(body.message ?? 'Failed to fetch event detail');
   }
 
-  const json = (await res.json()) as { data: { id: string; title: string; description: string; location: string; date: string; time: string; rsvpCount: number; maxRsvp: number | null; createdBy: string; createdAt: string; myRsvpStatus: string | null; attendees: Array<{ userName: string; response: string; respondedAt: string }> } };
+  const json = (await res.json()) as { data: { id: string; title: string; description: string; location: string; date: string; time: string; rsvpCount: number; maxRsvp: number | null; createdBy: string; organizerName: string; createdAt: string; myRsvpStatus: string | null; attendees: Array<{ userName: string; response: string; respondedAt: string }> } };
   const d = json.data;
   return {
     id: d.id,
@@ -35,6 +36,7 @@ async function fetchEventDetail(id: string): Promise<EventDetail> {
     rsvpCount: d.rsvpCount ?? 0,
     maxRsvp: d.maxRsvp ?? null,
     createdBy: d.createdBy ?? '',
+    organizerName: d.organizerName ?? 'Unknown',
     createdAt: d.createdAt ?? '',
     myRsvpStatus: d.myRsvpStatus ?? null,
     attendees: d.attendees ?? [],
