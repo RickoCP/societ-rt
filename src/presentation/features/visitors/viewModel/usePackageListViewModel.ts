@@ -108,6 +108,7 @@ export function usePackageListViewModel() {
     isCreating: createMutation.isPending,
     createError: createMutation.error,
     collectPackage: collectMutation.mutate,
+    collectPackageAsync: collectMutation.mutateAsync,
     isCollecting: collectMutation.isPending,
   };
 }

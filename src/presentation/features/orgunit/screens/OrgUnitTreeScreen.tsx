@@ -34,8 +34,18 @@ import { ConfirmDialog } from '@presentation/components/molecules/ConfirmDialog'
 import { ContextMenu, type ContextMenuItem, type ContextMenuContent } from '@presentation/components/molecules/ContextMenu';
 import { useOrgUnitTreeViewModel } from '../viewModel/useOrgUnitTreeViewModel';
 import { useDeleteOrgUnit } from '../hooks/useDeleteOrgUnit';
+import {
+  useCreateOrgUnit,
+  useUpdateOrgUnit,
+} from '../hooks/useOrgUnitMutations';
 import { OrgUnitDetailsPanel } from '../components/OrgUnitDetailsPanel';
 import { MoveTargetSelectionDialog } from '../components/MoveTargetSelectionDialog';
+import {
+  OrgUnitForm,
+  type CreateOrgUnitData,
+  type UpdateOrgUnitData,
+} from '../components/OrgUnitForm';
+import type { OrgUnit } from '@core/domains/orgunit/entities/OrgUnit';
 import type { OrgUnitNode } from '@core/domains/orgunit/entities/OrgUnitNode';
 import { OrgUnitType } from '@core/domains/orgunit/types';
 
@@ -635,6 +645,56 @@ function OrgUnitTreeContent() {
   } = useDeleteOrgUnit();
 
   // ---------------------------------------------------------------------------
+  // Create / Edit Form (OrgUnit CRUD)
+  // ---------------------------------------------------------------------------
+
+  const createMutation = useCreateOrgUnit();
+  const updateMutation = useUpdateOrgUnit();
+
+  // `null` = form closed. For create, we hold the parent node; for edit, the
+  // node being edited.
+  const [formState, setFormState] = useState<
+    | { mode: 'create'; parent: OrgUnitNode }
+    | { mode: 'edit'; target: OrgUnitNode }
+    | null
+  >(null);
+
+  const openCreateForm = useCallback((parent: OrgUnitNode) => {
+    setFormState({ mode: 'create', parent });
+  }, []);
+
+  const openEditForm = useCallback((target: OrgUnitNode) => {
+    setFormState({ mode: 'edit', target });
+  }, []);
+
+  const closeForm = useCallback(() => setFormState(null), []);
+
+  const handleCreateSubmit = useCallback(
+    async (data: CreateOrgUnitData): Promise<void> => {
+      if (formState?.mode !== 'create') return;
+      await createMutation.mutateAsync({
+        parentId: formState.parent.id,
+        name: data.name,
+        type: data.type,
+      });
+      setFormState(null);
+    },
+    [formState, createMutation],
+  );
+
+  const handleEditSubmit = useCallback(
+    async (data: UpdateOrgUnitData): Promise<void> => {
+      if (formState?.mode !== 'edit') return;
+      await updateMutation.mutateAsync({
+        orgUnitId: formState.target.id,
+        name: data.name,
+      });
+      setFormState(null);
+    },
+    [formState, updateMutation],
+  );
+
+  // ---------------------------------------------------------------------------
   // Tree Data Conversion
   // ---------------------------------------------------------------------------
 
@@ -662,6 +722,58 @@ function OrgUnitTreeContent() {
       const contextMenuItems: ContextMenuContent[] = [];
 
       if (vm.canWrite) {
+        // Add child option — only for non-leaf (RT cannot have children).
+        const canAddChild = data.type !== OrgUnitType.RT;
+        contextMenuItems.push({
+          id: 'add-child',
+          label: t('orgunit.context_menu.add_child', 'Add child unit'),
+          icon: (
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          ),
+          disabled: !canAddChild,
+          disabledTooltip: t(
+            'orgunit.add_child_leaf_error',
+            'RT units cannot have child units',
+          ),
+          onClick: () => openCreateForm(data),
+        });
+
+        // Rename (edit name) option.
+        contextMenuItems.push({
+          id: 'rename',
+          label: t('orgunit.context_menu.rename', 'Rename'),
+          icon: (
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          ),
+          onClick: () => openEditForm(data),
+        });
+
+        contextMenuItems.push({ type: 'separator' });
+
         // Move option - only for non-root OrgUnits
         contextMenuItems.push({
           id: 'move',
@@ -780,7 +892,7 @@ function OrgUnitTreeContent() {
 
       return nodeContent;
     },
-    [vm.highlightedIds, vm.hasActiveSearch, vm.selectedId, vm.searchQuery, vm.canWrite, vm.openMoveDialog, initiateDelete, t],
+    [vm.highlightedIds, vm.hasActiveSearch, vm.selectedId, vm.searchQuery, vm.canWrite, vm.openMoveDialog, initiateDelete, openCreateForm, openEditForm, t],
   );
 
   // ---------------------------------------------------------------------------
@@ -920,6 +1032,29 @@ function OrgUnitTreeContent() {
             <div className="flex items-center gap-2">
               <TypeBadge type={vm.selectedOrgUnit.type} />
               <MemberCountBadge count={vm.selectedOrgUnit.memberCount} />
+              {/* Add child + Rename (OrgUnit CRUD) - permission gated */}
+              {vm.canWrite && vm.selectedOrgUnit.type !== OrgUnitType.RT && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openCreateForm(vm.selectedOrgUnit!)}
+                  aria-label={t('orgunit.actions.add_child_aria', 'Add child unit under {{name}}', {
+                    name: vm.selectedOrgUnit.name,
+                  })}>
+                  {t('orgunit.actions.add_child', 'Add child')}
+                </Button>
+              )}
+              {vm.canWrite && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openEditForm(vm.selectedOrgUnit!)}
+                  aria-label={t('orgunit.actions.rename_aria', 'Rename {{name}}', {
+                    name: vm.selectedOrgUnit.name,
+                  })}>
+                  {t('orgunit.actions.rename', 'Rename')}
+                </Button>
+              )}
               {/* Delete Button (Task 11.4) - Permission gated */}
               {vm.canWrite && (
                 <Button
@@ -1031,6 +1166,22 @@ function OrgUnitTreeContent() {
         title={t('orgunit.delete_blocked_title', 'Cannot Delete Organization Unit')}
         message={deleteState.blockingError?.blockingMessage ?? ''}
         onClose={closeBlockingError}
+      />
+
+      {/* Create / Edit OrgUnit Form (OrgUnit CRUD) */}
+      <OrgUnitForm
+        isOpen={formState !== null}
+        onClose={closeForm}
+        mode={formState?.mode ?? 'create'}
+        parentOrgUnit={
+          formState?.mode === 'create' ? (formState.parent as OrgUnit) : null
+        }
+        editingOrgUnit={
+          formState?.mode === 'edit' ? (formState.target as OrgUnit) : null
+        }
+        onCreateSubmit={handleCreateSubmit}
+        onEditSubmit={handleEditSubmit}
+        isSubmitting={createMutation.isPending || updateMutation.isPending}
       />
     </div>
   );

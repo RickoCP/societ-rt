@@ -24,6 +24,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@presentation/hooks/usePermissions';
 import { useAdminUiStore } from '@infrastructure/stateManagement/adminUiStore';
 import { useToastStore } from '@infrastructure/stateManagement/toastStore';
+import { useSelectedAdminTenantId } from '@infrastructure/stateManagement/adminTenantSelectionStore';
 import type { OrgUnitNode } from '@core/domains/orgunit/entities/OrgUnitNode';
 import type { OrgUnitType } from '@core/domains/orgunit/types';
 import { canMoveToParent } from '@core/domains/orgunit/types';
@@ -342,8 +343,13 @@ export interface OrgUnitTreeViewModel {
 /**
  * Fetch OrgUnit hierarchy tree from the API.
  */
-async function fetchOrgUnitTree(): Promise<OrgUnitNode[]> {
-  const response = await fetch('/api/admin/orgunit/tree', {
+async function fetchOrgUnitTree(
+  targetTenantId: string | null,
+): Promise<OrgUnitNode[]> {
+  const query = targetTenantId
+    ? `?tenantId=${encodeURIComponent(targetTenantId)}`
+    : '';
+  const response = await fetch(`/api/admin/orgunit/tree${query}`, {
     credentials: 'include',
   });
 
@@ -605,7 +611,13 @@ export function useOrgUnitTreeViewModel(): OrgUnitTreeViewModel {
   const { hasPermission, isLoading: isPermissionsLoading } = usePermissions();
 
   const canRead = hasPermission('orgunit:read');
-  const canWrite = hasPermission('orgunit:write');
+  // Write actions (create/edit/delete/move) are gated on orgunit:manage —
+  // the actual permission PLATFORM_ADMIN and TENANT_OWNER hold (there is no
+  // 'orgunit:write' permission code in the registry).
+  const canWrite = hasPermission('orgunit:manage');
+
+  // Selected tenant for PLATFORM_ADMIN cross-tenant viewing (null = own tenant).
+  const selectedTenantId = useSelectedAdminTenantId();
 
   // ---------------------------------------------------------------------------
   // Admin UI Store (Persisted Expansion State)
@@ -651,8 +663,8 @@ export function useOrgUnitTreeViewModel(): OrgUnitTreeViewModel {
     error: queryError,
     refetch,
   } = useQuery<OrgUnitNode[], AppError>({
-    queryKey: [ORGUNIT_TREE_QUERY_KEY],
-    queryFn: fetchOrgUnitTree,
+    queryKey: [ORGUNIT_TREE_QUERY_KEY, selectedTenantId],
+    queryFn: () => fetchOrgUnitTree(selectedTenantId),
     enabled: canRead && !isPermissionsLoading,
     staleTime: 60 * 1000, // 1 minute
     gcTime: 10 * 60 * 1000, // 10 minutes

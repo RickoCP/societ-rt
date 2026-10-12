@@ -17,6 +17,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
+import { uuidLike as uuidLikeSchema } from '@infrastructure/utils/uuidLike';
 import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import { MembershipRole } from '@core/domains/membership/types';
@@ -115,12 +116,9 @@ export const GET = withPermission(
 // PATCH — Update household
 // ---------------------------------------------------------------------------
 
-// Custom UUID validation that accepts any UUID format including nil-variant UUIDs
-// Standard Zod .uuid() rejects UUIDs with version digit = 0 (like seed data)
-const uuidLike = z.string().regex(
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-  'Invalid UUID format'
-);
+// Accepts any canonical UUID-shaped string, including the synthetic nil-variant
+// IDs used by seed data that strict Zod .uuid() would reject.
+const uuidLike = uuidLikeSchema('Invalid UUID format');
 
 const updateHouseholdSchema = z.object({
   householdNumber: z.string().min(1).optional(),

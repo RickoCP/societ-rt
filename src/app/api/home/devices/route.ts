@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { GetDeviceDashboardUseCase } from '@core/domains/societHome/usecases';
@@ -21,7 +22,7 @@ import type { GetDeviceDashboardUseCase } from '@core/domains/societHome/usecase
 // ---------------------------------------------------------------------------
 
 const querySchema = z.object({
-  householdId: z.string().uuid('householdId must be a valid UUID'),
+  householdId: uuidLike('householdId must be a valid UUID'),
 });
 
 // ---------------------------------------------------------------------------
@@ -32,7 +33,7 @@ const querySchema = z.object({
  * Handles GET /api/home/devices request.
  *
  * Returns a list of devices for the specified household.
- * Requires `device:read` permission.
+ * Requires `iot:read` permission.
  *
  * @param request - The incoming NextRequest
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
@@ -106,9 +107,9 @@ const handleGetDeviceDashboard: AuthorizedRouteHandler<unknown> = async (
 /**
  * GET /api/home/devices
  *
- * Permission: device:read
+ * Permission: iot:read
  */
 export const GET = withPermission(
-  { permissions: ['device:read'] },
+  { permissions: ['iot:read'] },
   handleGetDeviceDashboard,
 );

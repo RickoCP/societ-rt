@@ -32,3 +32,9 @@ export type { FormFieldProps } from './FormField';
 
 export { SearchBar } from './SearchBar';
 export type { SearchBarProps } from './SearchBar';
+
+export { SearchableSelect } from './SearchableSelect';
+export type {
+  SearchableSelectProps,
+  SearchableSelectOption,
+} from './SearchableSelect';

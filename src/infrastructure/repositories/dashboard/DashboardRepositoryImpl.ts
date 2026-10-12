@@ -91,19 +91,29 @@ export const DashboardRepositoryImpl = ({
 
   async getPlatformMetrics(): Promise<DomainResult<PlatformDashboardMetrics>> {
     try {
-      const [totalTenants, totalUserCount, revenueResult, planCounts] =
-        await Promise.all([
-          prismaClient.tenant.count(),
-          prismaClient.user.count({ where: { deletedAt: null } }),
-          prismaClient.invoice.aggregate({
-            where: { status: 'paid' },
-            _sum: { amount: true },
-          }),
-          prismaClient.tenant.groupBy({
-            by: ['subscriptionPlanId'],
-            _count: { id: true },
-          }),
-        ]);
+      const [
+        totalTenants,
+        activeTenants,
+        suspendedTenants,
+        totalUserCount,
+        revenueResult,
+        pendingInvoices,
+        planCounts,
+      ] = await Promise.all([
+        prismaClient.tenant.count(),
+        prismaClient.tenant.count({ where: { status: 'active' } }),
+        prismaClient.tenant.count({ where: { status: 'suspended' } }),
+        prismaClient.user.count({ where: { deletedAt: null } }),
+        prismaClient.invoice.aggregate({
+          where: { status: 'paid' },
+          _sum: { amount: true },
+        }),
+        prismaClient.invoice.count({ where: { status: 'pending' } }),
+        prismaClient.tenant.groupBy({
+          by: ['subscriptionPlanId'],
+          _count: { id: true },
+        }),
+      ]);
 
       // Resolve plan names
       const planIds = planCounts.map((p) => p.subscriptionPlanId);
@@ -121,8 +131,11 @@ export const DashboardRepositoryImpl = ({
 
       return ok({
         totalTenants,
+        activeTenants,
+        suspendedTenants,
         monthlyRecurringRevenue: Number(revenueResult._sum.amount ?? 0),
         totalUserCount,
+        pendingInvoices,
         activeSubscriptionsByPlan,
       });
     } catch (error) {

@@ -14,6 +14,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import {
   withPermission,
   type AuthorizedRouteHandler,
@@ -25,8 +26,8 @@ import type { RecordPatrolAttendanceUseCase } from '@core/domains/security/useca
 // ---------------------------------------------------------------------------
 
 const recordAttendanceSchema = z.object({
-  scheduleId: z.string().uuid(),
-  userId: z.string().uuid(),
+  scheduleId: uuidLike(),
+  userId: uuidLike(),
 });
 
 // ---------------------------------------------------------------------------

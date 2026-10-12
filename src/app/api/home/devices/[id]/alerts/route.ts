@@ -36,7 +36,7 @@ const configureAlertsSchema = z.object({
  * Handles PATCH /api/home/devices/[id]/alerts request.
  *
  * Configures alert preferences for a specific device.
- * Requires `device:read` permission (read permission since this is configuration, not device control).
+ * Requires `iot:read` permission (read permission since this is configuration, not device control).
  *
  * @param request - The incoming NextRequest
  * @param authContext - The resolved AuthorizationContext (provided by withPermission)
@@ -141,9 +141,9 @@ const handleConfigureDeviceAlerts: AuthorizedRouteHandler<unknown> = async (
 /**
  * PATCH /api/home/devices/[id]/alerts
  *
- * Permission: device:read (configuration requires read access to device)
+ * Permission: iot:read (configuration requires read access to device)
  */
 export const PATCH = withPermission(
-  { permissions: ['device:read'] },
+  { permissions: ['iot:read'] },
   handleConfigureDeviceAlerts,
 );

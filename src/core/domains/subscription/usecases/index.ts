@@ -41,3 +41,13 @@ export type {
 } from './GetBillingHistoryUseCase';
 
 export { GetBillingHistoryUseCaseImpl } from './GetBillingHistoryUseCase';
+
+// GetTenantSubscriptionUseCase
+export type {
+  GetTenantSubscriptionUseCase,
+  GetTenantSubscriptionInput,
+  TenantSubscriptionView,
+  GetTenantSubscriptionUseCaseType,
+} from './GetTenantSubscriptionUseCase';
+
+export { GetTenantSubscriptionUseCaseImpl } from './GetTenantSubscriptionUseCase';

@@ -14,6 +14,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RecordIuranPaymentUseCase } from '@core/domains/finance/usecases';
@@ -26,9 +27,9 @@ import type { FinanceRepository } from '@core/domains/finance/repositories/Finan
 const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 const recordIuranPaymentSchema = z.object({
-  householdId: z.string().uuid('Invalid household ID'),
+  householdId: uuidLike('Invalid household ID'),
   month: z.string().regex(MONTH_REGEX, 'Month must be in YYYY-MM format'),
-  transactionId: z.string().uuid('Invalid transaction ID'),
+  transactionId: uuidLike('Invalid transaction ID'),
 });
 
 // ---------------------------------------------------------------------------

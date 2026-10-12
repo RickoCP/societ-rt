@@ -750,9 +750,10 @@ export function useThresholdAlertNotifications({
 // Exports
 // ---------------------------------------------------------------------------
 
+// NOTE: DEFAULT_THRESHOLDS is already exported inline at its declaration above,
+// so it must NOT be re-exported here (would be a duplicate export error).
 export {
   VIOLATION_CONFIG,
-  DEFAULT_THRESHOLDS,
   calculateUsagePercent,
   exceedsThreshold,
 };

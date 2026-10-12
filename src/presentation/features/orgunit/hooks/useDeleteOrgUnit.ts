@@ -26,6 +26,7 @@ import {
   showErrorToast,
 } from '@infrastructure/stateManagement/toastStore';
 import { useAdminUiStore } from '@infrastructure/stateManagement/adminUiStore';
+import { useSelectedAdminTenantId } from '@infrastructure/stateManagement';
 import type { OrgUnitNode } from '@core/domains/orgunit/entities/OrgUnitNode';
 import type { AppError } from '@core/utils';
 import { ORGUNIT_TREE_QUERY_KEY } from '../viewModel/useOrgUnitTreeViewModel';
@@ -131,8 +132,14 @@ export interface UseDeleteOrgUnitReturn {
  * @param orgUnitId - The OrgUnit ID to delete
  * @returns Promise resolving to the delete response
  */
-async function deleteOrgUnitApi(orgUnitId: string): Promise<DeleteOrgUnitResponse> {
-  const response = await fetch(`/api/admin/orgunit/${orgUnitId}`, {
+async function deleteOrgUnitApi(
+  orgUnitId: string,
+  tenantId: string | null,
+): Promise<DeleteOrgUnitResponse> {
+  const url = tenantId
+    ? `/api/admin/orgunit/${orgUnitId}?tenantId=${encodeURIComponent(tenantId)}`
+    : `/api/admin/orgunit/${orgUnitId}`;
+  const response = await fetch(url, {
     method: 'DELETE',
     credentials: 'include',
   });
@@ -192,6 +199,7 @@ export function useDeleteOrgUnit(): UseDeleteOrgUnitReturn {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { setOrgUnitExpanded, orgUnitExpandedIds } = useAdminUiStore();
+  const selectedTenantId = useSelectedAdminTenantId();
 
   // ---------------------------------------------------------------------------
   // Local State
@@ -214,7 +222,8 @@ export function useDeleteOrgUnit(): UseDeleteOrgUnitReturn {
     AppError,
     string
   >({
-    mutationFn: deleteOrgUnitApi,
+    mutationFn: (orgUnitId: string) =>
+      deleteOrgUnitApi(orgUnitId, selectedTenantId),
     onSuccess: (response, orgUnitId) => {
       if (!response.success) {
         // Handle error returned in success response (e.g., business error)

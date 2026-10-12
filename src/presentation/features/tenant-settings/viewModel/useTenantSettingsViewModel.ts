@@ -19,6 +19,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePermissions } from '@presentation/hooks/usePermissions';
+import { useSelectedAdminTenantId } from '@infrastructure/stateManagement';
 import type { AppError } from '@core/utils';
 
 // ---------------------------------------------------------------------------
@@ -343,8 +344,13 @@ export interface ConfigurationFormData {
 /**
  * Fetch tenant settings from the API.
  */
-async function fetchTenantSettings(): Promise<TenantSettings> {
-  const response = await fetch('/api/admin/tenant/settings', {
+async function fetchTenantSettings(
+  targetTenantId: string | null,
+): Promise<TenantSettings> {
+  const query = targetTenantId
+    ? `?tenantId=${encodeURIComponent(targetTenantId)}`
+    : '';
+  const response = await fetch(`/api/admin/tenant/settings${query}`, {
     credentials: 'include',
   });
 
@@ -432,6 +438,9 @@ export function useTenantSettingsViewModel(): TenantSettingsViewModel {
   } = usePermissions();
 
   const canManage = hasPermission('tenant:manage');
+
+  // Selected tenant for PLATFORM_ADMIN cross-tenant viewing (null = own tenant).
+  const selectedTenantId = useSelectedAdminTenantId();
   const isPlatformAdmin = role === 'PLATFORM_ADMIN';
 
   // ---------------------------------------------------------------------------
@@ -469,8 +478,8 @@ export function useTenantSettingsViewModel(): TenantSettingsViewModel {
     error: queryError,
     refetch,
   } = useQuery<TenantSettings, AppError>({
-    queryKey: [TENANT_SETTINGS_QUERY_KEY],
-    queryFn: fetchTenantSettings,
+    queryKey: [TENANT_SETTINGS_QUERY_KEY, selectedTenantId],
+    queryFn: () => fetchTenantSettings(selectedTenantId),
     enabled: canManage && !isPermissionsLoading,
     staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes

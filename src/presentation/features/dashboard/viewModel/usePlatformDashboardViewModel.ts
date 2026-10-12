@@ -11,6 +11,26 @@ interface PlatformMetrics {
   pendingInvoices: number;
 }
 
+/**
+ * Server contract returned by GET /api/dashboard/platform.
+ *
+ * The route wraps the domain entity in a `{ data }` envelope, and the entity
+ * uses domain field names (totalUserCount, monthlyRecurringRevenue) that differ
+ * from the UI-facing names. We map here so the UI stays decoupled from the
+ * domain shape.
+ */
+interface PlatformDashboardApiResponse {
+  data: {
+    totalTenants: number;
+    activeTenants: number;
+    suspendedTenants: number;
+    totalUserCount: number;
+    monthlyRecurringRevenue: number;
+    pendingInvoices: number;
+    activeSubscriptionsByPlan: Record<string, number>;
+  };
+}
+
 async function fetchPlatformDashboard(): Promise<PlatformMetrics> {
   const res = await fetch('/api/dashboard/platform');
 
@@ -19,7 +39,17 @@ async function fetchPlatformDashboard(): Promise<PlatformMetrics> {
     throw new Error(body.message ?? 'Failed to fetch platform dashboard');
   }
 
-  return (await res.json()) as PlatformMetrics;
+  const body = (await res.json()) as PlatformDashboardApiResponse;
+  const m = body.data;
+
+  return {
+    totalTenants: m.totalTenants,
+    activeTenants: m.activeTenants,
+    suspendedTenants: m.suspendedTenants,
+    totalUsers: m.totalUserCount,
+    monthlyRevenue: m.monthlyRecurringRevenue,
+    pendingInvoices: m.pendingInvoices,
+  };
 }
 
 export function usePlatformDashboardViewModel() {

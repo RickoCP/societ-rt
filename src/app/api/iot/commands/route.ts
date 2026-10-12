@@ -13,6 +13,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { SendDeviceCommandUseCase } from '@core/domains/iot/usecases';
@@ -23,7 +24,7 @@ import type { PrismaClient } from '@prisma/client';
 // ---------------------------------------------------------------------------
 
 const sendCommandSchema = z.object({
-  deviceId: z.string().uuid('deviceId must be a valid UUID'),
+  deviceId: uuidLike('deviceId must be a valid UUID'),
   commandType: z.string().min(1, 'commandType is required'),
   params: z.record(z.string(), z.unknown()).default({}),
 });

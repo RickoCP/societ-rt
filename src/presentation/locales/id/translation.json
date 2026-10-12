@@ -1,4 +1,9 @@
 {
+  "packages": {
+    "collect_loading": "Memproses pengambilan paket...",
+    "collect_success": "Paket berhasil ditandai sudah diambil",
+    "collect_error": "Gagal menandai paket. Coba lagi beberapa saat."
+  },
   "breadcrumbs": {
     "home": "Beranda",
     "dashboard": "Dasbor",

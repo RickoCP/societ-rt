@@ -34,6 +34,7 @@ import {
   GetSubscriptionUseCaseImpl,
   ChangePlanUseCaseImpl,
   GetBillingHistoryUseCaseImpl,
+  GetTenantSubscriptionUseCaseImpl,
 } from '@core/domains/subscription/usecases';
 import {
   CreateHouseholdUseCaseImpl,
@@ -86,6 +87,7 @@ import {
   LogVisitorUseCaseImpl,
   LogPackageUseCaseImpl,
   RecordVisitorExitUseCaseImpl,
+  DeleteVisitorUseCaseImpl,
 } from '@core/domains/visitor/usecases';
 import {
   GenerateInvoiceUseCaseImpl,
@@ -362,6 +364,7 @@ export function registerUseCases(container: AwilixContainer): void {
     logVisitorUseCase: asFunction(LogVisitorUseCaseImpl).singleton(),
     logPackageUseCase: asFunction(LogPackageUseCaseImpl).singleton(),
     recordVisitorExitUseCase: asFunction(RecordVisitorExitUseCaseImpl).singleton(),
+    deleteVisitorUseCase: asFunction(DeleteVisitorUseCaseImpl).singleton(),
     // Billing
     generateInvoiceUseCase: asFunction(GenerateInvoiceUseCaseImpl).singleton(),
     processPaymentUseCase: asFunction(ProcessPaymentUseCaseImpl).singleton(),
@@ -555,6 +558,9 @@ export function registerUseCases(container: AwilixContainer): void {
     changePlanUseCase: asFunction(ChangePlanUseCaseImpl).singleton(),
     // @see Requirements 16.1-16.11 (Billing History)
     getBillingHistoryUseCase: asFunction(GetBillingHistoryUseCaseImpl).singleton(),
+    // Multi-Tenant Admin UI — Tenant Subscription View (Requirement 18, Subscription Status Management)
+    // Composes subscriptionRepository + subscriptionPlanRepository (Awilix PROXY injection).
+    getTenantSubscriptionUseCase: asFunction(GetTenantSubscriptionUseCaseImpl).singleton(),
     // Multi-Tenant Admin UI â€” Audit Use Cases (Task 24.2)
     // @see Requirements 17.1-17.13 (Audit Log Viewer)
     queryAuditLogsUseCase: asFunction(QueryAuditLogsUseCaseImpl).singleton(),

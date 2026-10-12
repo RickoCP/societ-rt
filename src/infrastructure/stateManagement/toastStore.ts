@@ -15,7 +15,7 @@
 
 import { create } from 'zustand';
 
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
+export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading';
 
 export interface ToastAction {
   readonly label: string;
@@ -38,16 +38,26 @@ export interface Toast extends ToastConfig {
 interface ToastState {
   readonly toasts: Toast[];
   addToast: (config: ToastConfig) => string;
+  /**
+   * Replace an existing toast's content/type in place. Used to turn a
+   * persistent `loading` toast into a `success`/`error` toast once the
+   * underlying async operation settles. Re-applies the auto-dismiss timer
+   * for the new type. Falls back to adding a new toast if the id is gone.
+   */
+  updateToast: (id: string, config: ToastConfig) => void;
   removeToast: (id: string) => void;
   clearAllToasts: () => void;
 }
 
 // Default durations per type (in milliseconds)
+// A duration of 0 means "no auto-dismiss" (must be dismissed manually or
+// replaced via updateToast). Loading toasts are persistent by design.
 const DEFAULT_DURATIONS: Record<ToastType, number> = {
   success: 3000, // 3 seconds
   error: 5000, // 5 seconds
   warning: 5000, // 5 seconds (same as error)
   info: 4000, // 4 seconds
+  loading: 0, // persistent until updated or removed
 };
 
 // Counter for generating unique IDs
@@ -141,6 +151,44 @@ export const useToastStore = create<ToastState>((set, get) => ({
     return id;
   },
 
+  updateToast: (id: string, config: ToastConfig): void => {
+    const exists = get().toasts.some(toast => toast.id === id);
+
+    // If the toast was already dismissed, surface the result as a new toast
+    // so the outcome is never silently lost.
+    if (!exists) {
+      get().addToast(config);
+      return;
+    }
+
+    const duration = config.duration ?? DEFAULT_DURATIONS[config.type];
+
+    set(state => ({
+      toasts: state.toasts.map(toast =>
+        toast.id === id
+          ? {
+              id,
+              type: config.type,
+              message: config.message,
+              duration,
+              action: config.action,
+              silent: config.silent,
+            }
+          : toast,
+      ),
+    }));
+
+    if (!config.silent && typeof document !== 'undefined') {
+      announceToScreenReader(config.message, config.type);
+    }
+
+    if (duration > 0) {
+      setTimeout(() => {
+        get().removeToast(id);
+      }, duration);
+    }
+  },
+
   removeToast: (id: string): void => {
     set(state => ({
       toasts: state.toasts.filter(toast => toast.id !== id),
@@ -189,4 +237,27 @@ export const showInfoToast = (message: string, action?: ToastAction): string => 
     message,
     action,
   });
+};
+
+/**
+ * Show a persistent loading toast (does not auto-dismiss) and return its id.
+ * Resolve it afterwards with {@link updateToast} to swap in a success/error
+ * toast, or with {@link useToastStore.getState().removeToast} to clear it.
+ */
+export const showLoadingToast = (message: string): string => {
+  return useToastStore.getState().addToast({
+    type: 'loading',
+    message,
+  });
+};
+
+/**
+ * Replace an existing toast (typically a loading toast) with a new one.
+ * Thin wrapper over the store's updateToast for ergonomic call sites.
+ */
+export const updateToast = (
+  id: string,
+  config: ToastConfig,
+): void => {
+  useToastStore.getState().updateToast(id, config);
 };

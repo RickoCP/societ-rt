@@ -17,6 +17,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import { resolveTargetTenantFromContainer } from '@infrastructure/middleware/authorization/resolveTargetTenant';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { GetOrgUnitTreeUseCase } from '@core/domains/orgunit/usecases';
@@ -37,10 +38,29 @@ const handleGetOrgUnitTree: AuthorizedRouteHandler<void> = async (
   const includeMemberCounts = url.searchParams.get('includeMemberCounts') === 'true';
   const includeChildCounts = url.searchParams.get('includeChildCounts') === 'true';
 
-  // 2. Execute use case via DI
+  // 2. Resolve the tenant to scope to. PLATFORM_ADMIN may target another tenant
+  // via ?tenantId=; everyone else is restricted to their own tenant.
+  const targetTenant = await resolveTargetTenantFromContainer(
+    request,
+    authContext,
+    'admin/orgunit/tree',
+    container,
+  );
+  if (!targetTenant.ok) {
+    return NextResponse.json(
+      {
+        code: targetTenant.code,
+        message: targetTenant.message,
+        correlationId,
+      },
+      { status: targetTenant.status },
+    ) as NextResponse<void>;
+  }
+
+  // 3. Execute use case via DI
   const useCase = container.resolve<GetOrgUnitTreeUseCase>('getOrgUnitTreeUseCase');
   const result = await useCase.execute({
-    tenantId: authContext.tenantId,
+    tenantId: targetTenant.tenantId,
     actorOrgUnitId: authContext.orgUnitId,
     hasReadPermission: authContext.permissions.has('orgunit:read'),
     options: {

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { QueryProvider } from '@presentation/providers/QueryProvider';
 import { OfflineIndicator } from '@components/atoms/OfflineIndicator';
+import { ToastContainer } from '@components/organisms/ToastContainer';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -44,6 +45,7 @@ export default function RootLayout({
         <QueryProvider>
           {children}
           <OfflineIndicator />
+          <ToastContainer />
         </QueryProvider>
       </body>
     </html>

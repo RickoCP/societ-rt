@@ -37,17 +37,22 @@ import { PERMISSIONS, PERMISSION_BY_CODE, isValidPermissionCode } from './Permis
  */
 export const ROLE_PERMISSIONS: Readonly<Record<MembershipRole, readonly string[]>> = Object.freeze({
   // =========================================================================
-  // PLATFORM_ADMIN — Platform-level operations ONLY
+  // PLATFORM_ADMIN — Full access to all features (Super Admin)
   // =========================================================================
   /**
-   * PLATFORM_ADMIN has EXPLICIT platform-level permissions only.
+   * PLATFORM_ADMIN has FULL access to all features across the platform.
    *
-   * NOTE: PLATFORM_ADMIN has NO implicit tenant data access.
-   * Cross-tenant operations require Privileged Execution Path (L11).
+   * This role is the "super admin" with unrestricted access to:
+   * - All platform-level operations
+   * - All tenant-level operations (when operating within a tenant context)
+   *
+   * NOTE: While PLATFORM_ADMIN has all permissions, actual data access
+   * is still scoped by the active tenant context in the authorization flow.
    *
    * @see Design Components > 8. Permission Registry > PLATFORM_ADMIN Rules
    */
   [MembershipRole.PLATFORM_ADMIN]: Object.freeze([
+    // Platform-level permissions
     PERMISSIONS.PLATFORM_CONFIG_READ.code,
     PERMISSIONS.PLATFORM_CONFIG_WRITE.code,
     PERMISSIONS.PLATFORM_AUDIT_READ.code,
@@ -57,20 +62,14 @@ export const ROLE_PERMISSIONS: Readonly<Record<MembershipRole, readonly string[]
     PERMISSIONS.PLATFORM_SUBSCRIPTION_MANAGE.code,
     PERMISSIONS.PLATFORM_ANOMALY_REVIEW.code,
     PERMISSIONS.PLATFORM_ANOMALY_REMEDIATE.code,
-  ]),
-
-  // =========================================================================
-  // TENANT_OWNER — Full tenant-wide scope
-  // =========================================================================
-  /**
-   * TENANT_OWNER can manage the entire tenant, delegate roles, and access
-   * all tenant-level resources.
-   */
-  [MembershipRole.TENANT_OWNER]: Object.freeze([
     // Tenant management
     PERMISSIONS.TENANT_MANAGE.code,
     PERMISSIONS.ORGUNIT_MANAGE.code,
     PERMISSIONS.ORGUNIT_READ.code,
+    // Administration (letter requests)
+    PERMISSIONS.ADMIN_READ.code,
+    PERMISSIONS.ADMIN_WRITE.code,
+    PERMISSIONS.ADMIN_MANAGE.code,
     // Role delegation
     PERMISSIONS.MEMBERSHIP_DELEGATE.code,
     PERMISSIONS.MEMBERSHIP_READ.code,
@@ -103,6 +102,65 @@ export const ROLE_PERMISSIONS: Readonly<Record<MembershipRole, readonly string[]
     PERMISSIONS.PATROL_READ.code,
     PERMISSIONS.INCIDENT_MANAGE.code,
     PERMISSIONS.INCIDENT_REPORT.code,
+    // Privacy
+    PERMISSIONS.PRIVACY_READ.code,
+    PERMISSIONS.PRIVACY_MANAGE.code,
+  ]),
+
+  // =========================================================================
+  // TENANT_OWNER — Full tenant-wide scope (Admin)
+  // =========================================================================
+  /**
+   * TENANT_OWNER can manage the entire tenant, delegate roles, and access
+   * all tenant-level resources. This is the "admin" role for a tenant.
+   */
+  [MembershipRole.TENANT_OWNER]: Object.freeze([
+    // Tenant management
+    PERMISSIONS.TENANT_MANAGE.code,
+    PERMISSIONS.ORGUNIT_MANAGE.code,
+    PERMISSIONS.ORGUNIT_READ.code,
+    // Administration (letter requests)
+    PERMISSIONS.ADMIN_READ.code,
+    PERMISSIONS.ADMIN_WRITE.code,
+    PERMISSIONS.ADMIN_MANAGE.code,
+    // Tenant-scoped audit log access (shares the audit:read code; the audit
+    // repository scopes results by authContext.tenantId)
+    PERMISSIONS.PLATFORM_AUDIT_READ.code,
+    // Role delegation
+    PERMISSIONS.MEMBERSHIP_DELEGATE.code,
+    PERMISSIONS.MEMBERSHIP_READ.code,
+    // Financial access
+    PERMISSIONS.FINANCE_READ.code,
+    PERMISSIONS.FINANCE_WRITE.code,
+    // Resident management
+    PERMISSIONS.RESIDENT_READ.code,
+    PERMISSIONS.RESIDENT_WRITE.code,
+    PERMISSIONS.HOUSEHOLD_MANAGE.code,
+    PERMISSIONS.HOUSEHOLD_READ.code,
+    // Communication
+    PERMISSIONS.ANNOUNCEMENT_READ.code,
+    PERMISSIONS.ANNOUNCEMENT_PUBLISH.code,
+    // Voting
+    PERMISSIONS.VOTE_MANAGE.code,
+    PERMISSIONS.VOTE_CAST.code,
+    // IoT
+    PERMISSIONS.IOT_COMMAND.code,
+    PERMISSIONS.IOT_READ.code,
+    PERMISSIONS.IOT_MANAGE.code,
+    // Emergency
+    PERMISSIONS.EMERGENCY_CREATE.code,
+    PERMISSIONS.EMERGENCY_READ.code,
+    PERMISSIONS.EMERGENCY_MANAGE.code,
+    // Security
+    PERMISSIONS.SECURITY_MANAGE.code,
+    PERMISSIONS.SECURITY_READ.code,
+    PERMISSIONS.PATROL_MANAGE.code,
+    PERMISSIONS.PATROL_READ.code,
+    PERMISSIONS.INCIDENT_MANAGE.code,
+    PERMISSIONS.INCIDENT_REPORT.code,
+    // Privacy
+    PERMISSIONS.PRIVACY_READ.code,
+    PERMISSIONS.PRIVACY_MANAGE.code,
   ]),
 
   // =========================================================================
@@ -118,6 +176,10 @@ export const ROLE_PERMISSIONS: Readonly<Record<MembershipRole, readonly string[]
     PERMISSIONS.MEMBERSHIP_READ.code,
     // OrgUnit read (not manage)
     PERMISSIONS.ORGUNIT_READ.code,
+    // Administration (letter requests)
+    PERMISSIONS.ADMIN_READ.code,
+    PERMISSIONS.ADMIN_WRITE.code,
+    PERMISSIONS.ADMIN_MANAGE.code,
     // Financial access
     PERMISSIONS.FINANCE_READ.code,
     PERMISSIONS.FINANCE_WRITE.code,
@@ -138,8 +200,9 @@ export const ROLE_PERMISSIONS: Readonly<Record<MembershipRole, readonly string[]
     PERMISSIONS.EMERGENCY_CREATE.code,
     PERMISSIONS.EMERGENCY_READ.code,
     PERMISSIONS.EMERGENCY_MANAGE.code,
-    // Security
+    // Security (read + manage for visitor/package logging)
     PERMISSIONS.SECURITY_READ.code,
+    PERMISSIONS.SECURITY_MANAGE.code,
     PERMISSIONS.PATROL_MANAGE.code,
     PERMISSIONS.PATROL_READ.code,
     PERMISSIONS.INCIDENT_MANAGE.code,
@@ -157,6 +220,13 @@ export const ROLE_PERMISSIONS: Readonly<Record<MembershipRole, readonly string[]
     // Role delegation (within scope)
     PERMISSIONS.MEMBERSHIP_DELEGATE.code,
     PERMISSIONS.MEMBERSHIP_READ.code,
+    // Administration (letter requests)
+    PERMISSIONS.ADMIN_READ.code,
+    PERMISSIONS.ADMIN_WRITE.code,
+    PERMISSIONS.ADMIN_MANAGE.code,
+    // Tenant-scoped audit log access (shares the audit:read code; the audit
+    // repository scopes results by authContext.tenantId)
+    PERMISSIONS.PLATFORM_AUDIT_READ.code,
     // Financial access
     PERMISSIONS.FINANCE_READ.code,
     PERMISSIONS.FINANCE_WRITE.code,
@@ -179,8 +249,9 @@ export const ROLE_PERMISSIONS: Readonly<Record<MembershipRole, readonly string[]
     PERMISSIONS.EMERGENCY_CREATE.code,
     PERMISSIONS.EMERGENCY_READ.code,
     PERMISSIONS.EMERGENCY_MANAGE.code,
-    // Security
+    // Security (read + manage for visitor/package logging, alarms, CCTV)
     PERMISSIONS.SECURITY_READ.code,
+    PERMISSIONS.SECURITY_MANAGE.code,
     PERMISSIONS.PATROL_MANAGE.code,
     PERMISSIONS.PATROL_READ.code,
     PERMISSIONS.INCIDENT_MANAGE.code,
@@ -211,8 +282,9 @@ export const ROLE_PERMISSIONS: Readonly<Record<MembershipRole, readonly string[]
     // Incident reporting
     PERMISSIONS.INCIDENT_REPORT.code,
     PERMISSIONS.INCIDENT_MANAGE.code,
-    // Security
+    // Security (read + manage for visitor/package logging)
     PERMISSIONS.SECURITY_READ.code,
+    PERMISSIONS.SECURITY_MANAGE.code,
     // IoT read (for monitoring)
     PERMISSIONS.IOT_READ.code,
     // Announcement read

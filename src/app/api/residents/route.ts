@@ -15,6 +15,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
+import { uuidLike as uuidLikeSchema } from '@infrastructure/utils/uuidLike';
 import { withPermission, type AuthorizedRouteHandler } from '@infrastructure/middleware/authorization';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { AddResidentUseCase } from '@core/domains/resident/usecases';
@@ -25,12 +26,9 @@ import type { ResidentCategory, ResidencyStatus } from '@core/domains/resident/e
 // Input schemas
 // ---------------------------------------------------------------------------
 
-// Custom UUID validation that accepts any UUID format including nil-variant UUIDs
-// Standard Zod .uuid() rejects UUIDs with version digit = 0 (like seed data)
-const uuidLike = z.string().regex(
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-  'Invalid UUID format'
-);
+// Accepts any canonical UUID-shaped string, including the synthetic nil-variant
+// IDs used by seed data that strict Zod .uuid() would reject.
+const uuidLike = uuidLikeSchema('Invalid UUID format');
 
 const addResidentSchema = z.object({
   householdId: uuidLike,

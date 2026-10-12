@@ -14,6 +14,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { CreatePatrolScheduleUseCase } from '@core/domains/security/usecases';
@@ -26,7 +27,7 @@ import type { SecurityRepository } from '@core/domains/security/repositories/Sec
 const createScheduleSchema = z.object({
   date: z.string().datetime(),
   timeSlot: z.string().min(1),
-  assignedUserIds: z.array(z.string().uuid()).min(1),
+  assignedUserIds: z.array(uuidLike()).min(1),
 });
 
 // ---------------------------------------------------------------------------

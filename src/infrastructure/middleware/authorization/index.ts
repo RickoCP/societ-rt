@@ -84,3 +84,13 @@ export {
   withSafetyCriticalEntitlement,
   withBillingFlowEntitlement,
 } from './requireEntitlement';
+
+// Cross-tenant scoping helper (Option 2A — PLATFORM_ADMIN target-tenant access)
+export {
+  resolveTargetTenant,
+  resolveTargetTenantFromContainer,
+} from './resolveTargetTenant';
+export type {
+  ResolveTargetTenantResult,
+  ResolveTargetTenantDeps,
+} from './resolveTargetTenant';

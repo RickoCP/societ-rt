@@ -2,7 +2,7 @@
  * GET /api/iot/metrics — Prometheus-compatible IoT metrics endpoint.
  *
  * Returns metrics in Prometheus text exposition format.
- * Requires authentication and device:read permission.
+ * Requires authentication and iot:read permission.
  *
  * @see Requirements 44.6, 44.7, 44.8
  * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration

@@ -2,7 +2,7 @@
  * GET /api/iot/devices/health — IoT device health dashboard.
  *
  * Returns aggregated health information for all devices in a household.
- * Requires authentication and device:read permission.
+ * Requires authentication and iot:read permission.
  *
  * @see Requirements 44.1, 44.4, 44.5
  * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration
@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { GetDeviceHealthDashboardUseCase } from '@core/domains/iot/usecases';
@@ -22,7 +23,7 @@ import type { GetDeviceHealthDashboardUseCase } from '@core/domains/iot/usecases
 // ---------------------------------------------------------------------------
 
 const querySchema = z.object({
-  householdId: z.string().uuid('householdId must be a valid UUID').optional(),
+  householdId: uuidLike('householdId must be a valid UUID').optional(),
 });
 
 // ---------------------------------------------------------------------------

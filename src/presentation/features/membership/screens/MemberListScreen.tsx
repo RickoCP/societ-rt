@@ -23,15 +23,21 @@
  * @see Design Components > 2.1-2.4 (Member List Screen)
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PermissionGuard } from '@presentation/components/atoms/PermissionGuard';
 import { DataTable, type DataTableColumn, type SortDirection } from '@presentation/components/organisms/DataTable';
 import { FilterPanel, type FilterDefinition, type FilterValue } from '@presentation/components/molecules/FilterPanel';
 import { Button } from '@presentation/components/atoms/Button';
 import { EmptyState } from '@presentation/components/molecules/EmptyState';
-import { Spinner } from '@presentation/components/atoms/Spinner';
+import { ConfirmDialog } from '@presentation/components/molecules/ConfirmDialog';
 import { useMemberListViewModel, MAX_BULK_SELECTION } from '../viewModel/useMemberListViewModel';
+import {
+  useCreateMember,
+  useUpdateMember,
+  useDeleteMember,
+  useBulkMember,
+} from '../hooks/useMemberMutations';
 import type { Member } from '@core/domains/membership/entities/Member';
 import type { MemberSortColumn } from '@core/domains/membership/entities/MemberFilters';
 import { MembershipRole, ALL_MEMBERSHIP_ROLES } from '@core/domains/membership/types/MembershipRole';
@@ -76,7 +82,12 @@ const STATUS_CONFIG: Record<MembershipStatus, { label: string; color: string }> 
  * Status badge component.
  */
 function StatusBadge({ status }: { status: MembershipStatus }) {
-  const config = STATUS_CONFIG[status];
+  // Fail securely: fall back to a neutral badge for any unexpected/unmapped
+  // status rather than crashing on `config.color`.
+  const config = STATUS_CONFIG[status] ?? {
+    label: String(status),
+    color: 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-700',
+  };
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.color}`}>
@@ -294,6 +305,128 @@ function SelectionLimitWarning({ selectedCount }: { selectedCount: number }) {
   );
 }
 
+/**
+ * Invite Member dialog — a minimal create form (name, email, role).
+ */
+function InviteMemberDialog({
+  open,
+  isSubmitting,
+  onSubmit,
+  onClose,
+}: {
+  open: boolean;
+  isSubmitting: boolean;
+  onSubmit: (data: { name: string; email: string; role: MembershipRole }) => Promise<void>;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState<MembershipRole>(MembershipRole.RESIDENT);
+  const [error, setError] = useState<string | null>(null);
+
+  // Reset fields whenever the dialog opens.
+  const handleClose = useCallback(() => {
+    setName('');
+    setEmail('');
+    setRole(MembershipRole.RESIDENT);
+    setError(null);
+    onClose();
+  }, [onClose]);
+
+  const handleSubmit = useCallback(async () => {
+    setError(null);
+    if (!name.trim()) {
+      setError(t('member_list.invite_name_required', 'Name is required'));
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError(t('member_list.invite_email_invalid', 'A valid email is required'));
+      return;
+    }
+    await onSubmit({ name: name.trim(), email: email.trim(), role });
+  }, [name, email, role, onSubmit, t]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 bg-black/50"
+        aria-hidden="true"
+        onClick={handleClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('member_list.invite_member', 'Invite Member')}
+        className="relative z-10 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          {t('member_list.invite_member', 'Invite Member')}
+        </h2>
+
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="invite-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('member_list.invite_name', 'Name')}
+            </label>
+            <input
+              id="invite-name"
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="invite-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('member_list.invite_email', 'Email')}
+            </label>
+            <input
+              id="invite-email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="invite-role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('member_list.invite_role', 'Role')}
+            </label>
+            <select
+              id="invite-role"
+              value={role}
+              onChange={e => setRole(e.target.value as MembershipRole)}
+              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+              {ALL_MEMBERSHIP_ROLES.map(r => (
+                <option key={r} value={r}>
+                  {ROLE_LABELS[r]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={handleClose} disabled={isSubmitting}>
+            {t('common.cancel', 'Cancel')}
+          </Button>
+          <Button variant="primary" size="sm" onClick={handleSubmit} disabled={isSubmitting}>
+            {t('member_list.invite_submit', 'Send Invite')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
@@ -304,6 +437,62 @@ function SelectionLimitWarning({ selectedCount }: { selectedCount: number }) {
 function MemberListContent() {
   const { t } = useTranslation();
   const vm = useMemberListViewModel();
+
+  // ---------------------------------------------------------------------------
+  // Mutations (create / update / delete / bulk) — users-table backend
+  // ---------------------------------------------------------------------------
+
+  const createMember = useCreateMember();
+  const updateMember = useUpdateMember();
+  const deleteMember = useDeleteMember();
+  const bulkMember = useBulkMember();
+
+  const [isInviteOpen, setInviteOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
+
+  const handleInviteSubmit = useCallback(
+    async (data: { name: string; email: string; role: MembershipRole }) => {
+      await createMember.mutateAsync(data);
+      setInviteOpen(false);
+    },
+    [createMember],
+  );
+
+  const handleChangeRole = useCallback(
+    (member: Member, role: MembershipRole) => {
+      if (role === member.role) return;
+      void updateMember.mutateAsync({ memberId: member.id, role });
+    },
+    [updateMember],
+  );
+
+  const handleToggleStatus = useCallback(
+    (member: Member) => {
+      const next =
+        member.status === MembershipStatus.ACTIVE
+          ? MembershipStatus.SUSPENDED
+          : MembershipStatus.ACTIVE;
+      void updateMember.mutateAsync({ memberId: member.id, status: next });
+    },
+    [updateMember],
+  );
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!memberToDelete) return;
+    await deleteMember.mutateAsync(memberToDelete.id);
+    setMemberToDelete(null);
+  }, [memberToDelete, deleteMember]);
+
+  const handleBulk = useCallback(
+    (action: 'activate' | 'suspend' | 'revoke' | 'delete') => {
+      const ids = Array.from(vm.selectedIds);
+      if (ids.length === 0) return;
+      void bulkMember.mutateAsync({ action, memberIds: ids }).then(() => {
+        vm.clearSelection();
+      });
+    },
+    [vm, bulkMember],
+  );
   
   // ---------------------------------------------------------------------------
   // Filter Configuration
@@ -412,6 +601,52 @@ function MemberListContent() {
       responsive: { priority: 'essential' },
       render: (row) => <StatusBadge status={row.status} />,
     },
+    ...(vm.canWrite
+      ? [
+          {
+            key: 'actions',
+            header: t('member_list.column_actions', 'Actions'),
+            responsive: { priority: 'high' as const },
+            render: (row: Member) => (
+              <div className="flex items-center gap-2">
+                {/* Inline role change */}
+                <select
+                  aria-label={t('member_list.change_role_aria', 'Change role for {{name}}', { name: row.name })}
+                  value={row.role}
+                  onChange={e => handleChangeRole(row, e.target.value as MembershipRole)}
+                  disabled={row.status === MembershipStatus.REVOKED}
+                  className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                  {ALL_MEMBERSHIP_ROLES.map(r => (
+                    <option key={r} value={r}>
+                      {ROLE_LABELS[r]}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Suspend / Activate toggle */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleToggleStatus(row)}
+                  disabled={row.status === MembershipStatus.REVOKED}>
+                  {row.status === MembershipStatus.ACTIVE
+                    ? t('member_list.suspend', 'Suspend')
+                    : t('member_list.activate', 'Activate')}
+                </Button>
+
+                {/* Delete */}
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setMemberToDelete(row)}
+                  aria-label={t('member_list.delete_aria', 'Remove {{name}}', { name: row.name })}>
+                  {t('common.delete', 'Delete')}
+                </Button>
+              </div>
+            ),
+          } as DataTableColumn<Member>,
+        ]
+      : []),
     {
       key: 'createdAt',
       header: t('member_list.column_joined', 'Joined'),
@@ -424,7 +659,7 @@ function MemberListContent() {
         </span>
       ),
     },
-  ], [t]);
+  ], [t, vm.canWrite, handleChangeRole, handleToggleStatus]);
   
   // ---------------------------------------------------------------------------
   // Sort Handler
@@ -499,11 +734,19 @@ function MemberListContent() {
                 {t('member_list.clear_filters', 'Clear filters')}
               </Button>
             ) : vm.canDelegate ? (
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" onClick={() => setInviteOpen(true)}>
                 {t('member_list.invite_member', 'Invite Member')}
               </Button>
             ) : undefined
           }
+        />
+
+        {/* Invite dialog (also reachable from the empty state) */}
+        <InviteMemberDialog
+          open={isInviteOpen}
+          isSubmitting={createMember.isPending}
+          onSubmit={handleInviteSubmit}
+          onClose={() => setInviteOpen(false)}
         />
       </div>
     );
@@ -523,7 +766,7 @@ function MemberListContent() {
         </div>
         
         {vm.canDelegate && (
-          <Button variant="primary" size="sm">
+          <Button variant="primary" size="sm" onClick={() => setInviteOpen(true)}>
             {t('member_list.invite_member', 'Invite Member')}
           </Button>
         )}
@@ -558,7 +801,27 @@ function MemberListContent() {
               onClick={vm.clearSelection}>
               {t('member_list.clear_selection', 'Clear')}
             </Button>
-            {/* Placeholder for bulk action buttons - will be added in Task 8 */}
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={bulkMember.isPending || vm.isSelectionLimitExceeded}
+              onClick={() => handleBulk('activate')}>
+              {t('member_list.bulk_activate', 'Activate')}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={bulkMember.isPending || vm.isSelectionLimitExceeded}
+              onClick={() => handleBulk('suspend')}>
+              {t('member_list.bulk_suspend', 'Suspend')}
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={bulkMember.isPending || vm.isSelectionLimitExceeded}
+              onClick={() => handleBulk('delete')}>
+              {t('member_list.bulk_delete', 'Delete')}
+            </Button>
           </div>
         </div>
       )}
@@ -606,6 +869,35 @@ function MemberListContent() {
           )}
         </span>
       </div>
+
+      {/* Invite Member dialog */}
+      <InviteMemberDialog
+        open={isInviteOpen}
+        isSubmitting={createMember.isPending}
+        onSubmit={handleInviteSubmit}
+        onClose={() => setInviteOpen(false)}
+      />
+
+      {/* Delete confirmation */}
+      <ConfirmDialog
+        open={memberToDelete !== null}
+        title={t('member_list.delete_confirm_title', 'Remove Member')}
+        description={
+          memberToDelete
+            ? t(
+                'member_list.delete_confirm',
+                'Are you sure you want to remove "{{name}}"? This action cannot be undone.',
+                { name: memberToDelete.name },
+              )
+            : ''
+        }
+        confirmLabel={t('common.delete', 'Delete')}
+        cancelLabel={t('common.cancel', 'Cancel')}
+        variant="danger"
+        loading={deleteMember.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setMemberToDelete(null)}
+      />
     </div>
   );
 }

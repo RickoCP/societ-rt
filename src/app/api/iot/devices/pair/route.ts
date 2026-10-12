@@ -13,6 +13,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { PairDeviceUseCase } from '@core/domains/iot/usecases';
@@ -22,7 +23,7 @@ import type { PairDeviceUseCase } from '@core/domains/iot/usecases';
 // ---------------------------------------------------------------------------
 
 const pairDeviceSchema = z.object({
-  householdId: z.string().uuid('householdId must be a valid UUID'),
+  householdId: uuidLike('householdId must be a valid UUID'),
   deviceType: z.enum([
     'panic_button',
     'smart_siren',

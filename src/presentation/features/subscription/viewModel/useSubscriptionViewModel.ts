@@ -22,6 +22,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@presentation/hooks/usePermissions';
+import { useSelectedAdminTenantId } from '@infrastructure/stateManagement';
 import type { AppError } from '@core/utils';
 import type { SubscriptionStatus, PlanFeature } from '@core/domains/subscription/types';
 import type {
@@ -547,8 +548,13 @@ function formatStorageGB(bytes: number): number {
 /**
  * Fetch subscription data from the API.
  */
-async function fetchSubscription(): Promise<SubscriptionData> {
-  const response = await fetch('/api/admin/subscription', {
+async function fetchSubscription(
+  targetTenantId: string | null,
+): Promise<SubscriptionData | null> {
+  const query = targetTenantId
+    ? `?tenantId=${encodeURIComponent(targetTenantId)}`
+    : '';
+  const response = await fetch(`/api/admin/subscription${query}`, {
     credentials: 'include',
   });
 
@@ -571,14 +577,13 @@ async function fetchSubscription(): Promise<SubscriptionData> {
     throw error;
   }
 
-  const json = (await response.json()) as { data?: SubscriptionData };
+  const json = (await response.json()) as { data?: SubscriptionData | null };
 
+  // `data: null` is a VALID state (the tenant has no subscription yet) — this
+  // is an empty state, NOT an error. Return null so the UI shows the empty
+  // state instead of a "failed to load" error.
   if (!json.data) {
-    throw {
-      type: 'technical',
-      code: 'SUBSCRIPTION_INVALID_RESPONSE',
-      message: 'Invalid response format from subscription API',
-    } as AppError;
+    return null;
   }
 
   // Parse date fields
@@ -625,6 +630,9 @@ export function useSubscriptionViewModel(): SubscriptionViewModel {
   const { hasPermission, isLoading: isPermissionsLoading } = usePermissions();
   const canManage = hasPermission('tenant:manage');
 
+  // Selected tenant for PLATFORM_ADMIN cross-tenant viewing (null = own tenant).
+  const selectedTenantId = useSelectedAdminTenantId();
+
   // ---------------------------------------------------------------------------
   // Modal State
   // ---------------------------------------------------------------------------
@@ -641,9 +649,9 @@ export function useSubscriptionViewModel(): SubscriptionViewModel {
     isError,
     error: queryError,
     refetch,
-  } = useQuery<SubscriptionData, AppError>({
-    queryKey: [SUBSCRIPTION_QUERY_KEY],
-    queryFn: fetchSubscription,
+  } = useQuery<SubscriptionData | null, AppError>({
+    queryKey: [SUBSCRIPTION_QUERY_KEY, selectedTenantId],
+    queryFn: () => fetchSubscription(selectedTenantId),
     enabled: canManage && !isPermissionsLoading,
     staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes

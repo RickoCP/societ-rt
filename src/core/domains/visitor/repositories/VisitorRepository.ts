@@ -38,4 +38,16 @@ export interface VisitorRepository {
 
   /** Find all visitor logs within a tenant. */
   findByTenant(tenantId: string): Promise<DomainResult<VisitorLog[]>>;
+
+  /** Find a visitor log by ID within a tenant. */
+  findById(
+    tenantId: string,
+    visitorLogId: string,
+  ): Promise<DomainResult<VisitorLog | null>>;
+
+  /** Delete a visitor log by ID within a tenant. */
+  deleteVisitor(
+    tenantId: string,
+    visitorLogId: string,
+  ): Promise<DomainResult<void>>;
 }

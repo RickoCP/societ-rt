@@ -1,4 +1,9 @@
 {
+  "packages": {
+    "collect_loading": "Processing package collection...",
+    "collect_success": "Package successfully marked as collected",
+    "collect_error": "Failed to mark package. Please try again shortly."
+  },
   "breadcrumbs": {
     "home": "Home",
     "dashboard": "Dashboard",

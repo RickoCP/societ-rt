@@ -15,6 +15,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
@@ -23,7 +24,7 @@ import type { DoorMonitoringRepository } from '@core/domains/doorMonitoring/repo
 import type { DoorInstallationStatus } from '@core/domains/doorMonitoring/entities';
 
 const createSchema = z.object({
-  householdId: z.string().uuid('householdId must be a valid UUID'),
+  householdId: uuidLike('householdId must be a valid UUID'),
   note: z.string().max(500).optional(),
 });
 
@@ -77,7 +78,7 @@ type RequestListResponse = RequestListSuccessResponse | ErrorResponse;
 
 /**
  * Handler for creating door sensor installation requests.
- * Requires device:write permission for RT admins to request installations.
+ * Requires iot:command permission for RT admins to request installations.
  */
 const handleCreateRequest: AuthorizedRouteHandler<RequestCreateResponse> = async (
   request: NextRequest,
@@ -144,7 +145,7 @@ const handleCreateRequest: AuthorizedRouteHandler<RequestCreateResponse> = async
 
 /**
  * Handler for listing door sensor installation requests.
- * Requires device:read permission to view installation requests.
+ * Requires iot:read permission to view installation requests.
  */
 const handleListRequests: AuthorizedRouteHandler<RequestListResponse> = async (
   request: NextRequest,
@@ -192,11 +193,11 @@ const handleListRequests: AuthorizedRouteHandler<RequestListResponse> = async (
 };
 
 export const POST = withPermission(
-  { permissions: ['device:write'] },
+  { permissions: ['iot:command'] },
   handleCreateRequest,
 );
 
 export const GET = withPermission(
-  { permissions: ['device:read'] },
+  { permissions: ['iot:read'] },
   handleListRequests,
 );

@@ -15,12 +15,17 @@
     "prisma:validate": "prisma validate",
     "prisma:seed": "npx tsx prisma/seed.ts",
     "prisma:seed:tenants": "npx tsx prisma/run-seed-tenants.ts",
+    "prisma:seed:admin": "npx tsx prisma/seed-admin-dummy.ts",
+    "prisma:seed:all": "npm run prisma:seed && npm run prisma:seed:tenants && npm run prisma:seed:admin",
     "check:rls-coverage": "npx tsx scripts/check-rls-coverage.ts",
     "benchmark": "npx tsx scripts/benchmarks/performance-benchmarks.ts",
     "benchmark:ci": "npx tsx scripts/benchmarks/performance-benchmarks.ts --ci --iterations 5000 --warmup 500",
     "benchmark:report": "npx tsx scripts/benchmarks/comparison-report.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "generate:pbb-traceability": "npx tsx scripts/pbb-traceability/index.ts generate",
+    "validate:pbb-tasks": "npx tsx scripts/pbb-traceability/index.ts validate",
+    "verify:pbb-traceability": "npx tsx scripts/pbb-traceability/index.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -74,6 +79,7 @@
     "prettier": "^3.8.3",
     "prisma": "^7.10.0",
     "tailwindcss": "^3.4.19",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^3.2.1"

@@ -11,6 +11,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { jwtVerify } from 'jose';
 import pg from 'pg';
+import { MembershipRole } from '@core/domains/membership/types/MembershipRole';
+import { mapLegacyRole } from '@core/domains/membership/types/LegacyRoleMapping';
+import { getPermissionsForRole } from '@core/domains/authorization/permissions/PermissionRegistry';
+import { UserRole } from '@core/protocols';
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -82,17 +86,37 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const user = userResult.rows[0];
 
+    // Resolve permissions based on role
+    let permissions: string[] = [];
+    let normalizedRole: string = role;
+    
+    // Try to map legacy role to MembershipRole and get permissions
+    const legacyRole = role as UserRole;
+    const membershipRole = mapLegacyRole(legacyRole);
+    
+    if (membershipRole) {
+      // Use the normalized MembershipRole name
+      normalizedRole = membershipRole;
+      const permissionSet = getPermissionsForRole(membershipRole);
+      permissions = Array.from(permissionSet);
+    } else if (Object.values(MembershipRole).includes(role as MembershipRole)) {
+      // If role is already a MembershipRole, use it directly
+      normalizedRole = role;
+      const permissionSet = getPermissionsForRole(role as MembershipRole);
+      permissions = Array.from(permissionSet);
+    }
+
     return NextResponse.json(
       {
         data: {
           userId: user.id,
           name: user.name,
           email: user.email,
-          role: role,
+          role: normalizedRole,
           tenantId: tenantId,
           membershipId: '',
           orgUnitId: null,
-          permissions: [],
+          permissions: permissions,
         },
       },
       { status: 200 },

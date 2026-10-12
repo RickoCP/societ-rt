@@ -13,7 +13,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
-import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
+import {
+  withPermission,
+  resolveTargetTenantFromContainer,
+} from '@infrastructure/middleware/authorization';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { OrgUnitRepository } from '@core/domains/orgunit/repositories/OrgUnitRepository';
@@ -35,6 +38,20 @@ const handleMoveOrgUnit: AuthorizedRouteHandler<unknown> = async (
     request.headers.get('x-correlation-id') ?? generateCorrelationId();
 
   try {
+    // Resolve the tenant to scope to (cross-tenant for PLATFORM_ADMIN).
+    const targetTenant = await resolveTargetTenantFromContainer(
+      request,
+      authContext,
+      'admin/orgunit:move',
+      container,
+    );
+    if (!targetTenant.ok) {
+      return NextResponse.json(
+        { code: targetTenant.code, message: targetTenant.message, correlationId },
+        { status: targetTenant.status },
+      );
+    }
+
     // Parse request body
     const body = (await request.json()) as MoveRequestBody;
     const { orgUnitId, newParentId } = body;
@@ -50,7 +67,7 @@ const handleMoveOrgUnit: AuthorizedRouteHandler<unknown> = async (
       );
     }
 
-    const tenantId = authContext.tenantId;
+    const tenantId = targetTenant.tenantId;
 
     // Get repository from DI
     const orgUnitRepository =
@@ -107,4 +124,7 @@ const handleMoveOrgUnit: AuthorizedRouteHandler<unknown> = async (
 // Export wrapped handler with permission check
 // ---------------------------------------------------------------------------
 
-export const POST = withPermission(handleMoveOrgUnit, 'orgunit:write');
+export const POST = withPermission(
+  { permissions: ['orgunit:manage'] },
+  handleMoveOrgUnit,
+);

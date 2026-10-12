@@ -33,7 +33,55 @@ export function TenantListScreen() {
     importSirenCsv,
     isImportingSiren,
     sirenExportUrl,
+    createTenant,
+    isCreatingTenant,
+    setTenantLifecycle,
+    isUpdatingLifecycle,
   } = useTenantListViewModel(page);
+
+  // Create tenant dialog state.
+  const [isCreateOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    rtRwNumber: '',
+    region: '',
+    address: '',
+    contactPerson: '',
+  });
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [lifecycleId, setLifecycleId] = useState<string | null>(null);
+
+  const handleCreateSubmit = async () => {
+    setCreateError(null);
+    const { name, rtRwNumber, region, address, contactPerson } = createForm;
+    if (!name.trim() || !rtRwNumber.trim() || !region.trim() || !address.trim() || !contactPerson.trim()) {
+      setCreateError('Semua field wajib diisi');
+      return;
+    }
+    try {
+      await createTenant({
+        name: name.trim(),
+        rtRwNumber: rtRwNumber.trim(),
+        region: region.trim(),
+        address: address.trim(),
+        contactPerson: contactPerson.trim(),
+      });
+      setCreateOpen(false);
+      setCreateForm({ name: '', rtRwNumber: '', region: '', address: '', contactPerson: '' });
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Gagal membuat tenant');
+    }
+  };
+
+  const handleLifecycle = async (row: TenantRow) => {
+    const action = row.status === 'active' ? 'suspend' : 'reactivate';
+    setLifecycleId(row.id);
+    try {
+      await setTenantLifecycle({ tenantId: row.id, action });
+    } finally {
+      setLifecycleId(null);
+    }
+  };
 
   // Per-row siren editor state, keyed by tenant id.
   const [sirenDrafts, setSirenDrafts] = useState<Record<string, string>>({});
@@ -166,6 +214,20 @@ export function TenantListScreen() {
         );
       },
     },
+    {
+      key: 'lifecycle',
+      header: 'Aksi',
+      render: row => (
+        <Button
+          size="sm"
+          variant={row.status === 'active' ? 'danger' : 'primary'}
+          loading={isUpdatingLifecycle && lifecycleId === row.id}
+          disabled={isUpdatingLifecycle && lifecycleId === row.id}
+          onClick={() => handleLifecycle(row)}>
+          {row.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}
+        </Button>
+      ),
+    },
   ];
 
   return (
@@ -181,8 +243,11 @@ export function TenantListScreen() {
           </p>
         </div>
 
-        {/* Bulk actions: Export (download CSV/template) + Import (upload CSV) */}
+        {/* Bulk actions: Create tenant + Export (download CSV/template) + Import (upload CSV) */}
         <div className="flex flex-wrap items-center gap-2">
+          <Button variant="primary" size="md" onClick={() => setCreateOpen(true)}>
+            ➕ Tambah RT
+          </Button>
           <a href={sirenExportUrl}>
             <Button variant="secondary" size="md">
               📥 Export CSV
@@ -269,6 +334,73 @@ export function TenantListScreen() {
         rowKey={row => row.id}
         emptyMessage="Belum ada data RT"
       />
+
+      {/* Create tenant dialog */}
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-black/50"
+            aria-hidden="true"
+            onClick={() => setCreateOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Tambah RT"
+            className="relative z-10 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+              Tambah RT Baru
+            </h2>
+            <div className="space-y-3">
+              {[
+                { key: 'name' as const, label: 'Nama RT', placeholder: 'RT 05 Perumahan Melati' },
+                { key: 'rtRwNumber' as const, label: 'Nomor RT/RW', placeholder: '005/008' },
+                { key: 'region' as const, label: 'Wilayah', placeholder: 'Kelurahan ..., Kecamatan ...' },
+                { key: 'address' as const, label: 'Alamat', placeholder: 'Jl. ...' },
+                { key: 'contactPerson' as const, label: 'Narahubung', placeholder: 'Nama ketua RT' },
+              ].map(field => (
+                <div key={field.key}>
+                  <label
+                    htmlFor={`create-${field.key}`}
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {field.label}
+                  </label>
+                  <input
+                    id={`create-${field.key}`}
+                    type="text"
+                    value={createForm[field.key]}
+                    placeholder={field.placeholder}
+                    onChange={e =>
+                      setCreateForm(prev => ({ ...prev, [field.key]: e.target.value }))
+                    }
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                  />
+                </div>
+              ))}
+              {createError && (
+                <p className="text-sm text-red-600 dark:text-red-400">{createError}</p>
+              )}
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCreateOpen(false)}
+                disabled={isCreatingTenant}>
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                loading={isCreatingTenant}
+                disabled={isCreatingTenant}
+                onClick={handleCreateSubmit}>
+                Simpan
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

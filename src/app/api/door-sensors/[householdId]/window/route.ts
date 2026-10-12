@@ -59,7 +59,7 @@ type WindowConfigResponse = WindowConfigSuccessResponse | ErrorResponse;
 
 /**
  * Handler for setting the monitoring window for a household's door sensor.
- * Requires device:write permission. Ownership is enforced in the use case.
+ * Requires iot:command permission. Ownership is enforced in the use case.
  */
 const handleSetWindow: AuthorizedRouteHandler<WindowConfigResponse> = async (
   request: NextRequest,
@@ -140,7 +140,7 @@ const handleSetWindow: AuthorizedRouteHandler<WindowConfigResponse> = async (
 
 /**
  * Handler for fetching the current door-sensor config for a household.
- * Requires device:read permission to view sensor configuration.
+ * Requires iot:read permission to view sensor configuration.
  */
 const handleGetConfig: AuthorizedRouteHandler<WindowConfigResponse> = async (
   request: NextRequest,
@@ -188,11 +188,11 @@ const handleGetConfig: AuthorizedRouteHandler<WindowConfigResponse> = async (
 };
 
 export const PUT = withPermission(
-  { permissions: ['device:write'] },
+  { permissions: ['iot:command'] },
   handleSetWindow,
 );
 
 export const GET = withPermission(
-  { permissions: ['device:read'] },
+  { permissions: ['iot:read'] },
   handleGetConfig,
 );

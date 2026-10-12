@@ -1,9 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@components/atoms/Badge';
 import { Button } from '@components/atoms/Button';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
+import { SearchableSelect } from '@components/molecules/SearchableSelect';
+import {
+  showLoadingToast,
+  updateToast,
+} from '@infrastructure/stateManagement/toastStore';
 import { usePackageListViewModel } from '../viewModel/usePackageListViewModel';
 
 function formatDateTime(dateStr: string): string {
@@ -22,8 +28,12 @@ export function PackageListScreen() {
     createPackage,
     isCreating,
     createError,
-    collectPackage,
+    collectPackageAsync,
+    isCollecting,
   } = usePackageListViewModel();
+
+  const { t } = useTranslation();
+  const [collectingId, setCollectingId] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
   const [courierName, setCourierName] = useState('');
@@ -45,6 +55,36 @@ export function PackageListScreen() {
       setShowForm(false);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Network error');
+    }
+  };
+
+  const handleCollect = async (id: string) => {
+    setCollectingId(id);
+    const toastId = showLoadingToast(
+      t('packages.collect_loading', 'Memproses pengambilan paket...'),
+    );
+    try {
+      await collectPackageAsync(id);
+      updateToast(toastId, {
+        type: 'success',
+        message: t(
+          'packages.collect_success',
+          'Paket berhasil ditandai sudah diambil',
+        ),
+      });
+    } catch (err) {
+      updateToast(toastId, {
+        type: 'error',
+        message:
+          err instanceof Error
+            ? err.message
+            : t(
+                'packages.collect_error',
+                'Gagal menandai paket. Coba lagi beberapa saat.',
+              ),
+      });
+    } finally {
+      setCollectingId(null);
     }
   };
 
@@ -100,12 +140,18 @@ export function PackageListScreen() {
             </div>
             <div>
               <label htmlFor="p-recipient" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Penerima</label>
-              <select id="p-recipient" value={recipientHousehold} onChange={e => setRecipientHousehold(e.target.value)} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
-                <option value="">-- Pilih --</option>
-                {households.map(h => (
-                  <option key={h.id} value={h.id}>{h.householdNumber} - {h.address}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                id="p-recipient"
+                value={recipientHousehold}
+                onChange={setRecipientHousehold}
+                options={households.map(h => ({
+                  value: h.id,
+                  label: `${h.householdNumber} - ${h.address}`,
+                }))}
+                placeholder="-- Pilih --"
+                searchPlaceholder="Cari rumah…"
+                noResultsText="Rumah tidak ditemukan"
+              />
             </div>
           </div>
           <div className="mt-4">
@@ -198,10 +244,26 @@ export function PackageListScreen() {
                 {!p.collectedAt && (
                   <button
                     type="button"
-                    onClick={() => collectPackage(p.id)}
-                    className="shrink-0 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 transition-colors hover:bg-green-100 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400"
+                    onClick={() => handleCollect(p.id)}
+                    disabled={isCollecting}
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 transition-colors hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400"
                   >
-                    ✓ Diambil
+                    {collectingId === p.id ? (
+                      <>
+                        <svg
+                          className="h-3.5 w-3.5 animate-spin"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Memproses...
+                      </>
+                    ) : (
+                      <>✓ Diambil</>
+                    )}
                   </button>
                 )}
               </div>

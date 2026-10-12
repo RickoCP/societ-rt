@@ -79,6 +79,49 @@ async function importSirenCsvRequest(file: File): Promise<SirenImportSummary> {
   return json.data;
 }
 
+export interface CreateTenantParams {
+  name: string;
+  rtRwNumber: string;
+  region: string;
+  address: string;
+  contactPerson: string;
+}
+
+async function createTenantRequest(params: CreateTenantParams): Promise<void> {
+  const res = await fetch('/api/tenants', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(body.message ?? 'Gagal membuat tenant');
+  }
+}
+
+async function setTenantLifecycleRequest({
+  tenantId,
+  action,
+}: {
+  tenantId: string;
+  action: 'suspend' | 'reactivate';
+}): Promise<void> {
+  const res = await fetch(`/api/tenants/${tenantId}/${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(
+      body.message ??
+        (action === 'suspend'
+          ? 'Gagal menonaktifkan tenant'
+          : 'Gagal mengaktifkan kembali tenant'),
+    );
+  }
+}
+
 export function useTenantListViewModel(page = 1) {
   const queryClient = useQueryClient();
 
@@ -101,6 +144,20 @@ export function useTenantListViewModel(page = 1) {
     },
   });
 
+  const createMutation = useMutation({
+    mutationFn: createTenantRequest,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['tenants'] });
+    },
+  });
+
+  const lifecycleMutation = useMutation({
+    mutationFn: setTenantLifecycleRequest,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['tenants'] });
+    },
+  });
+
   return {
     tenants: query.data?.data ?? [],
     total: query.data?.total ?? 0,
@@ -118,5 +175,10 @@ export function useTenantListViewModel(page = 1) {
     isImportingSiren: importMutation.isPending,
     // URL to download the CSV export / template
     sirenExportUrl: '/api/tenants/siren/export',
+    // Tenant lifecycle (platform admin)
+    createTenant: createMutation.mutateAsync,
+    isCreatingTenant: createMutation.isPending,
+    setTenantLifecycle: lifecycleMutation.mutateAsync,
+    isUpdatingLifecycle: lifecycleMutation.isPending,
   };
 }

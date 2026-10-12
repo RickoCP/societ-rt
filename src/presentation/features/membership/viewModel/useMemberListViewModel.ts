@@ -20,6 +20,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePermissions } from '@presentation/hooks/usePermissions';
+import { useSelectedAdminTenantId } from '@infrastructure/stateManagement';
 import type { Member, PaginatedMembers } from '@core/domains/membership/entities/Member';
 import type {
   MemberFilters,
@@ -261,6 +262,7 @@ export interface MemberListViewModel {
  */
 async function fetchMembers(
   options: MemberListQueryOptions,
+  targetTenantId: string | null,
 ): Promise<PaginatedMembers> {
   const { filters, pagination, sort } = options;
   
@@ -286,6 +288,11 @@ async function fetchMembers(
   if (filters?.orgUnitId) {
     params.set('orgUnitId', filters.orgUnitId);
   }
+  // PLATFORM_ADMIN cross-tenant selection (honored server-side for platform
+  // admins only; ignored/rejected otherwise).
+  if (targetTenantId) {
+    params.set('tenantId', targetTenantId);
+  }
   
   const response = await fetch(`/api/admin/members?${params.toString()}`, {
     credentials: 'include',
@@ -302,17 +309,34 @@ async function fetchMembers(
     throw error;
   }
   
-  const json = await response.json() as { data?: PaginatedMembers };
-  
-  if (!json.data) {
+  // The API returns { data: Member[], pagination: {...} } — the members array
+  // is `data`, and pagination metadata is a sibling. Assemble the
+  // PaginatedMembers shape the UI expects from those two parts.
+  const json = (await response.json()) as {
+    data?: Member[];
+    pagination?: {
+      page: number;
+      pageSize: number;
+      totalCount: number;
+      totalPages: number;
+    };
+  };
+
+  if (!json.data || !json.pagination) {
     throw {
       type: 'technical',
       code: 'MEMBER_LIST_INVALID_RESPONSE',
       message: 'Invalid response format from members API',
     } as AppError;
   }
-  
-  return json.data;
+
+  return {
+    members: json.data,
+    page: json.pagination.page,
+    pageSize: json.pagination.pageSize,
+    totalCount: json.pagination.totalCount,
+    totalPages: json.pagination.totalPages,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -364,8 +388,14 @@ export function useMemberListViewModel(): MemberListViewModel {
   } = usePermissions();
   
   const canRead = hasPermission('membership:read');
-  const canWrite = hasPermission('membership:write');
+  // Write actions (invite/role/status/delete/bulk) are gated on
+  // membership:delegate — the permission admins actually hold (there is no
+  // 'membership:write' permission code in the registry).
+  const canWrite = hasPermission('membership:delegate');
   const canDelegate = hasPermission('membership:delegate');
+
+  // Selected tenant for PLATFORM_ADMIN cross-tenant viewing (null = own tenant).
+  const selectedTenantId = useSelectedAdminTenantId();
   
   // ---------------------------------------------------------------------------
   // Pagination State
@@ -425,8 +455,8 @@ export function useMemberListViewModel(): MemberListViewModel {
     error: queryError,
     refetch,
   } = useQuery<PaginatedMembers, AppError>({
-    queryKey: [MEMBER_LIST_QUERY_KEY, queryOptions],
-    queryFn: () => fetchMembers(queryOptions),
+    queryKey: [MEMBER_LIST_QUERY_KEY, queryOptions, selectedTenantId],
+    queryFn: () => fetchMembers(queryOptions, selectedTenantId),
     enabled: canRead && !isPermissionsLoading,
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)

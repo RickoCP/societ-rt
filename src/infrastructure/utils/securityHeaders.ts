@@ -14,7 +14,10 @@
  *                              item (move to nonces/hashes later).
  *   - img-src allows OpenStreetMap tiles + data: + blob: + https: — Leaflet map
  *                              tiles and uploaded images.
- *   - connect-src allows self + OSM nominatim (geocoding) + ws/wss (realtime).
+ *   - connect-src allows self + OSM tile servers (a/b/c subdomain pattern) +
+ *                              OSM nominatim (geocoding) + ws/wss (realtime).
+ *                              Leaflet uses Fetch API to load tiles, requiring
+ *                              connect-src in addition to img-src.
  *   - frame-ancestors 'none'  — clickjacking protection (complements
  *                              X-Frame-Options: DENY).
  *
@@ -44,6 +47,10 @@ function buildContentSecurityPolicy(): string {
     'connect-src': [
       "'self'",
       'https://nominatim.openstreetmap.org',
+      'https://*.tile.openstreetmap.org',
+      'https://a.tile.openstreetmap.org',
+      'https://b.tile.openstreetmap.org',
+      'https://c.tile.openstreetmap.org',
       'ws:',
       'wss:',
     ],

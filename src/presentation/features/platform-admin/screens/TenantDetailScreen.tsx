@@ -227,7 +227,6 @@ function TenantDetailError({
           'An error occurred while fetching tenant details. Please try again.',
         )}
       </p>
-      <div className="mt-4 flex gap-3">
       {error?.code && (
         <p className="mt-2 text-xs text-red-500 dark:text-red-500">
           {t('common.error_code', 'Error code: {{code}}', { code: error.code })}

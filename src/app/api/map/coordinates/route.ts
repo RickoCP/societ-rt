@@ -14,6 +14,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import {
   withPermission,
   type AuthorizedRouteHandler,
@@ -26,7 +27,7 @@ import type { UpdateHouseholdCoordinatesUseCase } from '@core/domains/map/usecas
 // ---------------------------------------------------------------------------
 
 const updateCoordinatesSchema = z.object({
-  householdId: z.string().uuid(),
+  householdId: uuidLike(),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
 });

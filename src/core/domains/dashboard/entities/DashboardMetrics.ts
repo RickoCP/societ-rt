@@ -19,7 +19,13 @@ export interface KetuaDashboardMetrics {
 
 export interface PlatformDashboardMetrics {
   readonly totalTenants: number;
+  /** Tenants with status = active. */
+  readonly activeTenants: number;
+  /** Tenants with status = suspended. */
+  readonly suspendedTenants: number;
   readonly monthlyRecurringRevenue: number;
   readonly totalUserCount: number;
+  /** Invoices with status = pending (awaiting payment). */
+  readonly pendingInvoices: number;
   readonly activeSubscriptionsByPlan: Record<string, number>;
 }

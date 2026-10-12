@@ -4,7 +4,7 @@
  *
  * Authorization: Super_Admin only (enforced inside the use case; additional
  * permission check via withPermission wrapper).
- * Permission: device:manage (admin-level device registration)
+ * Permission: iot:manage (admin-level device registration)
  *
  * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration
  */
@@ -15,13 +15,14 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { AuthorizationContext } from '@core/domains/authorization/types';
 import type { RegisterDoorSensorUseCase } from '@core/domains/doorMonitoring/usecases';
 
 const registerSchema = z.object({
-  householdId: z.string().uuid('householdId must be a valid UUID'),
+  householdId: uuidLike('householdId must be a valid UUID'),
   tuyaDeviceId: z.string().min(1, 'tuyaDeviceId is required').max(128),
   deviceName: z.string().min(1, 'deviceName is required').max(120),
   sirenZone: z.string().min(1, 'sirenZone is required').max(120),
@@ -53,7 +54,7 @@ type RegisterResponse = RegisterSuccessResponse | ErrorResponse;
 
 /**
  * Handler for registering a new door sensor.
- * Requires device:manage permission for admin-level device registration.
+ * Requires iot:manage permission for admin-level device registration.
  */
 const handleRegisterSensor: AuthorizedRouteHandler<RegisterResponse> = async (
   request: NextRequest,
@@ -113,6 +114,6 @@ const handleRegisterSensor: AuthorizedRouteHandler<RegisterResponse> = async (
 };
 
 export const POST = withPermission(
-  { permissions: ['device:manage'] },
+  { permissions: ['iot:manage'] },
   handleRegisterSensor,
 );

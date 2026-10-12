@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Badge } from '@components/atoms/Badge';
 import { Button } from '@components/atoms/Button';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
+import { SearchableSelect } from '@components/molecules/SearchableSelect';
 import { useVisitorListViewModel } from '../viewModel/useVisitorListViewModel';
 
 function formatDateTime(dateStr: string): string {
@@ -27,6 +28,8 @@ export function VisitorListScreen() {
     isCreating,
     createError,
     checkoutVisitor,
+    deleteVisitor,
+    isDeleting,
   } = useVisitorListViewModel();
 
   const [showForm, setShowForm] = useState(false);
@@ -35,6 +38,10 @@ export function VisitorListScreen() {
   const [destHousehold, setDestHousehold] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Delete confirmation state
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (!visitorName || !purpose || !destHousehold) {
@@ -49,6 +56,16 @@ export function VisitorListScreen() {
       setShowForm(false);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Network error');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeleteError(null);
+    try {
+      await deleteVisitor(id);
+      setDeleteConfirmId(null);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Gagal menghapus');
     }
   };
 
@@ -104,12 +121,18 @@ export function VisitorListScreen() {
             </div>
             <div>
               <label htmlFor="v-dest" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tujuan (Rumah)</label>
-              <select id="v-dest" value={destHousehold} onChange={e => setDestHousehold(e.target.value)} className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
-                <option value="">-- Pilih --</option>
-                {households.map(h => (
-                  <option key={h.id} value={h.id}>{h.householdNumber} - {h.address}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                id="v-dest"
+                value={destHousehold}
+                onChange={setDestHousehold}
+                options={households.map(h => ({
+                  value: h.id,
+                  label: `${h.householdNumber} - ${h.address}`,
+                }))}
+                placeholder="-- Pilih --"
+                searchPlaceholder="Cari rumah…"
+                noResultsText="Rumah tidak ditemukan"
+              />
             </div>
           </div>
           <div className="mt-4">
@@ -167,6 +190,51 @@ export function VisitorListScreen() {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40">
+                <span className="text-lg">🗑️</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Hapus Catatan Tamu?</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Tindakan ini tidak dapat dibatalkan</p>
+              </div>
+            </div>
+            
+            {deleteError && (
+              <div className="mb-4">
+                <ErrorMessage message={deleteError} />
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteConfirmId(null);
+                  setDeleteError(null);
+                }}
+                disabled={isDeleting}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(deleteConfirmId)}
+                disabled={isDeleting}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Visitor Cards */}
       {!isLoading && filteredVisitors.length > 0 && (
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -202,16 +270,26 @@ export function VisitorListScreen() {
                   {v.exitTimestamp ? 'Keluar' : '● Di Lokasi'}
                 </Badge>
 
-                {/* Action */}
-                {!v.exitTimestamp && (
+                {/* Actions */}
+                <div className="flex shrink-0 items-center gap-2">
+                  {!v.exitTimestamp && (
+                    <button
+                      type="button"
+                      onClick={() => checkoutVisitor(v.id)}
+                      className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-400"
+                    >
+                      Checkout
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => checkoutVisitor(v.id)}
-                    className="shrink-0 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-400"
+                    onClick={() => setDeleteConfirmId(v.id)}
+                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+                    title="Hapus catatan tamu"
                   >
-                    Checkout
+                    🗑️
                   </button>
-                )}
+                </div>
               </div>
             ))}
           </div>

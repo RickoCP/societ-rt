@@ -3,7 +3,7 @@
  * rejects a door-sensor installation request.
  *
  * Authorization: Super_Admin only (enforced inside the use case).
- * Permission: device:manage (admin-level device management)
+ * Permission: iot:manage (admin-level device management)
  *
  * @see Requirements 2.1, 2.2, 2.3 — Route Handler Migration
  */
@@ -46,7 +46,7 @@ type ResolveResponse = ResolveSuccessResponse | ErrorResponse;
 
 /**
  * Handler for resolving door sensor installation requests.
- * Requires device:manage permission for admin operations.
+ * Requires iot:manage permission for admin operations.
  */
 const handleResolveRequest: AuthorizedRouteHandler<ResolveResponse> = async (
   request: NextRequest,
@@ -114,6 +114,6 @@ const handleResolveRequest: AuthorizedRouteHandler<ResolveResponse> = async (
 };
 
 export const POST = withPermission(
-  { permissions: ['device:manage'] },
+  { permissions: ['iot:manage'] },
   handleResolveRequest,
 );

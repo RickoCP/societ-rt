@@ -10,3 +10,10 @@ export {
   type DeleteOrgUnitState,
   type DeleteValidationResult,
 } from './useDeleteOrgUnit';
+
+export {
+  useCreateOrgUnit,
+  useUpdateOrgUnit,
+  type CreateOrgUnitInput,
+  type UpdateOrgUnitInput,
+} from './useOrgUnitMutations';

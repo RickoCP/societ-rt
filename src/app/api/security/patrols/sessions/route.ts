@@ -14,6 +14,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { StartPatrolUseCase } from '@core/domains/patrol/usecases';
@@ -24,7 +25,7 @@ import type { PatrolRepository } from '@core/domains/patrol/repositories/PatrolR
 // ---------------------------------------------------------------------------
 
 const startSessionSchema = z.object({
-  routeId: z.string().uuid(),
+  routeId: uuidLike(),
 });
 
 // ---------------------------------------------------------------------------

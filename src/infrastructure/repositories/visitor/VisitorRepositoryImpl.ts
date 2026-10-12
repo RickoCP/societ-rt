@@ -209,5 +209,57 @@ export const VisitorRepositoryImpl = ({
         );
       }
     },
+
+    // -----------------------------------------------------------------------
+    // findById
+    // -----------------------------------------------------------------------
+    async findById(
+      tenantId: string,
+      visitorLogId: string,
+    ): Promise<DomainResult<VisitorLog | null>> {
+      try {
+        const log = await visitorLogRepo.findFirst(tenantId, {
+          where: { id: visitorLogId },
+        });
+
+        if (!log) {
+          return ok(null);
+        }
+
+        return ok(mapPrismaVisitorLogToDomain(log));
+      } catch (error) {
+        return fail(
+          technicalError(
+            'VISITOR_FIND_BY_ID_FAILED',
+            'Failed to find visitor log by ID',
+            { cause: error },
+          ),
+        );
+      }
+    },
+
+    // -----------------------------------------------------------------------
+    // deleteVisitor
+    // -----------------------------------------------------------------------
+    async deleteVisitor(
+      tenantId: string,
+      visitorLogId: string,
+    ): Promise<DomainResult<void>> {
+      try {
+        await visitorLogRepo.delete(tenantId, {
+          where: { id: visitorLogId },
+        });
+
+        return ok(undefined);
+      } catch (error) {
+        return fail(
+          technicalError(
+            'VISITOR_DELETE_FAILED',
+            'Failed to delete visitor log',
+            { cause: error },
+          ),
+        );
+      }
+    },
   };
 };

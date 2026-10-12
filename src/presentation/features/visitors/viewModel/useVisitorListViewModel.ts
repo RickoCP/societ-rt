@@ -1,6 +1,10 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  showLoadingToast,
+  updateToast,
+} from '@infrastructure/stateManagement/toastStore';
 
 interface VisitorRow {
   id: string;
@@ -69,6 +73,14 @@ async function checkoutVisitorRequest(id: string): Promise<void> {
   }
 }
 
+async function deleteVisitorRequest(id: string): Promise<void> {
+  const res = await fetch(`/api/visitors/${id}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const body = (await res.json()) as { message?: string; code?: string };
+    throw new Error(body.message ?? body.code ?? 'Failed to delete visitor');
+  }
+}
+
 export function useVisitorListViewModel() {
   const queryClient = useQueryClient();
 
@@ -91,6 +103,30 @@ export function useVisitorListViewModel() {
 
   const checkoutMutation = useMutation({
     mutationFn: checkoutVisitorRequest,
+    onMutate: () => {
+      const toastId = showLoadingToast('Memproses checkout tamu...');
+      return { toastId };
+    },
+    onSuccess: async (_data, _id, context) => {
+      await queryClient.invalidateQueries({ queryKey: ['visitors'] });
+      if (context?.toastId) {
+        updateToast(context.toastId, {
+          type: 'success',
+          message: 'Tamu berhasil checkout.',
+        });
+      }
+    },
+    onError: (error, _id, context) => {
+      const message =
+        error instanceof Error ? error.message : 'Gagal memproses checkout tamu.';
+      if (context?.toastId) {
+        updateToast(context.toastId, { type: 'error', message });
+      }
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteVisitorRequest,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['visitors'] });
     },
@@ -107,5 +143,8 @@ export function useVisitorListViewModel() {
     createError: createMutation.error,
     checkoutVisitor: checkoutMutation.mutate,
     isCheckingOut: checkoutMutation.isPending,
+    deleteVisitor: deleteMutation.mutateAsync,
+    isDeleting: deleteMutation.isPending,
+    deleteError: deleteMutation.error,
   };
 }

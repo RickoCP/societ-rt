@@ -17,10 +17,37 @@ import {
   AUTH_TOKEN_COOKIE,
 } from '@infrastructure/utils/cookieConfig';
 import { SignJWT } from 'jose';
+import { mapLegacyRole } from '@core/domains/membership/types';
+import { MembershipRole } from '@core/domains/membership/types';
+import { UserRole } from '@core/protocols';
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+/**
+ * Normalizes a stored (possibly legacy) role string into the canonical
+ * MembershipRole value used across the authorization system.
+ *
+ * The DB may still hold legacy roles (e.g. "Super_Admin"); the edge proxy and
+ * API-layer guards compare against MembershipRole values (e.g. "PLATFORM_ADMIN").
+ * Minting the canonical value into the JWT keeps proxy and API views consistent
+ * and avoids role-string mismatches (e.g. the /admin/security guard).
+ */
+function normalizeRole(storedRole: string): string {
+  // Already a canonical MembershipRole → use as-is.
+  if ((Object.values(MembershipRole) as string[]).includes(storedRole)) {
+    return storedRole;
+  }
+  // Legacy role → map to canonical, falling back to the original if no mapping.
+  if ((Object.values(UserRole) as string[]).includes(storedRole)) {
+    const mapped = mapLegacyRole(storedRole as UserRole);
+    if (mapped) {
+      return mapped;
+    }
+  }
+  return storedRole;
+}
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -124,12 +151,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+    const normalizedRole = normalizeRole(user.role);
+
     const token = await new SignJWT({
       sub: user.id,
       userId: user.id,
       tenantId,
       email: user.email,
-      role: user.role,
+      role: normalizedRole,
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()

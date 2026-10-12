@@ -41,6 +41,8 @@ export type PermissionDomain =
   | 'iot'
   | 'patrol'
   | 'incident'
+  // Administration domain (tenant administrative tasks, e.g. letter requests)
+  | 'admin'
   // Security domains
   | 'audit'
   | 'security'
@@ -417,6 +419,31 @@ export const PERMISSIONS = Object.freeze({
     'incident',
     'manage',
     'Manage incidents',
+  ),
+
+  // =========================================================================
+  // ADMINISTRATION PERMISSIONS — Tenant administrative tasks (letter requests)
+  // =========================================================================
+
+  /** Read administrative resources (e.g. list letter requests) */
+  ADMIN_READ: createPermission(
+    'admin',
+    'read',
+    'Read administrative resources such as letter requests',
+  ),
+
+  /** Create/submit administrative resources (e.g. submit a letter request) */
+  ADMIN_WRITE: createPermission(
+    'admin',
+    'write',
+    'Create administrative resources such as letter requests',
+  ),
+
+  /** Manage administrative workflows (e.g. approve/reject letter requests) */
+  ADMIN_MANAGE: createPermission(
+    'admin',
+    'manage',
+    'Manage administrative workflows such as approving or rejecting letter requests',
   ),
 
   // =========================================================================

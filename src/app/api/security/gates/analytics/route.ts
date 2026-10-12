@@ -14,6 +14,7 @@ import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { formatZodErrors } from '@infrastructure/utils/formatZodErrors';
 import { mapAppErrorToHttpResponse, type ErrorResponseBody } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import {
   withPermission,
   type AuthorizedRouteHandler,
@@ -25,7 +26,7 @@ import type { GetGateAnalyticsUseCase } from '@core/domains/gate/usecases';
 // ---------------------------------------------------------------------------
 
 const analyticsQuerySchema = z.object({
-  gateId: z.string().uuid(),
+  gateId: uuidLike(),
   from: z.coerce.date(),
   to: z.coerce.date(),
 });

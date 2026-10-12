@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@components/atoms/Button';
 import { Badge } from '@components/atoms/Badge';
 import { ErrorMessage } from '@components/molecules/ErrorMessage';
+import { SearchableSelect } from '@components/molecules/SearchableSelect';
 import {
   useDoorSensorAdminViewModel,
   type InstallationRequestRow,
@@ -86,24 +87,23 @@ export function DoorSensorAdminScreen() {
             <label htmlFor="household" className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Rumah
             </label>
-            <select
+            <SearchableSelect
               id="household"
               value={householdId}
-              onChange={e => setHouseholdId(e.target.value)}
-              disabled={householdsLoading}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+              onChange={setHouseholdId}
+              options={households.map(h => ({
+                value: h.id,
+                label:
+                  `Rumah ${h.householdNumber} — ${h.address}` +
+                  (h.headOfHousehold !== '-' ? ` (${h.headOfHousehold})` : ''),
+              }))}
+              isLoading={householdsLoading}
+              loadingText="Memuat rumah…"
+              placeholder="Pilih rumah…"
+              searchPlaceholder="Cari rumah…"
+              noResultsText="Rumah tidak ditemukan"
               required
-            >
-              <option value="">
-                {householdsLoading ? 'Memuat rumah…' : 'Pilih rumah…'}
-              </option>
-              {households.map(h => (
-                <option key={h.id} value={h.id}>
-                  Rumah {h.householdNumber} — {h.address}
-                  {h.headOfHousehold !== '-' ? ` (${h.headOfHousehold})` : ''}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="flex flex-col gap-1">

@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { container } from '@infrastructure/di/container';
 import { generateCorrelationId } from '@infrastructure/utils/correlationId';
 import { mapAppErrorToHttpResponse } from '@infrastructure/utils/errorMapping';
+import { uuidLike } from '@infrastructure/utils/uuidLike';
 import { withPermission } from '@infrastructure/middleware/authorization/requirePermission';
 import type { AuthorizedRouteHandler } from '@infrastructure/middleware/authorization/types';
 import type { IoTRepository } from '@core/domains/iot/repositories/IoTRepository';
@@ -21,7 +22,7 @@ import type { IoTRepository } from '@core/domains/iot/repositories/IoTRepository
 // ---------------------------------------------------------------------------
 
 const querySchema = z.object({
-  householdId: z.string().uuid('householdId must be a valid UUID'),
+  householdId: uuidLike('householdId must be a valid UUID'),
 });
 
 // ---------------------------------------------------------------------------
